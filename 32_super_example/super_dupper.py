@@ -9,6 +9,9 @@ import bz2
 import pygrib
 import re
 
+def kelvin_to_celsius(kelvin):
+    return kelvin - 273.15
+
 def parse_datetime_from_filename(filename):
     """
     Assuming that the filename matches Spire's naming convention,
@@ -38,21 +41,21 @@ def crop_dataframe_to_bbox(df, bbox):
     based on the specified bounding box
     """
     # Get longitude and latitude values from the DataFrame columns
-    longitudes = df["longitude"]
-    latitudes = df["latitude"]
+    longitudes = df["Longitude"]
+    latitudes = df["Latitude"]
     # Map longitude range from (0 to 360) into (-180 to 180)
     map_function = lambda lon: (lon - 360) if (lon > 180) else lon
     remapped_longitudes = longitudes.map(map_function)
     # Create new longitude and latitude columns in the DataFrame
-    df["longitude"] = remapped_longitudes
-    df["latitude"] = latitudes
+    df["Longitude"] = remapped_longitudes
+    df["Latitude"] = latitudes
     # Unpack the bounding box values
     min_lat = float(bbox[0])
     max_lat = float(bbox[1])
     min_lon = float(bbox[2])
     max_lon = float(bbox[3])
-    lat_filter = (df["latitude"] >= min_lat) & (df["latitude"] <= max_lat)
-    lon_filter = (df["longitude"] >= min_lon) & (df["longitude"] <= max_lon)
+    lat_filter = (df["Latitude"] >= min_lat) & (df["Latitude"] <= max_lat)
+    lon_filter = (df["Longitude"] >= min_lon) & (df["Longitude"] <= max_lon)
 
     # Apply filters to the DataFrame
     df = df.loc[lat_filter & lon_filter]
@@ -79,8 +82,8 @@ def process_data(filepath, variable, bbox):
     
     # Create a DataFrame with the extracted data
     df = pd.DataFrame()
-    df["latitude"] = latitudes.ravel()
-    df["longitude"] = longitudes.ravel()
+    df["Latitude"] = latitudes.ravel()
+    df["Longitude"] = longitudes.ravel()
     df[variable] = variable_data.ravel()
 
     # Perform the bounding box filter
@@ -88,7 +91,7 @@ def process_data(filepath, variable, bbox):
     
     # Create a list of forecast times for each row based on the forecast_time
     forecast_times = [forecast_time] * len(df)
-    df["time"] = forecast_times
+    df["Time"] = forecast_times
     
     return df
 
@@ -110,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--bbox",
         nargs="+",
-        default=[45.1512, 47.1512, 12.1955, 16.1955],  # min_lat max_lat min_lon max_lon
+        default=[45.1712, 47.1712, 13.0200, 16.8400],  # min_lat max_lat min_lon max_lon
         help="The bounding box used to crop the data, specified as minimum/maximum latitudes and longitudes",
     )
     args = parser.parse_args()
@@ -140,6 +143,11 @@ if __name__ == "__main__":
         # Process the data
         data = process_data(temp_decompressed_path, args.variable, args.bbox)
         if data is not None:
+            
+            # Convert temperature from Kelvin to Celsius
+            if args.variable == "2 metre temperature":
+                data[args.variable] = kelvin_to_celsius(data[args.variable])
+            
             output_df = pd.concat([output_df, data])
         # Remove the temporary decompressed file
         os.remove(temp_decompressed_path)

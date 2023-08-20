@@ -5,10 +5,10 @@ input_file = "output_data.csv"
 df = pd.read_csv(input_file)
 
 # Filter out data with time equal to 0
-df_filtered = df[df["time"] == 0]
+df_filtered = df[df["Time"] == 0]
 
 # Remove the "time" column
-df_filtered = df_filtered.drop(columns=["time"])
+df_filtered = df_filtered.drop(columns=["Time"])
 
 # Save the filtered DataFrame to a new CSV file
 output_file = "filtered_output_data.csv"
