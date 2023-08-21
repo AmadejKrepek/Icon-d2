@@ -113,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--bbox",
         nargs="+",
-        default=[45.1712, 47.1712, 13.0200, 16.8400],  # min_lat max_lat min_lon max_lon
+        default=[45.1512, 47.1512, 12.9955, 16.7955],  # min_lat max_lat min_lon max_lon
         help="The bounding box used to crop the data, specified as minimum/maximum latitudes and longitudes",
     )
     args = parser.parse_args()
