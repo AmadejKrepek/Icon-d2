@@ -1,5 +1,5 @@
 import pandas as pd
-
+import os
 def aggregate_data(df, agg_column, agg_function):
     if agg_function == 'sum':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].sum()
@@ -9,10 +9,13 @@ def aggregate_data(df, agg_column, agg_function):
         return df.groupby(['Latitude', 'Longitude'])[agg_column].min()
 
 def main():
-    csv_file = 'path_to_your_csv_file.csv'  # Replace with your CSV file path
+    csv_file = './output_data.csv'  # Replace with your CSV file path
     output_folder = 'output/'  # Replace with your desired output folder
 
     df = pd.read_csv(csv_file)
+    
+    # Convert 'ValidDate' column to datetime format
+    df['ValidDate'] = pd.to_datetime(df['ValidDate'])
 
     agg_column = df.columns[2]  # Default to the third column
 
@@ -56,7 +59,9 @@ def main():
         return
 
     aggregated_data = aggregate_data(filtered_data, agg_column, agg_function).reset_index()
-
+# Create the output directory if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
     output_file = f"{output_folder}aggregated_{agg_function}_{agg_column.replace(' ', '_')}.csv"
     aggregated_data.to_csv(output_file, index=False)
 
