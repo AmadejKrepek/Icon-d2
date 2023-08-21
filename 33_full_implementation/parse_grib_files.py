@@ -9,6 +9,19 @@ import bz2
 import pygrib
 import re
 
+# to nicely display maps we need to adjust coordinates to make sure it fits
+DEVIATION_LAT_MIN = 0.15
+DEVIATION_LAT_MAX = 0.01
+DEVIATION_LON_MIN = 0.02
+DEVIATION_LON_MAX = 0.0045
+
+LAT_MIN = 45.1512 - DEVIATION_LAT_MIN
+LAT_MAX = 47.1512 + DEVIATION_LAT_MAX
+LON_MIN = 12.9955 - DEVIATION_LON_MIN
+LON_MAX = 16.7955 + DEVIATION_LON_MAX
+
+45.0012, 47.1612, 12.9755, 16.8000
+
 def kelvin_to_celsius(kelvin):
     return kelvin - 273.15
 
@@ -109,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--bbox",
         nargs="+",
-        default=[45.0012, 47.1612, 12.9755, 16.8000],  # min_lat max_lat min_lon max_lon
+        default=[LAT_MIN, LAT_MAX, LON_MIN, LON_MAX],  # min_lat max_lat min_lon max_lon
         help="The bounding box used to crop the data, specified as minimum/maximum latitudes and longitudes",
     )
     args = parser.parse_args()
