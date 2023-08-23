@@ -42,9 +42,6 @@ if latest_model_run_filename:
         prev_model_run = str((int(model_run) - 3) % 24).zfill(2)  # Choose previous model run
         model_run = prev_model_run
 
-    # Remove any slashes ("/") from the filename
-    latest_model_run_filename = latest_model_run_filename.replace("/", "_")
-    
     # Construct the output directory path
     model_run_dir = os.path.join(output_directory, year, month, day, model_run + 'z')
     os.makedirs(model_run_dir, exist_ok=True)
@@ -54,14 +51,17 @@ if latest_model_run_filename:
         filename = latest_model_run_filename.replace("048", f"{new_dynamic_value:03d}")
         url = f"{base_url}/{filename}"
         
-        output_path = os.path.join(model_run_dir, filename)
+        # Get the original filename without path and directories
+        original_filename = filename.split("/")[-1]
+        
+        output_path = os.path.join(model_run_dir, original_filename)
 
         response = requests.get(url)
         
         with open(output_path, "wb") as f:
             f.write(response.content)
 
-        print(f"Downloaded: {filename}")
+        print(f"Downloaded: {original_filename}")
 
     print("Download complete.")
 else:
