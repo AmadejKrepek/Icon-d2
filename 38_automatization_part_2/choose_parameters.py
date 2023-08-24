@@ -6,7 +6,7 @@ def read_variable_names_from_file(file_path):
         variable_names = [line.strip() for line in f if line.strip()]
     return variable_names
 
-def main():
+def getGribFileNames():
     print("Script started at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     variable_names_file = "./variable_names/d2_variables.txt"
@@ -45,6 +45,5 @@ def main():
         print("No filenames available for the selected parameters.")
 
     print("Script finished at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-if __name__ == "__main__":
-    main()
+    
+    return filenames

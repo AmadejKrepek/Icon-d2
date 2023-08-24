@@ -93,13 +93,14 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
     for parameter_name, data_list in parameter_data.items():
         parameter_df_list = [data_item[0] for data_item in data_list]
         combined_df = pd.concat(parameter_df_list, ignore_index=True)
+        parameter_name = parameter_name.replace(" ", "_")
         model_run_dir = create_output_folders(year, month, day, model_run, parameter_name)
         output_filename = f"{parameter_name}_{year}_{month}_{day}_{model_run}.csv"
         output_path = os.path.join(model_run_dir, output_filename)
         combined_df.to_csv(output_path, index=False)
 
 if __name__ == "__main__":
-    source_data_dir = "./12z"
+    source_data_dir = "./downloaded_grib_files/t_2m/2023/08/24/15z"
     output_directory = "output"
     
     os.makedirs(output_directory, exist_ok=True)
