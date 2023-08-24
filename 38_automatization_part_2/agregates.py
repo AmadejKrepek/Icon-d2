@@ -8,10 +8,7 @@ def aggregate_data(df, agg_column, agg_function):
     elif agg_function == 'min':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].min()
 
-def main():
-    csv_file = './output/2_metre_temperature/2023/08/24/15z/2_metre_temperature_2023_08_24_15.csv'  # Replace with your CSV file path
-    output_folder = '2_metre_temperature_max'  # Replace with your desired output folder
-
+def create_aggregates(csv_file, output_folder):
     df = pd.read_csv(csv_file)
     
     # Convert 'ValidDate' column to datetime format
@@ -60,13 +57,10 @@ def main():
         return
 
     aggregated_data = aggregate_data(filtered_data, agg_column, agg_function).reset_index()
-# Create the output directory if it doesn't exist
+
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     output_file = f"{output_folder}aggregated_{agg_function}_{agg_column.replace(' ', '_')}.csv"
     aggregated_data.to_csv(output_file, index=False)
 
     print(f"Aggregated data written to {output_file}")
-
-if __name__ == "__main__":
-    main()

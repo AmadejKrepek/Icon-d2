@@ -83,8 +83,7 @@ def process_data(filepath, bbox):
     return df, parameter_name
 
 
-def create_output_folders(year, month, day, model_run, parameter_name):
-    output_directory = "output"
+def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
     os.makedirs(model_run_dir, exist_ok=True)
     return model_run_dir
@@ -94,15 +93,12 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         parameter_df_list = [data_item[0] for data_item in data_list]
         combined_df = pd.concat(parameter_df_list, ignore_index=True)
         parameter_name = parameter_name.replace(" ", "_")
-        model_run_dir = create_output_folders(year, month, day, model_run, parameter_name)
+        model_run_dir = create_output_folders(year, month, day, model_run, parameter_name, output_directory)
         output_filename = f"{parameter_name}_{year}_{month}_{day}_{model_run}.csv"
         output_path = os.path.join(model_run_dir, output_filename)
         combined_df.to_csv(output_path, index=False)
 
-if __name__ == "__main__":
-    source_data_dir = "./downloaded_grib_files/t_2m/2023/08/24/15z"
-    output_directory = "output"
-    
+def parse_gribs(source_data_dir, output_directory):    
     os.makedirs(output_directory, exist_ok=True)
     
     if not os.path.isdir(source_data_dir):

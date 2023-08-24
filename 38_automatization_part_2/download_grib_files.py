@@ -5,9 +5,6 @@ import re
 # Base URL for the directory containing GRIB files
 base_url = "https://opendata.dwd.de/weather/nwp/"
 
-# Directory to save downloaded files
-output_directory = "downloaded_grib_files"
-
 def extract_parameter_name(filename):
     parameter_name = filename.split(".grib2.bz2")[0]
     parts = parameter_name.split("_")
@@ -46,7 +43,7 @@ def download_grib_file(url, output_path):
     with open(output_path, "wb") as f:
         f.write(response.content)
 
-def download_gribs(latest_model_run_filename):
+def download_gribs(latest_model_run_filename, output_directory):
     if latest_model_run_filename:
         year, month, day, model_run, parameter_name = extract_date_and_model_run_parts(latest_model_run_filename)
         time_run = latest_model_run_filename.split("_")[-4]
