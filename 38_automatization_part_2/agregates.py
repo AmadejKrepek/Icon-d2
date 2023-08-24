@@ -14,34 +14,50 @@ def create_aggregates(csv_file, output_folder):
     # Convert 'ValidDate' column to datetime format
     df['ValidDate'] = pd.to_datetime(df['ValidDate'])
 
+    # Extract information from the filename
+    filename_parts = os.path.basename(csv_file).split("_")
+    parameter_name = "_".join(filename_parts[0:3])
+    year = filename_parts[3]
+    month = filename_parts[4]
+    day = filename_parts[5]
+    model_run = filename_parts[6].split(".")[0]
+
     agg_column = df.columns[2]  # Default to the third column
 
-    print(f"Variable read: {agg_column}")
+    print(f"Parameter name: {parameter_name}")
+    print(f"Year: {year}")
+    print(f"Month: {month}")
+    print(f"Day: {day}")
+    print(f"Model run: {model_run}")
 
     print("Available aggregation functions: sum, max, min")
-    agg_function = input("Enter aggregation function: ")
+    agg_function = input("Enter aggregation function (sum, max, min): ")
 
     if agg_function not in ['sum', 'max', 'min']:
         print("Invalid aggregation function. Exiting.")
         return
 
+    # Construct the output directory structure
+    output_dir = os.path.join(output_folder, parameter_name, "aggregate", year, month, day, model_run)
+    os.makedirs(output_dir, exist_ok=True)
+    
     print("Choose aggregation time frame:")
     print("1. Single day")
     print("2. Interval of days")
     time_frame_choice = input("Enter your choice (1 or 2): ")
     
+    unique_days = None
     if time_frame_choice == '1':
         unique_days = df['ValidDate'].dt.date.unique()
         print("Available days:")
-        for idx, day in enumerate(unique_days):
-            print(f"{idx+1}. {day}")
+        for idx, date in enumerate(unique_days):
+            print(f"{idx+1}. {date}")
 
         day_choice = int(input("Choose a day (enter the corresponding number): ")) - 1
         selected_day = unique_days[day_choice]
 
         # Filter data for the selected day
         filtered_data = df[df['ValidDate'].dt.date == selected_day]
-        print(filtered_data)
 
     elif time_frame_choice == '2':
         start_date = input("Enter the start date (YYYY-MM-DD): ")
@@ -57,10 +73,16 @@ def create_aggregates(csv_file, output_folder):
         return
 
     aggregated_data = aggregate_data(filtered_data, agg_column, agg_function).reset_index()
+    
+    latest_date = unique_days[-1]
+    year = str(latest_date.year)
+    month = str(latest_date.month).zfill(2)
+    day = str(latest_date.day).zfill(2)
+    
+    output_file = f"{agg_function}_{parameter_name}_{year}_{month}_{day}_{model_run}.csv"
+    output_path = os.path.join(output_dir, output_file)
+    aggregated_data.to_csv(output_path, index=False)
 
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    output_file = f"{output_folder}aggregated_{agg_function}_{agg_column.replace(' ', '_')}.csv"
-    aggregated_data.to_csv(output_file, index=False)
-
-    print(f"Aggregated data written to {output_file}")
+    print(f"Aggregated data written to {output_path}")
+    
+create_aggregates('./data/output/2_metre_temperature/2023/08/24/18z/2_metre_temperature_2023_08_24_18.csv', './data/output')
