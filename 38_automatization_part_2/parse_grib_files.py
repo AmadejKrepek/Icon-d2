@@ -99,7 +99,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--bbox",
         nargs="+",
-        default=[LAT_MIN, LAT_MAX, LON_MIN, LON_MAX],  # min_lat max_lat min_lon max_lon
+        default=[LAT_MIN, LAT_MAX, LON_MIN, LON_MAX],
         help="The bounding box used to crop the data, specified as minimum/maximum latitudes and longitudes",
     )
     args = parser.parse_args()
@@ -110,32 +110,29 @@ if __name__ == "__main__":
         )
 
     # Read all data files in the specified directory
-    filepath = os.path.join(args.source_data, "*2d_t_2m.grib2.bz2")
-    filenames = glob.glob(filepath)
+    filenames = glob.glob(os.path.join(args.source_data, "*.grib2.bz2"))
     filenames = sorted(filenames)
 
     output_df = pd.DataFrame()
 
     for file in filenames:
-        print("Processing ", file)
-        # Decompress the file and read the decompressed data
-        with bz2.BZ2File(file, 'rb') as compressed_file:
-            data = compressed_file.read()
-        # Create a temporary file to hold the decompressed data
-        original_filename = os.path.splitext(os.path.basename(file))[0]  # Extract original filename
-        temp_decompressed_path = f"{original_filename}_decompressed.grib2"  # Adjust the decompressed filename
-        with open(temp_decompressed_path, 'wb') as temp_file:
-            temp_file.write(data)
-        # Process the data
-        data = process_data(temp_decompressed_path, args.variable, args.bbox)
+        print("Processing", file)
+        
         if data is not None:
-            
             # Convert temperature from Kelvin to Celsius
             if args.variable == "2 metre temperature":
                 data[args.variable] = kelvin_to_celsius(data[args.variable])
             
-            output_df = pd.concat([output_df, data])
-        # Remove the temporary decompressed file
-        os.remove(temp_decompressed_path)
+            # Get date from the data
+            data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
+            
+            # Create dynamic output folder
+            output_folder = os.path.join("output", args.variable.replace(" ", "_"), data_date)
+            os.makedirs(output_folder, exist_ok=True)
+            
+            # Save the processed data to CSV
+            output_filename = os.path.splitext(os.path.basename(file))[0] + ".csv"
+            output_path = os.path.join(output_folder, output_filename)
+            data.to_csv(output_path, index=False)
 
-    output_df.to_csv("output_data.csv", index=False)
+    print("Script finished.")
