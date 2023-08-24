@@ -44,6 +44,7 @@ def main():
 
         # Filter data for the selected day
         filtered_data = df[df['ValidDate'].dt.date == selected_day]
+        print(filtered_data)
 
     elif time_frame_choice == '2':
         start_date = input("Enter the start date (YYYY-MM-DD): ")
