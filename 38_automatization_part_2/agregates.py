@@ -62,11 +62,22 @@ def create_aggregates(csv_file, output_folder):
 
         # Filter data for the selected day
         filtered_data = df[df['ValidDate'].dt.date == selected_day]
+        
+        # Get the first and last ValidDate in the filtered_data
+        first_valid_date = filtered_data['ValidDate'].min()
+        last_valid_date = filtered_data['ValidDate'].max()
+        
+        # Format the first and last ValidDate to YYYY_MM_DD_HH_mm format
+        formatted_first_valid_date = first_valid_date.strftime('%Y_%m_%d_%H_%M')
+        formatted_last_valid_date = last_valid_date.strftime('%Y_%m_%d_%H_%M')
+        
+        print(f"First ValidDate: {formatted_first_valid_date}")
+        print(f"Last ValidDate: {formatted_last_valid_date}")
 
         selected_year = str(selected_day.year)
         selected_month = str(selected_day.month).zfill(2)
         selected_day_number = str(selected_day.day).zfill(2)
-        output_file = f"{agg_function}_{parameter_name}_{selected_year}_{selected_month}_{selected_day_number}_{model_run}.csv"
+        output_file = f"{agg_function}_{parameter_name}_{selected_year}_{selected_month}_{selected_day_number}_{model_run}_{formatted_first_valid_date}_{formatted_last_valid_date}.csv"
 
     elif time_frame_choice == '2':
         start_date = input("Enter the start date (YYYY-MM-DD): ")
@@ -77,13 +88,24 @@ def create_aggregates(csv_file, output_folder):
         
         filtered_data = df[(df['ValidDate'] >= start_date) & (df['ValidDate'] <= end_date)]
         
+        # Get the first and last ValidDate in the filtered_data
+        first_valid_date = filtered_data['ValidDate'].min()
+        last_valid_date = filtered_data['ValidDate'].max()
+        
+        # Format the first and last ValidDate to YYYY_MM_DD_HH_mm format
+        formatted_first_valid_date = first_valid_date.strftime('%Y_%m_%d_%H_%M')
+        formatted_last_valid_date = last_valid_date.strftime('%Y_%m_%d_%H_%M')
+        
+        print(f"First ValidDate: {formatted_first_valid_date}")
+        print(f"Last ValidDate: {formatted_last_valid_date}")
+        
         selected_year = str(start_date.year)
         selected_month = str(start_date.month).zfill(2)
         selected_day_number = str(start_date.day).zfill(2)
         end_year = str(end_date.year)
         end_month = str(end_date.month).zfill(2)
         end_day_number = str(end_date.day).zfill(2)
-        output_file = f"{agg_function}_{parameter_name}_{selected_year}_{selected_month}_{selected_day_number}_{end_year}_{end_month}_{end_day_number}_{model_run}.csv"
+        output_file = f"{agg_function}_{parameter_name}_{selected_year}_{selected_month}_{selected_day_number}_{end_year}_{end_month}_{end_day_number}_{model_run}_{formatted_first_valid_date}_{formatted_last_valid_date}.csv"
         
     else:
         print("Invalid choice. Exiting.")
