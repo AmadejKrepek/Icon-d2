@@ -29,17 +29,26 @@ def extract_date_and_model_run_parts(filename):
 
 def determine_model_run(model_run, time_run):
     valid_model_run_times = ["00", "03", "06", "09", "12", "15", "18", "21"]
+
     if model_run not in valid_model_run_times:
         model_run = max(valid_model_run_times, key=lambda x: abs(int(x) - int(model_run)))
 
     print("Model run:", model_run)
     print("Time run:", time_run)
-    print("Time run:", int(time_run))
+
     if int(time_run) < 48:
-        model_run = "048"
-        prev_model_run = str((int(model_run) - 3) % 24).zfill(2)
-        return model_run, prev_model_run
-    return model_run, None
+        model_run_index = valid_model_run_times.index(model_run)
+        prev_model_run_index = (model_run_index - 1) % len(valid_model_run_times)
+        prev_model_run = valid_model_run_times[prev_model_run_index]
+
+        if prev_model_run != model_run:
+            print("Previous model run:", prev_model_run)
+            return model_run, prev_model_run
+        else:
+            print("Previous model run is the same as current model run.")
+            return model_run, None
+    return model_run, None  # No previous model run for this case
+
 
 def download_grib_file(url, output_path):
     response = requests.get(url)
