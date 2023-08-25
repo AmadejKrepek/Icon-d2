@@ -123,7 +123,8 @@ def parse_gribs(source_data_dir, output_directory):
         
         data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX])
         if data is not None:
-            data[parameter_name] = kelvin_to_celsius(data[parameter_name])
+            if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
+                data[parameter_name] = kelvin_to_celsius(data[parameter_name])
             
             date_str = original_filename.split("_")[4]
             year = date_str[:4]

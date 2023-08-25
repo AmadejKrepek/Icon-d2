@@ -16,7 +16,10 @@ def create_aggregates(csv_file, output_folder):
 
     # Extract information from the filename
     filename_parts = os.path.basename(csv_file).split("_")
+    print(filename_parts)
+    print(filename_parts[6])
     parameter_name = "_".join(filename_parts[0:3])
+    aggregate_name = filename_parts[0]
     year = filename_parts[3]
     month = filename_parts[4]
     day = filename_parts[5]
@@ -38,7 +41,7 @@ def create_aggregates(csv_file, output_folder):
         return
 
     # Construct the output directory structure
-    output_dir = os.path.join(output_folder, parameter_name, "aggregate", year, month, day, model_run + 'z')
+    output_dir = os.path.join(output_folder, parameter_name, agg_function, year, month, day, model_run + 'z')
     os.makedirs(output_dir, exist_ok=True)
     
     print("Choose aggregation time frame:")
