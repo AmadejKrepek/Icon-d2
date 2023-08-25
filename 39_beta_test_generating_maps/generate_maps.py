@@ -184,3 +184,57 @@ def create_variable_plot(
     # Save the figure with adjusted left padding
     plt.savefig(output_filename, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
     plt.close()
+    
+def extract_output_names(input_filename, variable):
+            # Extract relevant parts from the input filename
+        parts = input_filename.split('/')
+        model_run_year = parts[-5]
+        model_run_month = parts[-4]
+        model_run_day = parts[-3]
+        model_run = parts[-2]
+        output_variable_name = variable.replace(' ', '_').lower()
+        
+        selected_file_name = parts[-1]
+        selected_file_name_parts = selected_file_name.split('_')
+        
+        selected_aggregate = selected_file_name_parts[0]
+        selected_parameter = selected_file_name_parts[1:3]
+        
+        selected_year = selected_file_name_parts[4]
+        selected_month = selected_file_name_parts[5]
+        selected_day = selected_file_name_parts[6]
+        
+        selected_start_year = selected_file_name_parts[8]
+        selected_start_month = selected_file_name_parts[9]
+        selected_start_day = selected_file_name_parts[10]
+        selected_start_hour = selected_file_name_parts[11]
+        selected_start_minute = selected_file_name_parts[12]
+        
+        selected_end_year = selected_file_name_parts[13]
+        selected_end_month = selected_file_name_parts[14]
+        selected_end_day = selected_file_name_parts[15]
+        selected_end_hour = selected_file_name_parts[16]
+        selected_end_minute = selected_file_name_parts[17]
+        
+        formatted_start_datetime = "_".join([selected_start_year, selected_start_month, selected_start_day, selected_start_hour, selected_start_minute])
+        formatted_end_datetime = "_".join([selected_end_year, selected_end_month, selected_end_day, selected_end_hour, selected_end_minute])
+
+        # Parse the date components
+        model_run_date_components = datetime.strptime(f"{model_run_year}-{model_run_month}-{model_run_day}", "%Y-%m-%d")
+        model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
+        
+        selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day}", "%Y-%m-%d")
+        selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
+        
+        # Construct the output directory and filename
+        output_directory = f'../38_automatization_part_2/data/public/plots/{output_variable_name}/{selected_aggregate}/{model_run_year}/{model_run_month}/{model_run_day}/{model_run}/'
+        print(f"Output directory: {output_directory}")
+        
+        os.makedirs(output_directory, exist_ok=True)  # Create the output directory if it doesn't exist
+        
+        model_run = model_run.replace('z', '')
+        
+        output_filename = f'{selected_aggregate}_{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
+        output_filepath = os.path.join(output_directory, output_filename)
+        
+        return output_filepath, model_run_formatted_date, model_run, selected_formatted_date
