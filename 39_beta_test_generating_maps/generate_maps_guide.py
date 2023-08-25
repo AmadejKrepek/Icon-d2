@@ -85,7 +85,6 @@ for variable, title, x_title, colormap, legend_ticks, value_range in variables_a
         
         selected_file_name = parts[-1]
         selected_file_name_parts = selected_file_name.split('_')
-        print(selected_file_name_parts)
         
         selected_aggregate = selected_file_name_parts[0]
         selected_parameter = selected_file_name_parts[1:3]
@@ -125,7 +124,7 @@ for variable, title, x_title, colormap, legend_ticks, value_range in variables_a
         
         output_filename = f'{selected_aggregate}_{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
         output_filepath = os.path.join(output_directory, output_filename)
-        create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, value_range, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font)
+        create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, value_range, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font, precip_contour_levels)
 
 
 

@@ -23,7 +23,8 @@ def create_variable_plot(
     model_run_formatted_date,
     model_run,
     selected_formatted_date,
-    custom_font):
+    custom_font,
+    precip_contour_levels):
     if variable_name not in df.columns:
         print(f"Variable '{variable_name}' not found in the CSV file. Skipping...")
         return
@@ -64,14 +65,14 @@ def create_variable_plot(
     # Clip variable values within the desired range
     if variable_name == "Total_Precipitation":
         variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
-        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 1, step=10)
+        contour_levels = precip_contour_levels
     elif variable_name == "windgusts_10m_max":
         variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
         contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 1, step=10)
     else:
         variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
         contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 2, step=2)
-
+        
     # Identify the maximum variable value and its coordinates
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
@@ -162,9 +163,14 @@ def create_variable_plot(
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
-    step = 5
-    cax.set_xticks(contour_levels)
-    cax.set_xticklabels([str(int(level)) for level in contour_levels])
+    # Format the tick labels
+    if variable_name == "Total_Precipitation":
+        cax.set_xticks(precip_contour_levels)
+        cax.set_xticklabels([str(int(level)) for level in precip_contour_levels])
+    else:
+        step = 5
+        cax.set_xticks(contour_levels)
+        cax.set_xticklabels([str(int(level)) for level in contour_levels])
 
     # Make the border white and add padding
     for spine in ax.spines.values():
