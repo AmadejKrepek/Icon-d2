@@ -97,6 +97,7 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         output_filename = f"{parameter_name}_{year}_{month}_{day}_{model_run}.csv"
         output_path = os.path.join(model_run_dir, output_filename)
         combined_df.to_csv(output_path, index=False)
+        return output_path
 
 def parse_gribs(source_data_dir, output_directory):    
     os.makedirs(output_directory, exist_ok=True)
@@ -139,6 +140,4 @@ def parse_gribs(source_data_dir, output_directory):
         os.remove(temp_decompressed_path)
 
     # Save data for each parameter to separate CSV files
-    save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
-
-    print("Script finished.")
+    return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)

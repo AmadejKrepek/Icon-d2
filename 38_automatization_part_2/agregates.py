@@ -38,7 +38,7 @@ def create_aggregates(csv_file, output_folder):
         return
 
     # Construct the output directory structure
-    output_dir = os.path.join(output_folder, parameter_name, "aggregate", year, month, day, model_run)
+    output_dir = os.path.join(output_folder, parameter_name, "aggregate", year, month, day, model_run + 'z')
     os.makedirs(output_dir, exist_ok=True)
     
     print("Choose aggregation time frame:")
@@ -75,14 +75,12 @@ def create_aggregates(csv_file, output_folder):
     aggregated_data = aggregate_data(filtered_data, agg_column, agg_function).reset_index()
     
     latest_date = unique_days[-1]
-    year = str(latest_date.year)
-    month = str(latest_date.month).zfill(2)
-    day = str(latest_date.day).zfill(2)
+    year_latest = str(latest_date.year)
+    month_latest = str(latest_date.month).zfill(2)
+    day_latest = str(latest_date.day).zfill(2)
     
-    output_file = f"{agg_function}_{parameter_name}_{year}_{month}_{day}_{model_run}.csv"
+    output_file = f"{agg_function}_{parameter_name}_{year_latest}_{month_latest}_{day_latest}_{model_run}.csv"
     output_path = os.path.join(output_dir, output_file)
     aggregated_data.to_csv(output_path, index=False)
 
     print(f"Aggregated data written to {output_path}")
-    
-create_aggregates('./data/output/2_metre_temperature/2023/08/24/18z/2_metre_temperature_2023_08_24_18.csv', './data/output')

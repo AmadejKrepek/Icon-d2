@@ -32,6 +32,9 @@ def determine_model_run(model_run, time_run):
     if model_run not in valid_model_run_times:
         model_run = max(valid_model_run_times, key=lambda x: abs(int(x) - int(model_run)))
 
+    print("Model run:", model_run)
+    print("Time run:", time_run)
+    print("Time run:", int(time_run))
     if int(time_run) < 48:
         model_run = "048"
         prev_model_run = str((int(model_run) - 3) % 24).zfill(2)
@@ -64,5 +67,6 @@ def download_gribs(latest_model_run_filename, output_directory):
             print(f"Downloaded: {original_filename}")
 
         print("Download complete.")
+        return model_run_dir
     else:
         print("No regular-lat-lon model run found for parameter t_2m.")
