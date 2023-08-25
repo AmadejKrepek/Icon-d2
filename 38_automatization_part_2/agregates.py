@@ -16,8 +16,6 @@ def create_aggregates(csv_file, output_folder):
 
     # Extract information from the filename
     filename_parts = os.path.basename(csv_file).split("_")
-    print(filename_parts)
-    print(filename_parts[6])
     parameter_name = "_".join(filename_parts[0:3])
     aggregate_name = filename_parts[0]
     year = filename_parts[3]
@@ -25,7 +23,7 @@ def create_aggregates(csv_file, output_folder):
     day = filename_parts[5]
     model_run = filename_parts[6].split(".")[0]
 
-    agg_column = df.columns[2]  # Default to the third column
+    agg_column = df.columns[2]
 
     print(f"Parameter name: {parameter_name}")
     print(f"Year: {year}")
@@ -119,6 +117,10 @@ def create_aggregates(csv_file, output_folder):
     day_latest = str(latest_date.day).zfill(2)
     
     output_path = os.path.join(output_dir, output_file)
+    
+    adjusted_parameter_name = parameter_name.replace("_", " ")
+    aggregated_data.rename(columns={agg_column: f'{agg_function} {adjusted_parameter_name}'}, inplace=True)
+    
     aggregated_data.to_csv(output_path, index=False)
 
     print(f"Aggregated data written to {output_path}")

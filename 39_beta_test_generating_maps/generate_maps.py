@@ -185,7 +185,7 @@ def create_variable_plot(
     plt.savefig(output_filename, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
     plt.close()
     
-def extract_output_names(input_filename, variable):
+def extract_output_names(input_filename, variable, output_directory):
             # Extract relevant parts from the input filename
         parts = input_filename.split('/')
         model_run_year = parts[-5]
@@ -227,14 +227,14 @@ def extract_output_names(input_filename, variable):
         selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
         
         # Construct the output directory and filename
-        output_directory = f'../38_automatization_part_2/data/public/plots/{output_variable_name}/{selected_aggregate}/{model_run_year}/{model_run_month}/{model_run_day}/{model_run}/'
+        output_directory = f'{output_directory}/{output_variable_name}/{selected_aggregate}/{model_run_year}/{model_run_month}/{model_run_day}/{model_run}/'
         print(f"Output directory: {output_directory}")
         
         os.makedirs(output_directory, exist_ok=True)  # Create the output directory if it doesn't exist
         
         model_run = model_run.replace('z', '')
         
-        output_filename = f'{selected_aggregate}_{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
+        output_filename = f'{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
         output_filepath = os.path.join(output_directory, output_filename)
         
         return output_filepath, model_run_formatted_date, model_run, selected_formatted_date

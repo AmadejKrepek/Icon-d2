@@ -91,5 +91,10 @@ selected_file = available_files[file_choice]
 # Construct the path to the selected CSV file
 csv_file_path = os.path.join(model_run_path, selected_file)
 
-# Call the create_aggregates function with the selected CSV file and output folder
-create_aggregates(csv_file_path, base_path)
+while True:
+    # Call the create_aggregates function with the selected CSV file and output folder
+    create_aggregates(csv_file_path, base_path)
+    run_again = input("\nDo you want to run the script again? (yes/no): ")
+    if run_again.lower() != 'yes':
+        print("Exiting the script.")
+        break

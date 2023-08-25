@@ -14,6 +14,8 @@ def construct_input_filename(base_path, parameter, aggregate, year, month, day, 
 storage_directory = '../38_automatization_part_2/data'
 base_path = os.path.join(storage_directory, 'output')
 
+output_directory = '../38_automatization_part_2/data/public/plots'
+
 # List available parameter directories
 parameters = os.listdir(base_path)
 
@@ -66,6 +68,6 @@ input_filename = construct_input_filename(base_path, selected_parameter, selecte
 # Now you can use the input_filename to perform further operations
 print(f"Constructed input filename: {input_filename}")
 
-create_maps(input_filename)
+create_maps(input_filename, output_directory)
 
 

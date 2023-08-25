@@ -12,7 +12,7 @@ from matplotlib.font_manager import FontProperties
 import os
 from datetime import datetime
 
-def create_maps(input_filename):
+def create_maps(input_filename, output_directory):
     # Enhanced colormap with more detailed gradient
     colors = ["#f2f2f2","#b5c9fd","#9fbefd","#889eea","#6171f7","#3e55f4","#009694","#0cff00","#e6ff00","#ffff00","#ffcf00","#ff9f00","#ff6f00","#ff1b00","#e60000","#cc0000","#a600a4","#c27ec1","#e094c3","#ffbffd","#f5a6f9","#6fc3fb","#0098fe"]
     cmap_custom = mcolors.LinearSegmentedColormap.from_list('custom_cmap', colors, N=300)
@@ -61,9 +61,10 @@ def create_maps(input_filename):
 
     # List of variable names, titles, colormaps, legend ticks, and value ranges
     variables_and_settings = [
-        ("2 metre temperature", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
-        ("2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
-        ("temperature_2m_min", "Minimalna temperatura zraka na višini 2 m", "Temperatura zraka [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
+        ("max 2 metre temperature", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
+        ("min 2 metre temperature", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
+        ("max 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
+        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
         ("windgusts_10m_max", "Maksimalni sunki vetra na višini 10 m", "Sunki vetra [km/h]", cmap_wind_max_2m_colors, list(range(0, 200, 10)), (0, 200)),
         ("Total_Precipitation", "Napoved količine padavin", "Količina padavin [mm]",  cmap_custom, precip_ticks, (0, 350)),
     ]
@@ -74,7 +75,7 @@ def create_maps(input_filename):
         if variable not in df.columns:
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
         else: 
-            output_filepath, model_run_formatted_date, model_run, selected_formatted_date = extract_output_names(input_filename, variable)
+            output_filepath, model_run_formatted_date, model_run, selected_formatted_date = extract_output_names(input_filename, variable, output_directory)
             create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, value_range, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font, precip_contour_levels)
 
 
