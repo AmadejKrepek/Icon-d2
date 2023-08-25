@@ -1,5 +1,4 @@
 import os
-from create_dynamic_maps import create_maps
 
 def choose_directory(options):
     print("Select a directory:")
@@ -9,7 +8,7 @@ def choose_directory(options):
     return options[choice - 1]
 
 def construct_input_filename(base_path, parameter, aggregate, year, month, day, model_run, filename):
-    return os.path.join(base_path, parameter, aggregate, year, month, day, model_run, filename).replace('\\', '/')
+    return os.path.join(base_path, parameter, aggregate, year, month, day, model_run, filename)
 
 storage_directory = '../38_automatization_part_2/data'
 base_path = os.path.join(storage_directory, 'output')
@@ -63,9 +62,6 @@ selected_csv_file = csv_files[csv_choice - 1]
 
 # Construct input_filename based on user selections
 input_filename = construct_input_filename(base_path, selected_parameter, selected_aggregate, selected_year, selected_month, selected_day, selected_model_run, selected_csv_file)
+
 # Now you can use the input_filename to perform further operations
 print(f"Constructed input filename: {input_filename}")
-
-create_maps(input_filename)
-
-
