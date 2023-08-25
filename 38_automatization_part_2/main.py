@@ -16,7 +16,6 @@ output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files"
 # Construct the paths based on the storage_directory
 source_data_dir = os.path.join(output_directory_gribs, "t_2m/2023/08/24/18z")
 output_directory = os.path.join(storage_directory, "output")
-csv_file = os.path.join(output_directory, "2_metre_temperature", "2023", "08", "24", "18z", "2_metre_temperature_2023_08_24_18.csv")
 
 resulted_gribs_directory = None
 resulted_csv_file = None

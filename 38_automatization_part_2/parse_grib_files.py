@@ -122,6 +122,7 @@ def parse_gribs(source_data_dir, output_directory):
             temp_file.write(data)
         
         data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX])
+        print("Parameter name:", parameter_name)
         if data is not None:
             if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                 data[parameter_name] = kelvin_to_celsius(data[parameter_name])
@@ -131,7 +132,7 @@ def parse_gribs(source_data_dir, output_directory):
             month = date_str[4:6]
             day = date_str[6:8]
             model_run = date_str[8:]
-            
+                        
             if parameter_name not in parameter_data:
                 parameter_data[parameter_name] = []
             
