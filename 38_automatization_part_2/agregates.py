@@ -122,3 +122,4 @@ def create_aggregates(csv_file, output_folder):
     aggregated_data.to_csv(output_path, index=False)
 
     print(f"Aggregated data written to {output_path}")
+    return output_path
