@@ -31,42 +31,32 @@ def main():
     resulted_csv_file = None
 
     while True:
-        resulted_csv_file = download_and_parse(output_directory_gribs, output_directory)
+        print("Options:")
+        print("1. Run download_and_parse script")
+        print("2. Run create_aggregates script")
+        print("3. Run generate_fancy_maps script")
+        print("4. Exit")
 
-        if resulted_csv_file:
-            while True:
-                try:
-                    create_aggregates(resulted_csv_file, output_directory)
-                    run_again = input("\nDo you want to create aggregates again? (y/n): ")
-                    if run_again.lower() != 'y':
-                        print("Exiting the aggregates section.")
-                        break
-                except Exception as e:
-                    print("Error during aggregates:", e)
-                    retry = input("Do you want to retry creating aggregates? (y/n): ")
-                    if retry.lower() != 'y':
-                        print("Exiting the aggregates section.")
-                        break
+        choice = input("\nEnter your choice: ")
 
-            while True:
-                try:
-                    generate_fancy_maps(storage_directory, maps_output_directory)
-                    run_again = input("\nDo you want to generate maps again? (y/n): ")
-                    if run_again.lower() != 'y':
-                        print("Exiting the map generation section.")
-                        break
-                except Exception as e:
-                    print("Error during map generation:", e)
-                    retry = input("Do you want to retry generating maps? (y/n): ")
-                    if retry.lower() != 'y':
-                        print("Exiting the map generation section.")
-                        break
-
-        run_again = input("\nDo you want to run the script again? (y/n): ")
-        if run_again.lower() != 'y':
+        if choice == '1':
+            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory)
+        elif choice == '2':
+            try:
+                create_aggregates(resulted_csv_file, output_directory)
+            except Exception as e:
+                print("Error during aggregates:", e)
+        elif choice == '3':
+            try:
+                generate_fancy_maps(storage_directory, maps_output_directory)
+            except Exception as e:
+                print("Error during map generation:", e)
+        elif choice == '4':
             print("Exiting the script.")
             break
-    
+        else:
+            print("Invalid choice. Please select a valid option.")
+
     # Calculate and format script execution time
     end_time = time.time()
     execution_time_seconds = end_time - start_time
