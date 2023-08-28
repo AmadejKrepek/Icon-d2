@@ -16,7 +16,7 @@ def create_maps(input_filename, output_directory):
     precipitation_colors_1 = ["#f2f2f2","#b5c9fd","#9fbefd","#889eea","#6171f7","#3e55f4","#009694","#0cff00","#e6ff00","#ffff00","#ffcf00","#ff9f00","#ff6f00","#ff1b00","#e60000","#cc0000","#a600a4","#c27ec1","#e094c3","#ffbffd","#f5a6f9","#6fc3fb","#0098fe"]
     precipitation_colors_2 = ["#f1f1f1","#b2c7fc","#799adb","#4d6db5","#4159af","#17788e","#00938f","#24bc65","#98d344","#d7e205","#fff657","#ffd03b","#ff9124","#e55028","#ce2715","#ad0800",
                               "#aa3c90","#cc52c6","#d87fdd","#e89ef2","#f2bdff","#f7d4ff"]
-    precipitation_colors = ["#cce1ff","#8fbdff","#529bdd","#2876b5","#208e91","#04aa8a","#2cc469","#98d344","#d7e205","#ffea92","#ffd03b","#ff9124",
+    precipitation_colors = ["#ffffff","#cce1ff","#8fbdff","#529bdd","#2876b5","#208e91","#04aa8a","#2cc469","#98d344","#d7e205","#ffea92","#ffd03b","#ff9124",
                             "#e55028","#ce2715","#ad0800","#aa3c90","#cc52c6","#d87fdd","#e89ef2","#f2bdff"]
 
     temperature_colors_1 = [
@@ -48,7 +48,7 @@ def create_maps(input_filename, output_directory):
 
 
     # Define custom tick labels for precipitation
-    precip_ticks = [0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    precip_ticks = [0,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
 
     # Define the specific contour levels for precipitation
     precip_contour_levels = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200]

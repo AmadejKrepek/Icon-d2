@@ -82,7 +82,7 @@ def create_variable_plot(
         # Use the specified colormap with the custom normalization
         norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False)
         contour_plot = ax.contourf(lon_values, lat_values, variable_values, 
-                                levels=contour_levels, cmap=colormap, extend='both', norm=norm)
+                                levels=contour_levels, cmap=colormap, extend='max', norm=norm)
     else:
         contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='both')
     # Optionally, set stride to control the density of the text
@@ -168,7 +168,7 @@ def create_variable_plot(
     # Set the colorbar tick label color
     cbar.ax.xaxis.set_tick_params(color='white')
     # Set the color of the tick labels
-    cbar.set_ticklabels([str(int(level)) for level in legend_ticks], color='white')
+    #cbar.set_ticklabels([str(int(level)) for level in legend_ticks], )
 
     # Set the colorbar label color
     cbar.set_label(x_title, color='white', labelpad=11, fontproperties=custom_font)
@@ -177,7 +177,7 @@ def create_variable_plot(
     cbar.outline.set_edgecolor('none')
 
     cax.set_xticks(contour_levels)
-    cax.set_xticklabels([str(level) for level in contour_levels])
+    cax.set_xticklabels([str(level) for level in contour_levels], color='white')
 
     # Make the border white and add padding
     for spine in ax.spines.values():
