@@ -78,8 +78,13 @@ def create_variable_plot(
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
 
     # Use the specified colormap in the contour plot
-    contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='both')
-
+    if (variable_name == "max Total Precipitation"):
+        # Use the specified colormap with the custom normalization
+        norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False)
+        contour_plot = ax.contourf(lon_values, lat_values, variable_values, 
+                                levels=contour_levels, cmap=colormap, extend='both', norm=norm)
+    else:
+        contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='both')
     # Optionally, set stride to control the density of the text
     stride = 4
 
@@ -146,8 +151,16 @@ def create_variable_plot(
 
     # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
-    
-    cbar = plt.colorbar(contour_plot, cax=cax, orientation='horizontal', ticks=legend_ticks, label=x_title)
+    if variable_name == "max Total Precipitation":
+        colormap_modified = plt.cm.get_cmap(colormap)
+        colormap_modified.set_under('#ffffff')   # Color for values below minimum
+        colormap_modified.set_over('#f5d9fc') 
+        # Adjust colorbar settings
+        cbar = plt.colorbar(contour_plot, cax=cax, orientation='horizontal', 
+                            ticks=legend_ticks, label=x_title)
+    else:
+        cbar = plt.colorbar(contour_plot, cax=cax, orientation='horizontal', ticks=legend_ticks, label=x_title)
+ 
     
     # Adjust the width of the colorbar
     cbar.ax.set_position([cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075, cax.get_position().height])
@@ -163,14 +176,8 @@ def create_variable_plot(
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
-    # Format the tick labels
-    if variable_name == "max1 Total Precipitation1":
-        cax.set_xticks(precip_contour_levels)
-        cax.set_xticklabels([str(int(level)) for level in precip_contour_levels])
-    else:
-        step = 5
-        cax.set_xticks(contour_levels)
-        cax.set_xticklabels([str(int(level)) for level in contour_levels])
+    cax.set_xticks(contour_levels)
+    cax.set_xticklabels([str(level) for level in contour_levels])
 
     # Make the border white and add padding
     for spine in ax.spines.values():
@@ -218,7 +225,7 @@ def extract_output_names(input_filename, variable, output_directory):
             selected_end_month = selected_file_name_parts[year_index + 10]
             selected_end_day = selected_file_name_parts[year_index + 11]
             selected_end_hour = selected_file_name_parts[year_index + 12]
-            selected_end_minute = selected_file_name_parts[year_index + 13]
+            selected_end_minute = selected_file_name_parts[year_index + 13].replace(".csv", "")
             selected_aggregate = selected_file_name_parts[0]
         else:
             print("Year not found in filename")
@@ -231,8 +238,12 @@ def extract_output_names(input_filename, variable, output_directory):
         model_run_date_components = datetime.strptime(f"{model_run_year}-{model_run_month}-{model_run_day}", "%Y-%m-%d")
         model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
 
-        selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day}", "%Y-%m-%d")
-        selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
+        if (output_variable_name == "max_total_precipitation"):
+            selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day} {selected_end_hour}:{selected_end_minute}", "%Y-%m-%d %H:%M")
+            selected_formatted_date = selected_date_components.strftime("%d. %m. do %H:%M")
+        else:      
+            selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day}", "%Y-%m-%d")
+            selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
         
         # Construct the output directory and filename
         output_directory = f'{output_directory}/{output_variable_name}/{selected_aggregate}/{model_run_year}/{model_run_month}/{model_run_day}/{model_run}/'
