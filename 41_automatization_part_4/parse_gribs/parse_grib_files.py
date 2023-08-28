@@ -49,19 +49,28 @@ def crop_dataframe_to_bbox(df, bbox):
     df = df.loc[lat_filter & lon_filter]
     return df
 
-def process_data(filepath, bbox):
+def process_data(filepath, bbox, index):
     # Load the files with GRIB2 data using pygrib
     grbs = pygrib.open(filepath)
     
     # Retrieve the desired variable
     variable_data = None
-    parameter_name = None
+    parameter_name = None   
     
     for grb in grbs:
         variable_data = grb.values
-        latitudes, longitudes = grb.latlons()
+        latitudes, longitudes = grb.latlons()        
         valid_date = grb.validDate
         parameter_name = grb.name
+        base_datetime = valid_date
+        
+        if parameter_name == 'Total Precipitation':
+            time_range = timedelta(hours=index)
+            valid_date = base_datetime + time_range
+    
+        print(f'Variable: {parameter_name}')
+        print(f'Valid date: {valid_date}')
+                
     grbs.close()
     
     if variable_data is None:
@@ -110,10 +119,11 @@ def parse_gribs(source_data_dir, output_directory):
     filenames = sorted(filenames)
 
     parameter_data = {}  # Dictionary to store data for each parameter
-
+    
+    index = 0
+    
     for file in filenames:
         print("Processing", file)
-        
         with bz2.BZ2File(file, 'rb') as compressed_file:
             data = compressed_file.read()
         original_filename = os.path.splitext(os.path.basename(file))[0]
@@ -121,7 +131,9 @@ def parse_gribs(source_data_dir, output_directory):
         with open(temp_decompressed_path, 'wb') as temp_file:
             temp_file.write(data)
         
-        data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX])
+        data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
+        index = index + 1
+        print(f'Index: {index}')
         print("Parameter name:", parameter_name)
         if data is not None:
             if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":

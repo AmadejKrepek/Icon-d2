@@ -3,6 +3,7 @@ import time
 from get_grib_filenames.choose_parameters import getGribFileNames
 from download_grib_files import download_grib_files
 from parse_gribs.parse_grib_files import parse_gribs
+from get_aggregates.agregates_choose import choose_aggregates
 from get_aggregates.agregates import create_aggregates
 from generate_maps.generate_maps_guide import generate_fancy_maps
 
@@ -43,6 +44,8 @@ def main():
             resulted_csv_file = download_and_parse(output_directory_gribs, output_directory)
         elif choice == '2':
             try:
+                if resulted_csv_file is None:
+                    resulted_csv_file = choose_aggregates()
                 create_aggregates(resulted_csv_file, output_directory)
             except Exception as e:
                 print("Error during aggregates:", e)

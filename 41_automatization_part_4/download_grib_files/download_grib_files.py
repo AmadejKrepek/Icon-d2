@@ -13,10 +13,6 @@ def extract_parameter_name(filename):
         parameter_name = parameter_name[len("icon-"):]
     return parameter_name
 
-filename = "icon-d2_germany_regular-lat-lon_single-level_2023082415_000_2d_t_2m.grib2.bz2"
-parameter_name = extract_parameter_name(filename)
-print("Parameter Name:", parameter_name)
-
 def extract_date_and_model_run_parts(filename):
     parts = filename.split("_")
     parameter_name = extract_parameter_name(filename)
@@ -36,18 +32,12 @@ def determine_model_run(model_run, time_run):
     print("Model run:", model_run)
     print("Time run:", time_run)
 
+    adjusted_model_run = model_run
     if int(time_run) < 48:
-        model_run_index = valid_model_run_times.index(model_run)
-        prev_model_run_index = (model_run_index - 1) % len(valid_model_run_times)
-        prev_model_run = valid_model_run_times[prev_model_run_index]
+        adjusted_model_run = str(int(model_run) - 3).rjust(2, "0")
 
-        if prev_model_run != model_run:
-            print("Previous model run:", prev_model_run)
-            return model_run, prev_model_run
-        else:
-            print("Previous model run is the same as current model run.")
-            return model_run, None
-    return model_run, None  # No previous model run for this case
+    print("Adjusted model run:", adjusted_model_run)
+    return adjusted_model_run, None
 
 
 def download_grib_file(url, output_path):
@@ -65,8 +55,25 @@ def download_gribs(latest_model_run_filename, output_directory):
         model_run_dir = os.path.join(output_directory, parameter_name, year, month, day, model_run + 'z')
         os.makedirs(model_run_dir, exist_ok=True)
 
+        # Define a regular expression pattern to match the numerical part between "000" and "048"
+        pattern = r'_(0[0-9]|0[0-3][0-9]|048)_'
+        model_run_pattern = r'\d{10}'
+
+        # Find the match using the pattern
+        match = re.search(pattern, latest_model_run_filename)
+        model_run_match = re.search(model_run_pattern, latest_model_run_filename)
+        
+        filename = latest_model_run_filename
         for new_dynamic_value in range(49):
-            filename = latest_model_run_filename.replace("048", f"{new_dynamic_value:03d}")
+            if match:
+                matched_substring = match.group()
+                filename = filename.replace(matched_substring, f"{new_dynamic_value:03d}")
+            if model_run_match:
+                matched_model_run_substring = model_run_match.group()
+                filename = latest_model_run_filename.replace(matched_model_run_substring, f'{year}{month}{day}{model_run}')
+                
+            filename = filename.replace("048", f"{new_dynamic_value:03d}")
+            filename = filename.replace("__", "_")
             url = f"{base_url}/{filename}"
             original_filename = filename.split("/")[-1]
             output_path = os.path.join(model_run_dir, original_filename)

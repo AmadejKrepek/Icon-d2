@@ -14,22 +14,36 @@ def create_aggregates(csv_file, output_folder):
     # Convert 'ValidDate' column to datetime format
     df['ValidDate'] = pd.to_datetime(df['ValidDate'])
 
-    # Extract information from the filename
+    import os
+
     filename_parts = os.path.basename(csv_file).split("_")
-    parameter_name = "_".join(filename_parts[0:3])
-    aggregate_name = filename_parts[0]
-    year = filename_parts[3]
-    month = filename_parts[4]
-    day = filename_parts[5]
-    model_run = filename_parts[6].split(".")[0]
+    print(f'filename parts: {filename_parts}')
 
-    agg_column = df.columns[2]
+    # Find the index of the year
+    year_index = None
+    for i, part in enumerate(filename_parts):
+        if part.isdigit() and len(part) == 4:
+            year_index = i
+            break
 
-    print(f"Parameter name: {parameter_name}")
-    print(f"Year: {year}")
-    print(f"Month: {month}")
-    print(f"Day: {day}")
-    print(f"Model run: {model_run}")
+    # Extract information based on the found year index
+    if year_index is not None:
+        parameter_name = "_".join(filename_parts[0:year_index])
+        aggregate_name = filename_parts[0]
+        year = filename_parts[year_index]
+        month = filename_parts[year_index + 1]
+        day = filename_parts[year_index + 2]
+        model_run = filename_parts[year_index + 3].split(".")[0]
+
+        agg_column = df.columns[2]
+
+        print(f"Parameter name: {parameter_name}")
+        print(f"Year: {year}")
+        print(f"Month: {month}")
+        print(f"Day: {day}")
+        print(f"Model run: {model_run}")
+    else:
+        print("Year not found in filename")
 
     print("Available aggregation functions: sum, max, min")
     agg_function = input("Enter aggregation function (sum, max, min): ")

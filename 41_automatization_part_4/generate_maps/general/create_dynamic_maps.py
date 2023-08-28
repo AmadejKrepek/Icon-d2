@@ -13,9 +13,11 @@ import os
 from datetime import datetime
 
 def create_maps(input_filename, output_directory):
-    # Enhanced colormap with more detailed gradient
-    colors = ["#f2f2f2","#b5c9fd","#9fbefd","#889eea","#6171f7","#3e55f4","#009694","#0cff00","#e6ff00","#ffff00","#ffcf00","#ff9f00","#ff6f00","#ff1b00","#e60000","#cc0000","#a600a4","#c27ec1","#e094c3","#ffbffd","#f5a6f9","#6fc3fb","#0098fe"]
-    cmap_custom = mcolors.LinearSegmentedColormap.from_list('custom_cmap', colors, N=300)
+    precipitation_colors_1 = ["#f2f2f2","#b5c9fd","#9fbefd","#889eea","#6171f7","#3e55f4","#009694","#0cff00","#e6ff00","#ffff00","#ffcf00","#ff9f00","#ff6f00","#ff1b00","#e60000","#cc0000","#a600a4","#c27ec1","#e094c3","#ffbffd","#f5a6f9","#6fc3fb","#0098fe"]
+    precipitation_colors_2 = ["#f1f1f1","#b2c7fc","#799adb","#4d6db5","#4159af","#17788e","#00938f","#24bc65","#98d344","#d7e205","#fff657","#ffd03b","#ff9124","#e55028","#ce2715","#ad0800",
+                              "#aa3c90","#cc52c6","#d87fdd","#e89ef2","#f2bdff","#f7d4ff"]
+    precipitation_colors = ["#f1f1f1","#b2c7fc","#799adb","#4d6db5","#4159af","#17788e","#00938f","#24bc65","#98d344","#d7e205","#fff657","#ffd03b","#ff9124","#e55028","#ce2715","#ad0800",
+                              "#aa3c90","#cc52c6","#d87fdd","#e89ef2","#f2bdff","#f7d4ff"]
 
     temperature_colors_1 = [
         "#ff89ff","#a774ff","#27b4ff","#88e4ff","#56c976","#bae972","#ffff6f","#fda450","#ff4941","#8c3232"
@@ -44,14 +46,17 @@ def create_maps(input_filename, output_directory):
         '#FFFF00'                          # Yellow (>200 km/h)
     ]
 
-    cmap_temperature = mcolors.LinearSegmentedColormap.from_list('temperature_cmap', temperature_colors, N=500)
-    cmap_wind_max_2m_colors = mcolors.LinearSegmentedColormap.from_list('wind_max_2m_cmap', wind_max_2m_colors, N=300)
 
     # Define custom tick labels for precipitation
-    precip_ticks = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350]
+    precip_ticks = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
 
     # Define the specific contour levels for precipitation
-    precip_contour_levels = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300, 350]
+    precip_contour_levels = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    
+    cmap_temperature = mcolors.LinearSegmentedColormap.from_list('temperature_cmap', temperature_colors, N=500)
+    cmap_wind_max_2m_colors = mcolors.LinearSegmentedColormap.from_list('wind_max_2m_cmap', wind_max_2m_colors, N=300)
+    
+    cmap_precipitation = mcolors.LinearSegmentedColormap.from_list('precipitation_cmap', precipitation_colors, N=500)
 
     # Specify the path to the directory containing the custom font file
     font_path = '../assets/fonts/'
@@ -66,7 +71,7 @@ def create_maps(input_filename, output_directory):
         ("max 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
         ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
         ("windgusts_10m_max", "Maksimalni sunki vetra na višini 10 m", "Sunki vetra [km/h]", cmap_wind_max_2m_colors, list(range(0, 200, 10)), (0, 200)),
-        ("Total_Precipitation", "Napoved količine padavin", "Količina padavin [mm]",  cmap_custom, precip_ticks, (0, 350)),
+        ("max Total Precipitation", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precip_ticks, (0, 300)),
     ]
 
     # Loop through the variables and create plots
@@ -75,8 +80,10 @@ def create_maps(input_filename, output_directory):
         if variable not in df.columns:
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
         else: 
+            print(f"Creating plot for variable '{variable}'")
             output_filepath, model_run_formatted_date, model_run, selected_formatted_date = extract_output_names(input_filename, variable, output_directory)
-            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, value_range, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font, precip_contour_levels)
+            print(f"Output filepath: {output_filepath}")
+            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, value_range, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font, precip_ticks)
 
 
 

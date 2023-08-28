@@ -63,7 +63,7 @@ def create_variable_plot(
     fig.set_facecolor('#333333')
 
     # Clip variable values within the desired range
-    if variable_name == "Total_Precipitation":
+    if variable_name == "max Total Precipitation":
         variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
         contour_levels = precip_contour_levels
     elif variable_name == "windgusts_10m_max":
@@ -78,7 +78,7 @@ def create_variable_plot(
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
 
     # Use the specified colormap in the contour plot
-    contour_plot = ax.contourf(lon_values, lat_values, variable_clipped, levels=contour_levels, cmap=colormap, extend='both')
+    contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='both')
 
     # Optionally, set stride to control the density of the text
     stride = 4
@@ -164,7 +164,7 @@ def create_variable_plot(
     cbar.outline.set_edgecolor('none')
 
     # Format the tick labels
-    if variable_name == "Total_Precipitation":
+    if variable_name == "max1 Total Precipitation1":
         cax.set_xticks(precip_contour_levels)
         cax.set_xticklabels([str(int(level)) for level in precip_contour_levels])
     else:
@@ -186,43 +186,51 @@ def create_variable_plot(
     plt.close()
     
 def extract_output_names(input_filename, variable, output_directory):
-            # Extract relevant parts from the input filename
         parts = input_filename.split('/')
         model_run_year = parts[-5]
         model_run_month = parts[-4]
         model_run_day = parts[-3]
         model_run = parts[-2]
         output_variable_name = variable.replace(' ', '_').lower()
-        
+
         selected_file_name = parts[-1]
         selected_file_name_parts = selected_file_name.split('_')
-        
-        selected_aggregate = selected_file_name_parts[0]
-        selected_parameter = selected_file_name_parts[1:3]
-        
-        selected_year = selected_file_name_parts[4]
-        selected_month = selected_file_name_parts[5]
-        selected_day = selected_file_name_parts[6]
-        
-        selected_start_year = selected_file_name_parts[8]
-        selected_start_month = selected_file_name_parts[9]
-        selected_start_day = selected_file_name_parts[10]
-        selected_start_hour = selected_file_name_parts[11]
-        selected_start_minute = selected_file_name_parts[12]
-        
-        selected_end_year = selected_file_name_parts[13]
-        selected_end_month = selected_file_name_parts[14]
-        selected_end_day = selected_file_name_parts[15]
-        selected_end_hour = selected_file_name_parts[16]
-        selected_end_minute = selected_file_name_parts[17]
-        
+
+        # Find the index of the year in selected_file_name_parts
+        year_index = None
+        for i, part in enumerate(selected_file_name_parts):
+            if part.isdigit() and len(part) == 4:
+                year_index = i
+                break
+
+        selected_aggregate = None
+
+        if year_index is not None:
+            selected_year = selected_file_name_parts[year_index]
+            selected_month = selected_file_name_parts[year_index + 1]
+            selected_day = selected_file_name_parts[year_index + 2]
+            selected_start_year = selected_file_name_parts[year_index + 4]
+            selected_start_month = selected_file_name_parts[year_index + 5]
+            selected_start_day = selected_file_name_parts[year_index + 6]
+            selected_start_hour = selected_file_name_parts[year_index + 7]
+            selected_start_minute = selected_file_name_parts[year_index + 8]
+            selected_end_year = selected_file_name_parts[year_index + 9]
+            selected_end_month = selected_file_name_parts[year_index + 10]
+            selected_end_day = selected_file_name_parts[year_index + 11]
+            selected_end_hour = selected_file_name_parts[year_index + 12]
+            selected_end_minute = selected_file_name_parts[year_index + 13]
+            selected_aggregate = selected_file_name_parts[0]
+        else:
+            print("Year not found in filename")
+
+        # Continue with the rest of your code
         formatted_start_datetime = "_".join([selected_start_year, selected_start_month, selected_start_day, selected_start_hour, selected_start_minute])
         formatted_end_datetime = "_".join([selected_end_year, selected_end_month, selected_end_day, selected_end_hour, selected_end_minute])
 
         # Parse the date components
         model_run_date_components = datetime.strptime(f"{model_run_year}-{model_run_month}-{model_run_day}", "%Y-%m-%d")
         model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
-        
+
         selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day}", "%Y-%m-%d")
         selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
         
