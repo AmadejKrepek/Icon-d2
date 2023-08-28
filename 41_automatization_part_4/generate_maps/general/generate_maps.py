@@ -96,9 +96,14 @@ def create_variable_plot(
                 continue
             # Extract variable value and convert to integer
             var_val = int(round(variable_clipped[i, j]))
-            # Always plot the maximum value
-            if (i, j) == max_value_coords or var_val != 0:
+            # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
+            if variable_name == "max Total Precipitation":
+                if (i, j) == max_value_coords or var_val != 0:
+                    ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+            else:
                 ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+
+
 
     # Add borders between countries
     region_clipped.boundary.plot(ax=ax, linewidth=2, color='#333333')
@@ -176,8 +181,13 @@ def create_variable_plot(
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
-    cax.set_xticks(contour_levels)
-    cax.set_xticklabels([str(level) for level in contour_levels], color='white')
+    if (variable_name == "max Total Precipitation"):
+        # Set colorbar tick labels for the entire range, excluding label for value 0
+        cax.set_xticks([level for level in contour_levels if level != 0])
+        cax.set_xticklabels([str(level) for level in contour_levels if level != 0], color='white')  # Adjust color as needed
+    else:
+        cax.set_xticks(contour_levels)
+        cax.set_xticklabels([str(level) for level in contour_levels], color='white')
 
     # Make the border white and add padding
     for spine in ax.spines.values():

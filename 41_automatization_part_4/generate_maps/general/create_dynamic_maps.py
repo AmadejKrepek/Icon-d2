@@ -48,7 +48,7 @@ def create_maps(input_filename, output_directory):
 
 
     # Define custom tick labels for precipitation
-    precip_ticks = [0,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    precip_ticks = [0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
 
     # Define the specific contour levels for precipitation
     precip_contour_levels = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200]
