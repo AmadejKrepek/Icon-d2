@@ -64,13 +64,13 @@ def create_variable_plot(
 
     # Clip variable values within the desired range
     if variable_name == "max Total Precipitation":
-        variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
+        variable_clipped = np.clip(variable_values, value_range[0], None)
         contour_levels = precip_contour_levels
     elif variable_name == "windgusts_10m_max":
-        variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
+        variable_clipped = np.clip(variable_values, value_range[0], None)
         contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 1, step=10)
     else:
-        variable_clipped = np.clip(variable_values, value_range[0], value_range[1])
+        variable_clipped = np.clip(variable_values, value_range[0], None)
         contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 2, step=2)
         
     # Identify the maximum variable value and its coordinates
@@ -98,12 +98,10 @@ def create_variable_plot(
             var_val = int(round(variable_clipped[i, j]))
             # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
             if variable_name == "max Total Precipitation":
-                if (i, j) == max_value_coords or var_val != 0:
+                if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
                     ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
             else:
                 ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
-
-
 
     # Add borders between countries
     region_clipped.boundary.plot(ax=ax, linewidth=2, color='#333333')
