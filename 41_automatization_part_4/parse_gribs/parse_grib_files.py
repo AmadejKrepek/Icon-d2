@@ -23,6 +23,9 @@ LON_MAX = 16.7955 + DEVIATION_LON_MAX
 def kelvin_to_celsius(kelvin):
     return kelvin - 273.15
 
+def ms_to_kmh(ms):
+    return ms * 3.6
+
 def crop_dataframe_to_bbox(df, bbox):
     """
     Perform a geospatial filter on the DataFrame
@@ -138,6 +141,8 @@ def parse_gribs(source_data_dir, output_directory):
         if data is not None:
             if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                 data[parameter_name] = kelvin_to_celsius(data[parameter_name])
+            elif parameter_name == "maximum Wind 10m" or parameter_name == "10 metre V wind component":
+                data[parameter_name] = ms_to_kmh(data[parameter_name])
             
             date_str = original_filename.split("_")[4]
             year = date_str[:4]
