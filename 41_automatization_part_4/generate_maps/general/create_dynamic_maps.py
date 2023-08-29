@@ -37,16 +37,15 @@ def create_maps(input_filename, output_directory):
         "#bf2b25","#962727","#a03937","#b55757","#ba8080"
     ]
 
-    wind_max_2m_colors = [
-        '#FFFFFF',                          # White (0 km/h)
-        '#00FF00', '#00E600', '#00CC00',   # Green (0-50 km/h)
-        '#FFFF00', '#FFCC00',              # Yellow (50-100 km/h)
-        '#FFA500', '#FF8C00',              # Orange (100-150 km/h)
-        '#FF0000', '#CC0000',              # Red (150-200 km/h)
-        '#FFFF00'                          # Yellow (>200 km/h)
-    ]
-
-
+    wind_max_2m_colors_1 = ["#2961b2","#2876b5","#208e91","#04aa8a","#2cc469","#98d344","#d7e205","#ffea92","#ffd03b","#ff9124",
+                            "#e55028","#ce2715","#ad0800","#aa3c90","#cc52c6","#d87fdd","#e89ef2","#fbebff"]
+    
+    wind_max_2m_colors = ["#FF5733", "#FF8844", "#FFBB55", "#FFDD66", "#FFEE77", "#FFFF88", "#CCFF99", "#AAFFAA", "#77FFBB", "#44FFCC",
+                    "#22FFDD", "#11FFEE", "#33FFCC", "#55FFAA", "#77FF88", "#99FF66", "#BBFF44", "#DDFF22", "#FFFF11", "#FFDD00"]
+    
+    wind_max_2m_colors = ["#003300", "#115511", "#227722", "#339933", "#44AA44", "#55BB55", "#66CC66", "#77DD77", "#88EE88", "#99FF99",
+             "#AAFFAA", "#BBFFBB", "#CCFFCC", "#DDFFDD", "#EEFFEE", "#FFFFDD", "#FFFFBB", "#FFFF99"]
+    
     # Define custom tick labels for precipitation
     precip_ticks = [0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
 
