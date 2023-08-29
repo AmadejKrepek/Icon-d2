@@ -64,9 +64,9 @@ def create_variable_plot(
 
     # Clip variable values within the desired range
     if variable_name == "max Total Precipitation":
-        variable_clipped = np.clip(variable_values, value_range[0], None)
+        variable_clipped = np.clip(variable_values, 0.0, None)
         contour_levels = precip_contour_levels
-    elif variable_name == "windgusts_10m_max":
+    elif variable_name == "max maximum Wind 10m":
         variable_clipped = np.clip(variable_values, value_range[0], None)
         contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 1, step=10)
     else:
@@ -83,6 +83,8 @@ def create_variable_plot(
         norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False)
         contour_plot = ax.contourf(lon_values, lat_values, variable_values, 
                                 levels=contour_levels, cmap=colormap, extend='max', norm=norm)
+    elif(variable_name == "max maximum Wind 10m"):
+        contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='max')
     else:
         contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='both')
     # Optionally, set stride to control the density of the text
