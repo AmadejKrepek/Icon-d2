@@ -67,9 +67,6 @@ def process_data(filepath, bbox, index):
         if parameter_name == 'Total Precipitation':
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
-    
-        print(f'Variable: {parameter_name}')
-        print(f'Valid date: {valid_date}')
                 
     grbs.close()
     
@@ -133,8 +130,7 @@ def parse_gribs(source_data_dir, output_directory):
         
         data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
         index = index + 1
-        print(f'Index: {index}')
-        print("Parameter name:", parameter_name)
+
         if data is not None:
             if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                 data[parameter_name] = kelvin_to_celsius(data[parameter_name])
