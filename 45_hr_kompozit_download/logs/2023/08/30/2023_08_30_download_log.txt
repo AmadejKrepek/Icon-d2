@@ -128,3 +128,4 @@ Log file created.
 2023-08-30 21:12:36: Image saved to data/2023/08/30\meteo_hr_radar_stat_kompozit_2023_08_30_21_12_36.png
 2023-08-30 21:17:37: Image saved to data/2023/08/30\meteo_hr_radar_stat_kompozit_2023_08_30_21_17_37.png
 2023-08-30 21:22:37: Image saved to data/2023/08/30\meteo_hr_radar_stat_kompozit_2023_08_30_21_22_37.png
+2023-08-30 21:27:38: Image saved to data/2023/08/30\meteo_hr_radar_stat_kompozit_2023_08_30_21_27_38.png
