@@ -58,10 +58,13 @@ def download_gribs(latest_model_run_filename, output_directory):
         # Define a regular expression pattern to match the numerical part between "000" and "048"
         pattern = r'_(0[0-9]|0[0-3][0-9]|048)_'
         model_run_pattern = r'\d{10}'
+        # Define a pattern to match the "grib" followed by a slash and a number
+        first_model_run_pattern = r'grib/(\d+)'
 
         # Find the match using the pattern
         match = re.search(pattern, latest_model_run_filename)
         model_run_match = re.search(model_run_pattern, latest_model_run_filename)
+        first_model_run_match = re.search(first_model_run_pattern, latest_model_run_filename)
         
         filename = latest_model_run_filename
         for new_dynamic_value in range(49):
@@ -71,9 +74,11 @@ def download_gribs(latest_model_run_filename, output_directory):
             if model_run_match:
                 matched_model_run_substring = model_run_match.group()
                 filename = latest_model_run_filename.replace(matched_model_run_substring, f'{year}{month}{day}{model_run}')
+            if first_model_run_match:
+                matched_first_model_run_value = first_model_run_match.group()
+                filename = filename.replace(matched_first_model_run_value, f'grib/{model_run}')
 
-            filename = filename.replace("048", f"{new_dynamic_value:03d}")
-            filename = filename.replace("__", "_")
+            filename = filename.replace(f"{time_run}", f"{new_dynamic_value:03d}")
             url = f"{base_url}/{filename}"
             original_filename = filename.split("/")[-1]
             output_path = os.path.join(model_run_dir, original_filename)
