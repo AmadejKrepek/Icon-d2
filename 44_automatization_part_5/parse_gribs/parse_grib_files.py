@@ -1,13 +1,10 @@
-from datetime import datetime, timedelta
-import xarray as xr
+from datetime import timedelta
 import pandas as pd
-import argparse
 import glob
 import sys
 import os
 import bz2
 import pygrib
-import re
 
 # to nicely display maps we need to adjust coordinates to make sure it fits
 DEVIATION_LAT_MIN = 0.15

@@ -1,5 +1,5 @@
 import pandas as pd
-import os
+
 def aggregate_data(df, agg_column, agg_function):
     if agg_function == 'sum':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].sum()

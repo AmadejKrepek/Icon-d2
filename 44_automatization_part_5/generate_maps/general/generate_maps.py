@@ -8,7 +8,6 @@ import matplotlib.colors as mcolors
 import matplotlib.image as mpimg
 from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
-from matplotlib.font_manager import FontProperties
 
 # Function to create the plot
 def create_variable_plot(

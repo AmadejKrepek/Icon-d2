@@ -1,16 +1,7 @@
 from .generate_maps import create_variable_plot, extract_output_names
 import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
-from shapely.geometry import Polygon, Point
-import numpy as np
 import matplotlib.colors as mcolors
-import matplotlib.image as mpimg
-from scipy.ndimage import zoom
-import matplotlib.patches as patches
 from matplotlib.font_manager import FontProperties
-import os
-from datetime import datetime
 
 def create_maps(input_filename, output_directory):
     precipitation_colors_1 = ["#f2f2f2","#b5c9fd","#9fbefd","#889eea","#6171f7","#3e55f4","#009694","#0cff00","#e6ff00","#ffff00","#ffcf00","#ff9f00","#ff6f00","#ff1b00","#e60000","#cc0000","#a600a4","#c27ec1","#e094c3","#ffbffd","#f5a6f9","#6fc3fb","#0098fe"]
