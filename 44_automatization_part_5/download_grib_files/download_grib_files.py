@@ -37,7 +37,7 @@ def determine_model_run(model_run, time_run):
         adjusted_model_run = str(int(model_run) - 3).rjust(2, "0")
 
     print("Adjusted model run:", adjusted_model_run)
-    return adjusted_model_run, None
+    return adjusted_model_run, model_run
 
 
 def download_grib_file(url, output_path):
@@ -71,7 +71,7 @@ def download_gribs(latest_model_run_filename, output_directory):
             if model_run_match:
                 matched_model_run_substring = model_run_match.group()
                 filename = latest_model_run_filename.replace(matched_model_run_substring, f'{year}{month}{day}{model_run}')
-                
+
             filename = filename.replace("048", f"{new_dynamic_value:03d}")
             filename = filename.replace("__", "_")
             url = f"{base_url}/{filename}"
