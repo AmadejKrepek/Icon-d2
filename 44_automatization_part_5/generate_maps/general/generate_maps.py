@@ -182,8 +182,8 @@ def create_variable_plot(
 
     if (variable_name == "max Total Precipitation"):
         # Set colorbar tick labels for the entire range, excluding label for value 0
-        cax.set_xticks([level for level in contour_levels if level != 0])
-        cax.set_xticklabels([str(level) for level in contour_levels if level != 0], color='white')  # Adjust color as needed
+        cax.set_xticks([level for level in contour_levels])
+        cax.set_xticklabels([str(level) for level in contour_levels], color='white')  # Adjust color as needed
     else:
         cax.set_xticks(contour_levels)
         cax.set_xticklabels([str(level) for level in contour_levels], color='white')
@@ -249,7 +249,7 @@ def extract_output_names(input_filename, variable, output_directory):
 
         if (output_variable_name == "max_total_precipitation"):
             selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day} {selected_end_hour}:{selected_end_minute}", "%Y-%m-%d %H:%M")
-            selected_formatted_date = selected_date_components.strftime("%d. %m. do %H:%M")
+            selected_formatted_date = selected_date_components.strftime("velja do %d. %m. %Y ob %H:%M")
         else:      
             selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day}", "%Y-%m-%d")
             selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
