@@ -152,24 +152,19 @@ def create_variable_plot(
     # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
     
+    colormap_modified = plt.cm.get_cmap(colormap, len(contour_levels))
     if variable_name == "max Total Precipitation":
-        colormap_modified = plt.cm.get_cmap(colormap, len(contour_levels))
         colormap_modified.set_under('#ffffff')   # Color for values below minimum
         colormap_modified.set_over('#f5d9fc') 
-        # Adjust colorbar settings
-        cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal', 
+        
+    cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal', 
                             ticks=legend_ticks, label=x_title, extend='both')
-    else:
-        cbar = plt.colorbar(contour_plot, cax=cax, orientation='horizontal', ticks=legend_ticks, label=x_title)
  
-    
     # Adjust the width of the colorbar
     cbar.ax.set_position([cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075, cax.get_position().height])
     
     # Set the colorbar tick label color
     cbar.ax.xaxis.set_tick_params(color='white')
-    # Set the color of the tick labels
-    #cbar.set_ticklabels([str(int(level)) for level in legend_ticks], )
 
     # Set the colorbar label color
     cbar.set_label(x_title, color='white', labelpad=11, fontproperties=custom_font)
