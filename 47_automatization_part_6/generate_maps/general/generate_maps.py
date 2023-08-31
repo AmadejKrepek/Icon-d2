@@ -9,7 +9,6 @@ import matplotlib.image as mpimg
 from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
 
-
 # Function to create the plot
 def create_variable_plot(
     df, 
@@ -20,10 +19,8 @@ def create_variable_plot(
     legend_ticks, 
     output_filename,
     model_run_formatted_date,
-    model_run,
     selected_formatted_date,
-    custom_font,
-    precip_contour_levels):
+    custom_font):
     
     # Read the variable data
     variable_values = df.pivot("Latitude", "Longitude", variable_name).values
@@ -57,32 +54,16 @@ def create_variable_plot(
     # Adjust the position of the axes to control left padding
     gpd.GeoSeries(bbox_polygon).boundary.plot(ax=ax, color='#333333', linestyle='--')
     fig.set_facecolor('#333333')
-
-    # Clip variable values within the desired range
-    if variable_name == "max Total Precipitation":
-        contour_levels = precip_contour_levels
-    elif variable_name == "max maximum Wind 10m":
-        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1], step=10)
-    else:
-        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1], step=2)
         
     variable_clipped = np.clip(variable_values, -20, None)
         
     # Identify the maximum variable value and its coordinates
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
-    norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False, extend='both')
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=contour_levels, norm=norm, cmap=colormap)
+    
+    norm = mcolors.BoundaryNorm(legend_ticks, colormap.N, clip=False, extend='both')
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=legend_ticks, norm=norm, cmap=colormap)
 
-    # Use the specified colormap in the contour plot
-    if (variable_name == "max Total Precipitation"):
-        #test
-        print("max Total Precipitation")
-    elif(variable_name == "max maximum Wind 10m"):
-        contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='max')
-    else:
-        contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='both')
-    # Optionally, set stride to control the density of the text
     stride = 4
 
     # Iterate through the grid and add text for variable values
@@ -144,7 +125,7 @@ def create_variable_plot(
     # Set title and source information
     fig.text(0.5, 0.795 + header_padding, f'{selected_formatted_date}', ha='center', **title_font)
     fig.text(0.897, 0.125, "vir podatkov: DWD", ha="right", **subtitle_font)
-    fig.text(0.127, 0.125, f'ICON-D2 ({model_run_formatted_date} {model_run} UTC)', ha="left", **subtitle_font)
+    fig.text(0.127, 0.125, f'ICON-D2 ({model_run_formatted_date})', ha="left", **subtitle_font)
     fig.text(0.897, 0.795 + header_padding, title, ha='right', **title_font)
 
     cax_height = 0.02
@@ -152,7 +133,7 @@ def create_variable_plot(
     # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
     
-    colormap_modified = plt.cm.get_cmap(colormap, len(contour_levels))
+    colormap_modified = plt.cm.get_cmap(colormap, len(legend_ticks))
     if variable_name == "max Total Precipitation":
         colormap_modified.set_under('#ffffff')   # Color for values below minimum
         colormap_modified.set_over('#f5d9fc') 
@@ -172,8 +153,8 @@ def create_variable_plot(
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
-    cax.set_xticks(contour_levels)
-    cax.set_xticklabels([str(level) for level in contour_levels], color='white')
+    cax.set_xticks(legend_ticks)
+    cax.set_xticklabels([str(level) for level in legend_ticks], color='white')
 
     # Make the border white and add padding
     for spine in ax.spines.values():
@@ -233,6 +214,7 @@ def extract_output_names(input_filename, variable, output_directory):
         # Parse the date components
         model_run_date_components = datetime.strptime(f"{model_run_year}-{model_run_month}-{model_run_day}", "%Y-%m-%d")
         model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
+        model_run_formatted_date = model_run_formatted_date + f" {model_run} UTC"
 
         if (output_variable_name == "max_total_precipitation"):
             selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day} {selected_end_hour}:{selected_end_minute}", "%Y-%m-%d %H:%M")
@@ -252,4 +234,4 @@ def extract_output_names(input_filename, variable, output_directory):
         output_filename = f'{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
         output_filepath = os.path.join(output_directory, output_filename)
         
-        return output_filepath, model_run_formatted_date, model_run, selected_formatted_date
+        return output_filepath, model_run_formatted_date, selected_formatted_date
