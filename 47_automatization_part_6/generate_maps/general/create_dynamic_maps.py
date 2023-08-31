@@ -7,7 +7,7 @@ def create_maps(input_filename, output_directory):
     precipitation_colors_1 = ["#f2f2f2","#b5c9fd","#9fbefd","#889eea","#6171f7","#3e55f4","#009694","#0cff00","#e6ff00","#ffff00","#ffcf00","#ff9f00","#ff6f00","#ff1b00","#e60000","#cc0000","#a600a4","#c27ec1","#e094c3","#ffbffd","#f5a6f9","#6fc3fb","#0098fe"]
     precipitation_colors_2 = ["#f1f1f1","#b2c7fc","#799adb","#4d6db5","#4159af","#17788e","#00938f","#24bc65","#98d344","#d7e205","#fff657","#ffd03b","#ff9124","#e55028","#ce2715","#ad0800",
                               "#aa3c90","#cc52c6","#d87fdd","#e89ef2","#f2bdff","#f7d4ff"]
-    precipitation_colors = ["#ffffff","#cce1ff","#8fbdff","#529bdd","#2876b5","#208e91","#04aa8a","#2cc469","#98d344","#d7e205","#ffea92","#ffd03b","#ff9124",
+    precipitation_colors = ["#dedef2","#cce1ff","#8fbdff","#529bdd","#2876b5","#208e91","#04aa8a","#2cc469","#98d344","#d7e205","#ffea92","#ffd03b","#ff9124",
                             "#e55028","#ce2715","#ad0800","#aa3c90","#cc52c6","#d87fdd","#e89ef2","#f2bdff"]
 
     temperature_colors_1 = [
@@ -38,7 +38,7 @@ def create_maps(input_filename, output_directory):
              "#AAFFAA", "#BBFFBB", "#CCFFCC", "#DDFFDD", "#EEFFEE", "#FFFFDD", "#FFFFBB", "#FFFF99"]
     
     # Define custom tick labels for precipitation
-    precip_ticks = [0, 0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    precip_ticks = [0.1,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
 
     # Define the specific contour levels for precipitation
     precip_contour_levels = [0, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200]
@@ -56,17 +56,17 @@ def create_maps(input_filename, output_directory):
 
     # List of variable names, titles, colormaps, legend ticks, and value ranges
     variables_and_settings = [
-        ("max 2 metre temperature", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
-        ("min 2 metre temperature", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
-        ("max 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
-        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 40, 1)), (-20, 40)),
-        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, list(range(0, 200, 10)), (0, 200)),
-        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, list(range(0, 200, 10)), (0, 200)),
-        ("max Total Precipitation", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precip_ticks, (0, 300)),
+        ("max 2 metre temperature", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 43, 1))),
+        ("min 2 metre temperature", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature, list(range(-20, 43, 1))),
+        ("max 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 43, 1))),
+        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, list(range(-20, 43, 1))),
+        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, list(range(0, 210, 10))),
+        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, list(range(0, 210, 10))),
+        ("max Total Precipitation", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precip_ticks),
     ]
 
     # Loop through the variables and create plots
-    for variable, title, x_title, colormap, legend_ticks, value_range in variables_and_settings:        
+    for variable, title, x_title, colormap, legend_ticks, in variables_and_settings:        
         df = pd.read_csv(input_filename)
         if variable not in df.columns:
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
@@ -74,7 +74,8 @@ def create_maps(input_filename, output_directory):
             print(f"Creating plot for variable '{variable}'")
             output_filepath, model_run_formatted_date, model_run, selected_formatted_date = extract_output_names(input_filename, variable, output_directory)
             print(f"Output filepath: {output_filepath}")
-            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, value_range, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font, precip_ticks)
+            print(f"legend_ticks: {legend_ticks}")
+            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, output_filepath, model_run_formatted_date, model_run, selected_formatted_date, custom_font, precip_ticks)
 
 
 

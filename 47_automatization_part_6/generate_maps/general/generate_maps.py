@@ -9,6 +9,7 @@ import matplotlib.image as mpimg
 from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
 
+
 # Function to create the plot
 def create_variable_plot(
     df, 
@@ -17,16 +18,12 @@ def create_variable_plot(
     x_title, 
     colormap, 
     legend_ticks, 
-    value_range, 
     output_filename,
     model_run_formatted_date,
     model_run,
     selected_formatted_date,
     custom_font,
     precip_contour_levels):
-    if variable_name not in df.columns:
-        print(f"Variable '{variable_name}' not found in the CSV file. Skipping...")
-        return
     
     # Read the variable data
     variable_values = df.pivot("Latitude", "Longitude", variable_name).values
@@ -63,25 +60,24 @@ def create_variable_plot(
 
     # Clip variable values within the desired range
     if variable_name == "max Total Precipitation":
-        variable_clipped = np.clip(variable_values, 0.0, None)
         contour_levels = precip_contour_levels
     elif variable_name == "max maximum Wind 10m":
-        variable_clipped = np.clip(variable_values, value_range[0], None)
-        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 1, step=10)
+        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1], step=10)
     else:
-        variable_clipped = np.clip(variable_values, value_range[0], None)
-        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1] + 2, step=2)
+        contour_levels = np.arange(legend_ticks[0], legend_ticks[-1], step=2)
+        
+    variable_clipped = np.clip(variable_values, -20, None)
         
     # Identify the maximum variable value and its coordinates
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
+    norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False, extend='both')
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=contour_levels, norm=norm, cmap=colormap)
 
     # Use the specified colormap in the contour plot
     if (variable_name == "max Total Precipitation"):
-        # Use the specified colormap with the custom normalization
-        norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False)
-        contour_plot = ax.contourf(lon_values, lat_values, variable_values, 
-                                levels=contour_levels, cmap=colormap, extend='max', norm=norm)
+        #test
+        print("max Total Precipitation")
     elif(variable_name == "max maximum Wind 10m"):
         contour_plot = ax.contourf(lon_values, lat_values, variable_values, levels=contour_levels, cmap=colormap, extend='max')
     else:
@@ -155,13 +151,14 @@ def create_variable_plot(
 
     # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
+    
     if variable_name == "max Total Precipitation":
-        colormap_modified = plt.cm.get_cmap(colormap)
+        colormap_modified = plt.cm.get_cmap(colormap, len(contour_levels))
         colormap_modified.set_under('#ffffff')   # Color for values below minimum
         colormap_modified.set_over('#f5d9fc') 
         # Adjust colorbar settings
-        cbar = plt.colorbar(contour_plot, cax=cax, orientation='horizontal', 
-                            ticks=legend_ticks, label=x_title)
+        cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal', 
+                            ticks=legend_ticks, label=x_title, extend='both')
     else:
         cbar = plt.colorbar(contour_plot, cax=cax, orientation='horizontal', ticks=legend_ticks, label=x_title)
  
@@ -180,13 +177,8 @@ def create_variable_plot(
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
-    if (variable_name == "max Total Precipitation"):
-        # Set colorbar tick labels for the entire range, excluding label for value 0
-        cax.set_xticks([level for level in contour_levels])
-        cax.set_xticklabels([str(level) for level in contour_levels], color='white')  # Adjust color as needed
-    else:
-        cax.set_xticks(contour_levels)
-        cax.set_xticklabels([str(level) for level in contour_levels], color='white')
+    cax.set_xticks(contour_levels)
+    cax.set_xticklabels([str(level) for level in contour_levels], color='white')
 
     # Make the border white and add padding
     for spine in ax.spines.values():
