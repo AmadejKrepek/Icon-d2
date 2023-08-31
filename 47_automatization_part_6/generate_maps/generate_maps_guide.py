@@ -12,7 +12,7 @@ def construct_input_filename(base_path, parameter, aggregate, year, month, day, 
     return os.path.join(base_path, parameter, aggregate, year, month, day, model_run, filename).replace('\\', '/')
 
 
-def generate_fancy_maps(storage_directory, output_directory):
+def generate_fancy_maps(storage_directory, output_directory, color_configuration, custom_font):
     base_path = os.path.join(storage_directory, 'output')
 
     # List available parameter directories
@@ -67,6 +67,6 @@ def generate_fancy_maps(storage_directory, output_directory):
     # Now you can use the input_filename to perform further operations
     print(f"Constructed input filename: {input_filename}")
 
-    create_maps(input_filename, output_directory)
+    create_maps(input_filename, output_directory, color_configuration, custom_font)
 
 

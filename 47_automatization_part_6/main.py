@@ -6,6 +6,9 @@ from parse_gribs.parse_grib_files import parse_gribs
 from get_aggregates.agregates_choose import choose_aggregates
 from get_aggregates.agregates import create_aggregates
 from generate_maps.generate_maps_guide import generate_fancy_maps
+from parse_settings.read import read_colors
+
+from matplotlib.font_manager import FontProperties
 
 def download_and_parse(output_directory_gribs, output_directory):
     try:
@@ -23,12 +26,17 @@ def download_and_parse(output_directory_gribs, output_directory):
 def main():
     start_time = time.time()
 
+    color_configuration = read_colors.read_colors("./configuration/colors.config")
+    
+    font_path = '../assets/fonts/'
+
+    custom_font = FontProperties(fname=font_path + 'font.ttf')
+
     storage_directory = "./data"
     output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files")
     output_directory = os.path.join(storage_directory, "output")
     maps_output_directory = os.path.join(storage_directory, 'public/plots')
 
-    resulted_gribs_directory = None
     resulted_csv_file = None
 
     while True:
@@ -51,7 +59,7 @@ def main():
                 print("Error during aggregates:", e)
         elif choice == '3':
             try:
-                generate_fancy_maps(storage_directory, maps_output_directory)
+                generate_fancy_maps(storage_directory, maps_output_directory, color_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
         elif choice == '4':
