@@ -90,4 +90,4 @@ def download_gribs(latest_model_run_filename, output_directory):
         print("Download complete.")
         return model_run_dir
     else:
-        print("No regular-lat-lon model run found for parameter t_2m.")
+        print("No regular-lat-lon model run found for parameter.")
