@@ -10,10 +10,8 @@ from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
 from models.MapsModel import MapsModel
 
-# Function to create the plot
-def create_variable_plot(model: MapsModel):
+def create_multiple_variable_plot(model: MapsModel):
     
-    # Read the variable data
     variable_values = model.df.pivot("Latitude", "Longitude", model.variable).values
 
     lat_values = model.df['Latitude'].unique()

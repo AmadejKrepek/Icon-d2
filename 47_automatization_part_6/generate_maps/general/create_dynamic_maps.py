@@ -1,4 +1,5 @@
-from .generate_maps import create_variable_plot, extract_output_names
+from .generate_maps import create_variable_plot
+from ..utils.extract_names import extract_output_names
 import pandas as pd
 import matplotlib.colors as mcolors
 from models.MapsModel import MapsModel
