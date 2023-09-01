@@ -11,27 +11,31 @@ def create_maps(input_filename, output_directory, color_configuration, custom_fo
     cmap_wind_max_2m_colors = mcolors.LinearSegmentedColormap.from_list('wind_max_2m_cmap', wind_max_2m_colors, N=500)
     cmap_precipitation = mcolors.LinearSegmentedColormap.from_list('precipitation_cmap', precipitation_colors, N=500)
 
-    temperature_range = list(range(-20, 43, 2))
-    wind_max_2m_range = list(range(0, 210, 10))
-    precipitation_range = [0.1,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    temperature_ticks = list(range(-20, 42, 2))
+    wind_max_2m_ticks = list(range(0, 210, 10))
+    precipitation_ticks = [0.1,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+
+    temperature_contour_levels = list(range(-20, 42, 2))
+    wind_max_2m_contour_levels = list(range(0, 210, 10))
+    precipitation_contour_leves = precipitation_ticks
 
     variables_and_settings = [
-        ("max 2 metre temperature", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_range),
-        ("min 2 metre temperature", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_range),
-        ("max 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, temperature_range),
-        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, temperature_range),
-        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_range),
-        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_range),
-        ("max Total Precipitation", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precipitation_range),
+        ("max 2 metre temperature", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
+        ("min 2 metre temperature", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
+        ("max 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
+        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
+        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max maximum Wind 10m", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max Total Precipitation", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precipitation_ticks, precipitation_contour_leves),
     ]
 
-    for variable, title, x_title, colormap, legend_ticks, in variables_and_settings:        
+    for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:        
         df = pd.read_csv(input_filename)
         if variable not in df.columns:
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
         else: 
             output_filepath, model_run_formatted_date, selected_formatted_date = extract_output_names(input_filename, variable, output_directory)
-            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, output_filepath, model_run_formatted_date, selected_formatted_date, custom_font)
+            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, custom_font)
 
 
 

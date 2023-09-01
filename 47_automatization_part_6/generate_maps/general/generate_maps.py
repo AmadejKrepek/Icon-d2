@@ -17,6 +17,7 @@ def create_variable_plot(
     x_title, 
     colormap, 
     legend_ticks, 
+    contour_levels,
     output_filename,
     model_run_formatted_date,
     selected_formatted_date,
@@ -61,8 +62,8 @@ def create_variable_plot(
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
     
-    norm = mcolors.BoundaryNorm(legend_ticks, colormap.N, clip=False, extend='both')
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=legend_ticks, norm=norm, cmap=colormap)
+    norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False, extend='both')
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=contour_levels, norm=norm, cmap=colormap)
 
     stride = 4
 
@@ -134,10 +135,7 @@ def create_variable_plot(
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
     
     colormap_modified = plt.cm.get_cmap(colormap, len(legend_ticks))
-    if variable_name == "max Total Precipitation":
-        colormap_modified.set_under('#ffffff')   # Color for values below minimum
-        colormap_modified.set_over('#f5d9fc') 
-        
+            
     cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal', 
                             ticks=legend_ticks, label=x_title, extend='both')
  
