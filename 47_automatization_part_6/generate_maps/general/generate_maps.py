@@ -219,6 +219,7 @@ def extract_output_names(input_filename, variable, output_directory):
         os.makedirs(output_directory, exist_ok=True)  # Create the output directory if it doesn't exist
         
         model_run = model_run.replace('z', '')
+        model_run_formatted_date = model_run_formatted_date.replace('z', '')
         
         output_filename = f'{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
         output_filepath = os.path.join(output_directory, output_filename)
