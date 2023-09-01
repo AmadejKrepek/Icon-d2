@@ -1,6 +1,7 @@
 from .generate_maps import create_variable_plot, extract_output_names
 import pandas as pd
 import matplotlib.colors as mcolors
+from models.MapsModel import MapsModel
 
 def create_maps(input_filename, output_directory, color_configuration, custom_font):
     precipitation_colors = color_configuration["precipitation_colors"]
@@ -35,7 +36,8 @@ def create_maps(input_filename, output_directory, color_configuration, custom_fo
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
         else: 
             output_filepath, model_run_formatted_date, selected_formatted_date = extract_output_names(input_filename, variable, output_directory)
-            create_variable_plot(df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, custom_font)
+            model = MapsModel(df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, custom_font)
+            create_variable_plot(model)
 
 
 

@@ -8,26 +8,17 @@ import matplotlib.colors as mcolors
 import matplotlib.image as mpimg
 from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
-
+from models.MapsModel import MapsModel
+from osgeo import gdal
+from matplotlib.colors import LightSource
 # Function to create the plot
-def create_variable_plot(
-    df, 
-    variable_name, 
-    title,
-    x_title, 
-    colormap, 
-    legend_ticks, 
-    contour_levels,
-    output_filename,
-    model_run_formatted_date,
-    selected_formatted_date,
-    custom_font):
+def create_variable_plot(model: MapsModel):
     
     # Read the variable data
-    variable_values = df.pivot("Latitude", "Longitude", variable_name).values
+    variable_values = model.df.pivot("Latitude", "Longitude", model.variable).values
 
-    lat_values = df['Latitude'].unique()
-    lon_values = df['Longitude'].unique()
+    lat_values = model.df['Latitude'].unique()
+    lon_values = model.df['Longitude'].unique()
 
     # Load the world map with medium resolution
     world = gpd.read_file('../data/shapes/shape/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp')
@@ -49,9 +40,9 @@ def create_variable_plot(
     # Adjust the bounding box of the region to match the defined bounding box
     region_clipped = gpd.clip(region, bbox_polygon)
 
-    # Plot the bounding areas with detailed geometries
+    # Plot the bounding areas with detailed     geometries
     fig, ax = plt.subplots(figsize=(15, 15))    
-    
+
     # Adjust the position of the axes to control left padding
     gpd.GeoSeries(bbox_polygon).boundary.plot(ax=ax, color='#333333', linestyle='--')
     fig.set_facecolor('#333333')
@@ -62,8 +53,8 @@ def create_variable_plot(
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
     
-    norm = mcolors.BoundaryNorm(contour_levels, colormap.N, clip=False, extend='both')
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=contour_levels, norm=norm, cmap=colormap)
+    norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap)
 
     stride = 4
 
@@ -76,7 +67,7 @@ def create_variable_plot(
             # Extract variable value and convert to integer
             var_val = int(round(variable_clipped[i, j]))
             # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
-            if variable_name == "max Total Precipitation":
+            if model.variable == "max Total Precipitation":
                 if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
                     ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
             else:
@@ -111,8 +102,8 @@ def create_variable_plot(
 
     fig.figimage(logo_resized, xo=60, yo=3110, zorder=20)
         
-    title_font = {'family' : custom_font.get_name(), 'size':'15', 'color':'white', 'weight':'bold'}
-    subtitle_font = {'family' : custom_font.get_name(), 'size':'11', 'color':'white'}
+    title_font = {'family' : model.custom_font.get_name(), 'size':'15', 'color':'white', 'weight':'bold'}
+    subtitle_font = {'family' : model.custom_font.get_name(), 'size':'11', 'color':'white'}
     
     header_padding = 0.01
     padding = 0.02
@@ -124,20 +115,20 @@ def create_variable_plot(
     fig.text(0.899, 0.12, "Vir podatkov: Open-Meteo", ha="right", **subtitle_font, alpha=0)
     
     # Set title and source information
-    fig.text(0.5, 0.795 + header_padding, f'{selected_formatted_date}', ha='center', **title_font)
+    fig.text(0.5, 0.795 + header_padding, f'{model.selected_formatted_date}', ha='center', **title_font)
     fig.text(0.897, 0.125, "vir podatkov: DWD", ha="right", **subtitle_font)
-    fig.text(0.127, 0.125, f'ICON-D2 ({model_run_formatted_date})', ha="left", **subtitle_font)
-    fig.text(0.897, 0.795 + header_padding, title, ha='right', **title_font)
+    fig.text(0.127, 0.125, f'ICON-D2 ({model.model_run_formatted_date})', ha="left", **subtitle_font)
+    fig.text(0.897, 0.795 + header_padding, model.title, ha='right', **title_font)
 
     cax_height = 0.02
 
     # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
     
-    colormap_modified = plt.cm.get_cmap(colormap, len(legend_ticks))
+    colormap_modified = plt.cm.get_cmap(model.colormap, len(model.legend_ticks))
             
     cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal', 
-                            ticks=legend_ticks, label=x_title, extend='both')
+                            ticks=model.legend_ticks, label=model.x_title, extend='both')
  
     # Adjust the width of the colorbar
     cbar.ax.set_position([cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075, cax.get_position().height])
@@ -146,13 +137,13 @@ def create_variable_plot(
     cbar.ax.xaxis.set_tick_params(color='white')
 
     # Set the colorbar label color
-    cbar.set_label(x_title, color='white', labelpad=11, fontproperties=custom_font)
+    cbar.set_label(model.x_title, color='white', labelpad=11, fontproperties=model.custom_font)
     
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
-    cax.set_xticks(legend_ticks)
-    cax.set_xticklabels([str(level) for level in legend_ticks], color='white')
+    cax.set_xticks(model.legend_ticks)
+    cax.set_xticklabels([str(level) for level in model.legend_ticks], color='white')
 
     # Make the border white and add padding
     for spine in ax.spines.values():
@@ -164,7 +155,7 @@ def create_variable_plot(
     ax.tick_params(axis='y', colors='white')
 
     # Save the figure with adjusted left padding
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
+    plt.savefig(model.output_filepath, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
     plt.close()
     
 def extract_output_names(input_filename, variable, output_directory):
