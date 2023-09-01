@@ -40,7 +40,7 @@ def create_variable_plot(model: MapsModel):
     # Adjust the bounding box of the region to match the defined bounding box
     region_clipped = gpd.clip(region, bbox_polygon)
 
-    # Plot the bounding areas with detailed     geometries
+    # Plot the bounding areas with detailed
     fig, ax = plt.subplots(figsize=(15, 15))    
 
     # Adjust the position of the axes to control left padding
