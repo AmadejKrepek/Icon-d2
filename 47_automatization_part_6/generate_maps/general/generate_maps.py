@@ -9,6 +9,7 @@ import matplotlib.image as mpimg
 from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
 from models.MapsModel import MapsModel
+from osgeo import gdal
 
 # Function to create the plot
 def create_variable_plot(model: MapsModel):
@@ -32,6 +33,20 @@ def create_variable_plot(model: MapsModel):
     LAT_MAX = 47.1512
     LON_MIN = 12.9955
     LON_MAX = 16.7955
+    
+    shading_path = '../data/shading/sencenje_250.tif'  # Replace with the path to your shading GeoTIFF file
+
+    # Open the shading GeoTIFF file
+    shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
+
+    # Read the shading data into a NumPy array
+    shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
+
+    # Create a LightSource instance
+    ls = mcolors.LightSource(azdeg=315, altdeg=45)  # Corrected import
+
+    # Calculate the shaded relief
+    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='hsv')
 
     # Create bounding box for the region
     bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
@@ -53,7 +68,8 @@ def create_variable_plot(model: MapsModel):
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
     
     norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap)
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=0.7)
+    plt.imshow(shaded_relief, extent=(LON_MIN, LON_MAX, LAT_MIN, LAT_MAX), origin='upper', cmap=plt.cm.gray, alpha=1.0)
 
     stride = 4
 
