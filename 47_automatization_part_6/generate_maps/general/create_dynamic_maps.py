@@ -14,11 +14,11 @@ def create_maps(input_filename, output_directory, color_configuration, custom_fo
     cmap_precipitation = mcolors.LinearSegmentedColormap.from_list('precipitation_cmap', precipitation_colors, N=500)
 
     temperature_ticks = list(range(-20, 42, 2))
-    wind_max_2m_ticks = list(range(0, 210, 10))
+    wind_max_2m_ticks = list(range(10, 210, 10))
     precipitation_ticks = [0.1,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
 
     temperature_contour_levels = list(range(-20, 42, 2))
-    wind_max_2m_contour_levels = list(range(0, 210, 10))
+    wind_max_2m_contour_levels = list(range(10, 210, 10))
     precipitation_contour_leves = precipitation_ticks
 
     variables_and_settings = [
