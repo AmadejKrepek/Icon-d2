@@ -154,10 +154,10 @@ def createShadedRelief(shading_path: str):
     shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
 
     # Create a LightSource instance
-    ls = mcolors.LightSource(azdeg=90, altdeg=45)  # Corrected import
+    ls = mcolors.LightSource(azdeg=145, altdeg=45)  # Corrected import
 
     # Calculate the shaded relief
-    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=10, blend_mode='soft')
+    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='soft')
     
     return shaded_relief
 
