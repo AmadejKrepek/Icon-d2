@@ -33,20 +33,6 @@ def create_variable_plot(model: MapsModel):
     LAT_MAX = 47.1512
     LON_MIN = 12.9955
     LON_MAX = 16.7955
-    
-    shading_path = '../data/shading/sencenje_250.tif'  # Replace with the path to your shading GeoTIFF file
-
-    # Open the shading GeoTIFF file
-    shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
-
-    # Read the shading data into a NumPy array
-    shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
-
-    # Create a LightSource instance
-    ls = mcolors.LightSource(azdeg=315, altdeg=45)  # Corrected import
-
-    # Calculate the shaded relief
-    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='hsv')
 
     # Create bounding box for the region
     bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
@@ -69,7 +55,10 @@ def create_variable_plot(model: MapsModel):
     
     norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
     ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=0.7)
-    plt.imshow(shaded_relief, extent=(LON_MIN, LON_MAX, LAT_MIN, LAT_MAX), origin='upper', cmap=plt.cm.gray, alpha=1.0)
+    
+    if (model.variable == "max Total Precipitation"):
+        shaded_relief = createShadedRelief('../data/shading/sencenje_250.tif')
+        plt.imshow(shaded_relief, extent=(LON_MIN, LON_MAX, LAT_MIN, LAT_MAX), origin='upper', cmap=plt.cm.gray, alpha=1.0)
 
     stride = 4
 
@@ -172,3 +161,32 @@ def create_variable_plot(model: MapsModel):
     # Save the figure with adjusted left padding
     plt.savefig(model.output_filepath, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
     plt.close()
+    
+
+def createShadedRelief(shading_path: str):
+    # Open the shading GeoTIFF file
+    shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
+    
+    # Get the geotransform information
+    geotransform = shading_ds.GetGeoTransform()
+
+    # Extract relevant information from the geotransform
+    min_x = geotransform[0]
+    max_y = geotransform[3]
+    max_x = min_x + geotransform[1] * shading_ds.RasterXSize
+    min_y = max_y + geotransform[5] * shading_ds.RasterYSize
+    
+    # Now you have the minimum and maximum coordinates of the extent
+    print(f"Min X: {min_x}, Max X: {max_x}")
+    print(f"Min Y: {min_y}, Max Y: {max_y}")
+
+    # Read the shading data into a NumPy array
+    shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
+
+    # Create a LightSource instance
+    ls = mcolors.LightSource(azdeg=315, altdeg=45)  # Corrected import
+
+    # Calculate the shaded relief
+    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='hsv')
+    
+    return shaded_relief
