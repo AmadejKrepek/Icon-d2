@@ -56,7 +56,7 @@ def create_variable_plot(model: MapsModel):
     if (model.variable == "max Total Precipitation"):
         shaded_relief = createShadedRelief('../data/shading/sencenje_250.tif')
         extent_coordinates = get_extent_coordinates('../data/shading/sencenje_250.tif')
-        plt.imshow(shaded_relief, extent=(extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'], extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
+        ax.imshow(shaded_relief, extent=(extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'], extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
     ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=alpha)
 
     stride = 4
