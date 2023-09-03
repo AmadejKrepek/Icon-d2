@@ -1,6 +1,3 @@
-import pandas as pd
-import os
-from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import geopandas as gpd
@@ -10,11 +7,10 @@ from scipy.ndimage import zoom
 from shapely.geometry import Polygon, Point
 from models.MapsModel import MapsModel
 from osgeo import gdal
+import pyproj
 
-# Function to create the plot
 def create_variable_plot(model: MapsModel):
     
-    # Read the variable data
     variable_values = model.df.pivot(index="Latitude", columns="Longitude", values=model.variable).values
 
     lat_values = model.df['Latitude'].unique()
@@ -54,11 +50,14 @@ def create_variable_plot(model: MapsModel):
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
     
     norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=0.7)
+    if (model.variable == "max Total Precipitation"):
+        alpha = 0.7
     
     if (model.variable == "max Total Precipitation"):
         shaded_relief = createShadedRelief('../data/shading/sencenje_250.tif')
-        plt.imshow(shaded_relief, extent=(LON_MIN, LON_MAX, LAT_MIN, LAT_MAX), origin='upper', cmap=plt.cm.gray, alpha=1.0)
+        extent_coordinates = get_extent_coordinates('../data/shading/sencenje_250.tif')
+        plt.imshow(shaded_relief, extent=(extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'], extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=alpha)
 
     stride = 4
 
@@ -87,23 +86,7 @@ def create_variable_plot(model: MapsModel):
     plt.xticks([])
     plt.yticks([])
 
-    # Load and resize the logo (replace 'logo.png' with your actual logo path)
-    logo = mpimg.imread('../assets/logo/logo_512_39.webp')
-
-    # Desired width and height for the resized logo
-    desired_width = 800
-    desired_height = 500
-
-    # Calculate scaling factors for width and height
-    scaling_factor_width = desired_width / logo.shape[1]
-    scaling_factor_height = desired_height / logo.shape[0]
-
-    # Choose the minimum scaling factor to maintain aspect ratio
-    scaling_factor = min(scaling_factor_width, scaling_factor_height)
-
-    # Resize the logo
-    logo_resized = zoom(logo, (scaling_factor, scaling_factor, 1))
-
+    logo_resized = createLogo('../assets/logo/logo_512_39.webp')
     fig.figimage(logo_resized, xo=60, yo=3110, zorder=20)
         
     title_font = {'family' : model.custom_font.get_name(), 'size':'15', 'color':'white', 'weight':'bold'}
@@ -167,26 +150,70 @@ def createShadedRelief(shading_path: str):
     # Open the shading GeoTIFF file
     shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
     
-    # Get the geotransform information
-    geotransform = shading_ds.GetGeoTransform()
-
-    # Extract relevant information from the geotransform
-    min_x = geotransform[0]
-    max_y = geotransform[3]
-    max_x = min_x + geotransform[1] * shading_ds.RasterXSize
-    min_y = max_y + geotransform[5] * shading_ds.RasterYSize
-    
-    # Now you have the minimum and maximum coordinates of the extent
-    print(f"Min X: {min_x}, Max X: {max_x}")
-    print(f"Min Y: {min_y}, Max Y: {max_y}")
-
     # Read the shading data into a NumPy array
     shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
 
     # Create a LightSource instance
-    ls = mcolors.LightSource(azdeg=315, altdeg=45)  # Corrected import
+    ls = mcolors.LightSource(azdeg=90, altdeg=45)  # Corrected import
 
     # Calculate the shaded relief
-    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='hsv')
+    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=10, blend_mode='soft')
     
     return shaded_relief
+
+def get_extent_coordinates(geotiff_path: str):
+    # Open the GeoTIFF file
+    ds = gdal.Open(geotiff_path, gdal.GA_ReadOnly)
+
+    if ds is None:
+        print(f"Failed to open {geotiff_path}")
+        return None
+
+    # Get the geotransform information
+    geotransform = ds.GetGeoTransform()
+
+    # Extract relevant information from the geotransform
+    min_x = geotransform[0]
+    max_y = geotransform[3]
+    max_x = min_x + geotransform[1] * ds.RasterXSize
+    min_y = max_y + geotransform[5] * ds.RasterYSize
+
+    # Define the source coordinate system based on the provided CRS information
+    source_crs = pyproj.CRS(ds.GetProjection())
+
+    # Define the target coordinate system (WGS84)
+    target_crs = pyproj.CRS("EPSG:4326")  # WGS84 (latitude/longitude)
+
+    # Create a transformer to convert coordinates
+    transformer = pyproj.Transformer.from_crs(source_crs, target_crs, always_xy=True)
+
+    # Convert the coordinates to latitude and longitude
+    min_lon, min_lat = transformer.transform(min_x, min_y)
+    max_lon, max_lat = transformer.transform(max_x, max_y)
+
+    return {
+        "min_latitude": min_lat,
+        "max_latitude": max_lat,
+        "min_longitude": min_lon,
+        "max_longitude": max_lon,
+    }
+
+def createLogo(path):
+    # Load and resize the logo (replace 'logo.png' with your actual logo path)
+    logo = mpimg.imread(path)
+
+    # Desired width and height for the resized logo
+    desired_width = 800
+    desired_height = 500
+
+    # Calculate scaling factors for width and height
+    scaling_factor_width = desired_width / logo.shape[1]
+    scaling_factor_height = desired_height / logo.shape[0]
+
+    # Choose the minimum scaling factor to maintain aspect ratio
+    scaling_factor = min(scaling_factor_width, scaling_factor_height)
+
+    # Resize the logo
+    logo_resized = zoom(logo, (scaling_factor, scaling_factor, 1))
+    
+    return logo_resized
