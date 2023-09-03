@@ -15,7 +15,7 @@ from osgeo import gdal
 def create_variable_plot(model: MapsModel):
     
     # Read the variable data
-    variable_values = model.df.pivot("Latitude", "Longitude", model.variable).values
+    variable_values = model.df.pivot(index="Latitude", columns="Longitude", values=model.variable).values
 
     lat_values = model.df['Latitude'].unique()
     lon_values = model.df['Longitude'].unique()
