@@ -1,7 +1,9 @@
 import os
 import time
-from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNames
-from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2
+from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNames as getDWDGribFileNames
+from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2 as downloadDWD
+from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNames as getARSOGribFileNames
+from download_grib_files.PROVIDER.ARSO.NWP import download_ALADIN as downloadALADIN
 from parse_gribs.parse_grib_files import parse_gribs
 from get_aggregates.agregates_choose import choose_aggregates
 from get_aggregates.agregates import create_aggregates
@@ -10,12 +12,27 @@ from parse_settings.read import read_colors
 
 from matplotlib.font_manager import FontProperties
 
-def download_and_parse(output_directory_gribs, output_directory):
+def choose_nwp_provider():
+    print("Choose NWP provider:")
+    print("1. DWD (German Weather Service)")
+    print("2. ARSO (Slovenian Environment Agency)")
+    
+    choice = input("Enter your choice: ")
+
+    if choice == '1':
+        return getDWDGribFileNames, downloadDWD
+    elif choice == '2':
+        return getARSOGribFileNames, downloadALADIN
+    else:
+        print("Invalid choice. Defaulting to DWD (German Weather Service).")
+        return getDWDGribFileNames, downloadDWD
+
+def download_and_parse(output_directory_gribs, output_directory, getGribFileNames, download_function):
     try:
         filenames = getGribFileNames()
 
         for filename in filenames:
-            resulted_gribs_directory = download_ICON_D2.download_gribs(filename, output_directory_gribs)
+            resulted_gribs_directory = download_function.download_gribs(filename, output_directory_gribs)
         
         resulted_csv_file = parse_gribs(resulted_gribs_directory, output_directory)
         return resulted_csv_file
@@ -41,28 +58,31 @@ def main():
 
     while True:
         print("Options:")
-        print("1. Run download_and_parse script")
-        print("2. Run create_aggregates script")
-        print("3. Run generate_fancy_maps script")
-        print("4. Exit")
+        print("1. Choose NWP provider")
+        print("2. Run download_and_parse script")
+        print("3. Run create_aggregates script")
+        print("4. Run generate_fancy_maps script")
+        print("5. Exit")
 
         choice = input("\nEnter your choice: ")
 
         if choice == '1':
-            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory)
+            getGribFileNames, download_function = choose_nwp_provider()
         elif choice == '2':
+            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory, getGribFileNames, download_function)
+        elif choice == '3':
             try:
                 if resulted_csv_file is None:
                     resulted_csv_file = choose_aggregates()
                 create_aggregates(resulted_csv_file, output_directory)
             except Exception as e:
                 print("Error during aggregates:", e)
-        elif choice == '3':
+        elif choice == '4':
             try:
                 generate_fancy_maps(storage_directory, maps_output_directory, color_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
-        elif choice == '4':
+        elif choice == '5':
             print("Exiting the script.")
             break
         else:

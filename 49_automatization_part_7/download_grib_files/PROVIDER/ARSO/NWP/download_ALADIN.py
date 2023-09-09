@@ -25,4 +25,4 @@ def download_gribs(latest_model_run_filename, output_directory):
         year, month, day, model_run = extract_date_and_model_run_parts(latest_model_run_filename)
         print(f'{year} {month} {day} {model_run}')
     else: 
-        print(f'No GRBI files found for Aladin')
+        print(f'No GRIB files found for Aladin')

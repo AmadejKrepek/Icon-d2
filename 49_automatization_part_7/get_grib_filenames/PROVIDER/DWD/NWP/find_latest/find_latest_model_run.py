@@ -46,28 +46,3 @@ def get_latest_model_run_filename(data, parameter_name):
                     latest_file = file_info
 
     return latest_file
-
-def main():
-    print("Script started at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-    data = download_and_extract_log_file()
-
-    parameter_input = input("Enter parameter names separated by commas: ")
-    selected_params = [param.strip() for param in parameter_input.split(",")]
-
-    filenames = []
-    for param in selected_params:
-        latest_file = get_latest_model_run_filename(data, param)
-        if latest_file:
-            filenames.append(latest_file)
-            print(f"Latest model run filename for parameter '{param}': {latest_file}")
-        else:
-            print(f"No regular-lat-lon model run found for parameter '{param}'.")
-
-    if not filenames:
-        print("No filenames available for the selected parameters.")
-
-    print("Script finished at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-if __name__ == "__main__":
-    main()
