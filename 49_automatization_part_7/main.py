@@ -1,7 +1,7 @@
 import os
 import time
 from get_grib_filenames.choose_parameters import getGribFileNames
-from download_grib_files import download_grib_files
+from download_grib_files.DWD.NWP import download_ICON_D2
 from parse_gribs.parse_grib_files import parse_gribs
 from get_aggregates.agregates_choose import choose_aggregates
 from get_aggregates.agregates import create_aggregates
@@ -15,7 +15,7 @@ def download_and_parse(output_directory_gribs, output_directory):
         filenames = getGribFileNames()
 
         for filename in filenames:
-            resulted_gribs_directory = download_grib_files.download_gribs(filename, output_directory_gribs)
+            resulted_gribs_directory = download_ICON_D2.download_gribs(filename, output_directory_gribs)
         
         resulted_csv_file = parse_gribs(resulted_gribs_directory, output_directory)
         return resulted_csv_file
