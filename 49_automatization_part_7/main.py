@@ -1,7 +1,7 @@
 import os
 import time
-from get_grib_filenames.choose_parameters import getGribFileNames
-from download_grib_files.DWD.NWP import download_ICON_D2
+from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNames
+from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2
 from parse_gribs.parse_grib_files import parse_gribs
 from get_aggregates.agregates_choose import choose_aggregates
 from get_aggregates.agregates import create_aggregates

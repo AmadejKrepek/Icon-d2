@@ -9,7 +9,7 @@ def read_variable_names_from_file(file_path):
 def getGribFileNames():
     print("Script started at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    variable_names_file = "./get_grib_filenames/variable_names/d2_variables.txt"
+    variable_names_file = "./configuration/parameters/icon_d2.config"
     variable_names = read_variable_names_from_file(variable_names_file)
     data = download_and_extract_log_file()
 
