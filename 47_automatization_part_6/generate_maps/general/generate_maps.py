@@ -73,8 +73,9 @@ def create_variable_plot(model: MapsModel):
             var_val = int(round(variable_clipped[i, j]))
             # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
             if model.variable == "max Total Precipitation":
-                if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
-                    ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+                if (max_value > 0):
+                    if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
+                        ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
             else:
                 ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
 
