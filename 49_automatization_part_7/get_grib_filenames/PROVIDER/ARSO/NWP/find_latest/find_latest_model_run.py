@@ -29,4 +29,4 @@ def get_latest_model_run_filenames(base_url):
                 file_url = f"{base_url}/nwp_{date}-{model_run}.zip"
                 latest_files.append(file_url)
 
-    return latest_files
+    return [latest_files[0]]

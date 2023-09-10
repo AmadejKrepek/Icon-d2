@@ -105,7 +105,7 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         combined_df.to_csv(output_path, index=False)
         return output_path
 
-def parse_gribs(source_data_dir, output_directory):    
+def parse_gribs(source_data_dir, output_directory, temp_directory):    
     os.makedirs(output_directory, exist_ok=True)
     
     if not os.path.isdir(source_data_dir):

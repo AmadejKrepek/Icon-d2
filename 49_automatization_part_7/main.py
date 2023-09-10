@@ -4,11 +4,14 @@ from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNam
 from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2 as downloadDWD
 from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNames as getARSOGribFileNames
 from download_grib_files.PROVIDER.ARSO.NWP import download_ALADIN as downloadALADIN
-from parse_gribs.parse_grib_files import parse_gribs
+from parse_gribs.PROVIDER.DWD.NWP.parse_grib_files import parse_gribs as parse_gribs_DWD
+from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_gribs_ARSO
 from get_aggregates.agregates_choose import choose_aggregates
 from get_aggregates.agregates import create_aggregates
 from generate_maps.generate_maps_guide import generate_fancy_maps
 from parse_settings.read import read_colors
+import traceback
+    
 
 from matplotlib.font_manager import FontProperties
 
@@ -25,15 +28,15 @@ def choose_nwp_provider():
 
     if choice == '1':
         provider_directory = "DWD"
-        return getDWDGribFileNames, downloadDWD
+        return getDWDGribFileNames, downloadDWD, parse_gribs_DWD
     elif choice == '2':
         provider_directory = "ARSO"
-        return getARSOGribFileNames, downloadALADIN
+        return getARSOGribFileNames, downloadALADIN, parse_gribs_ARSO
     else:
         print("Invalid choice. Defaulting to DWD (German Weather Service).")
-        return getDWDGribFileNames, downloadDWD
+        return getDWDGribFileNames, downloadDWD, parse_gribs_DWD
 
-def download_and_parse(output_directory_gribs, output_directory, getGribFileNames, download_function):
+def download_and_parse(output_directory_gribs, output_directory, temp_directory, getGribFileNames, download_function, parse_gribs):
     global provider_directory  # Access the global provider_directory variable
     try:
         filenames = getGribFileNames()
@@ -43,10 +46,12 @@ def download_and_parse(output_directory_gribs, output_directory, getGribFileName
             resulted_gribs_directory = download_function.download_gribs(filename, os.path.join(output_directory_gribs, provider_directory))
         
         # Append provider_directory after output_directory
-        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory))
+        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory), temp_directory)
+        print(f"Downloaded and parsed {resulted_csv_file}")
         return resulted_csv_file
     except Exception as e:
         print("Error during download and parse:", e)
+        traceback.print_exc()
         return None
 
 def main():
@@ -65,6 +70,8 @@ def main():
     output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files")
     output_directory = os.path.join(storage_directory, "output")
     maps_output_directory = os.path.join(storage_directory, 'public/plots')
+    
+    temp_directory = os.path.join(storage_directory, "temp")
 
     resulted_csv_file = None
 
@@ -79,9 +86,9 @@ def main():
         choice = input("\nEnter your choice: ")
 
         if choice == '1':
-            getGribFileNames, download_function = choose_nwp_provider()
+            getGribFileNames, download_function, parse_gribs = choose_nwp_provider()
         elif choice == '2':
-            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory, getGribFileNames, download_function)
+            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory, temp_directory, getGribFileNames, download_function, parse_gribs)
         elif choice == '3':
             try:
                 if resulted_csv_file is None:
