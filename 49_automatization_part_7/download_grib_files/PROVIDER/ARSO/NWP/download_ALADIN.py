@@ -30,18 +30,30 @@ def download_gribs(latest_model_run_url, output_directory):
     if latest_model_run_url:
         year, month, day, model_run = extract_date_and_model_run_parts(latest_model_run_url)
         if year and month and day and model_run:
-            # Create the directory if it doesn't exist
-            os.makedirs(output_directory, exist_ok=True)
+            # Replace the last two digits of model_run with 'z'
+            model_run = model_run[:-2] + 'z'
+            
+            # Create the directory structure if it doesn't exist
+            parameter_name = "all"
+            parameter_name_directory = os.path.join(output_directory, parameter_name)
+            year_directory = os.path.join(parameter_name_directory, year)
+            month_directory = os.path.join(year_directory, month)
+            day_directory = os.path.join(month_directory, day)
+            model_run_directory = os.path.join(day_directory, model_run)
+            
+            os.makedirs(model_run_directory, exist_ok=True)
             
             # Generate the local filename for the downloaded ZIP file
-            local_filename = f"{year}{month}{day}-{model_run}.zip"
-            local_filepath = os.path.join(output_directory, local_filename)
+            local_filename = f"{parameter_name}_{year}_{month}_{day}_{model_run}.zip"
+            local_filepath = os.path.join(model_run_directory, local_filename)
             
+            print(latest_model_run_url)
+            print(local_filepath)
             # Download the file using the provided function
             download_grib_file(latest_model_run_url, local_filepath)
             
-            print(f"Downloaded {local_filename} to {output_directory}")
-            return output_directory
+            print(f"Downloaded {local_filename} to {model_run_directory}")
+            return model_run_directory
         else:
             print("Invalid filename format")
             return None
