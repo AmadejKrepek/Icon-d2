@@ -1,18 +1,24 @@
 import re
+from urllib.parse import urlparse
+import os
 from download_grib_files.download_grib_files import download_grib_file
 
 base_url = "https://meteo.arso.gov.si/uploads/probase/www/model/data/"
 
-def extract_date_and_model_run_parts(filename):
+def extract_date_and_model_run_parts(url):
+    # Parse the URL to extract the filename
+    parsed_url = urlparse(url)
+    filename = parsed_url.path.split("/")[-1]
+
     # Use regular expressions to match the date and model run parts
-    match = re.match(r'nwp_(\d{8}-\d{4})\.zip', filename)
-    
+    match = re.match(r'nwp_(\d{8})-(\d{4})\.zip', filename)
     if match:
-        date_and_time_str = match.group(1)
-        year = date_and_time_str[:4]
-        month = date_and_time_str[4:6]
-        day = date_and_time_str[6:8]
-        model_run = date_and_time_str[9:13]  # Extract the time part (HHmm)
+        date_str = match.group(1)
+        time_str = match.group(2)
+        year = date_str[:4]
+        month = date_str[4:6]
+        day = date_str[6:8]
+        model_run = time_str  # Extract the time part (HHmm)
         return year, month, day, model_run
     else:
         # Handle the case where the filename format doesn't match
@@ -20,9 +26,25 @@ def extract_date_and_model_run_parts(filename):
         return None
 
 
-def download_gribs(latest_model_run_filename, output_directory):
-    if latest_model_run_filename:
-        year, month, day, model_run = extract_date_and_model_run_parts(latest_model_run_filename)
-        print(f'{year} {month} {day} {model_run}')
-    else: 
-        print(f'No GRIB files found for Aladin')
+def download_gribs(latest_model_run_url, output_directory):
+    if latest_model_run_url:
+        year, month, day, model_run = extract_date_and_model_run_parts(latest_model_run_url)
+        if year and month and day and model_run:
+            # Create the directory if it doesn't exist
+            os.makedirs(output_directory, exist_ok=True)
+            
+            # Generate the local filename for the downloaded ZIP file
+            local_filename = f"{year}{month}{day}-{model_run}.zip"
+            local_filepath = os.path.join(output_directory, local_filename)
+            
+            # Download the file using the provided function
+            download_grib_file(latest_model_run_url, local_filepath)
+            
+            print(f"Downloaded {local_filename} to {output_directory}")
+            return output_directory
+        else:
+            print("Invalid filename format")
+            return None
+    else:
+        print("No GRIB files found for Aladin")
+        return None
