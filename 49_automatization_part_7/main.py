@@ -12,7 +12,11 @@ from parse_settings.read import read_colors
 
 from matplotlib.font_manager import FontProperties
 
+# Global variable to store the provider's directory
+provider_directory = "DWD"
+
 def choose_nwp_provider():
+    global provider_directory
     print("Choose NWP provider:")
     print("1. DWD (German Weather Service)")
     print("2. ARSO (Slovenian Environment Agency)")
@@ -20,21 +24,26 @@ def choose_nwp_provider():
     choice = input("Enter your choice: ")
 
     if choice == '1':
+        provider_directory = "DWD"
         return getDWDGribFileNames, downloadDWD
     elif choice == '2':
+        provider_directory = "ARSO"
         return getARSOGribFileNames, downloadALADIN
     else:
         print("Invalid choice. Defaulting to DWD (German Weather Service).")
         return getDWDGribFileNames, downloadDWD
 
 def download_and_parse(output_directory_gribs, output_directory, getGribFileNames, download_function):
+    global provider_directory  # Access the global provider_directory variable
     try:
         filenames = getGribFileNames()
 
         for filename in filenames:
-            resulted_gribs_directory = download_function.download_gribs(filename, output_directory_gribs)
+            # Append provider_directory after output_directory_gribs
+            resulted_gribs_directory = download_function.download_gribs(filename, os.path.join(output_directory_gribs, provider_directory))
         
-        resulted_csv_file = parse_gribs(resulted_gribs_directory, output_directory)
+        # Append provider_directory after output_directory
+        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory))
         return resulted_csv_file
     except Exception as e:
         print("Error during download and parse:", e)
@@ -50,6 +59,9 @@ def main():
     custom_font = FontProperties(fname=font_path + 'font.ttf')
 
     storage_directory = "./data"
+    
+    input_directory_plots = os.path.join(storage_directory, 'output', provider_directory)
+    
     output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files")
     output_directory = os.path.join(storage_directory, "output")
     maps_output_directory = os.path.join(storage_directory, 'public/plots')
@@ -74,12 +86,12 @@ def main():
             try:
                 if resulted_csv_file is None:
                     resulted_csv_file = choose_aggregates()
-                create_aggregates(resulted_csv_file, output_directory)
+                create_aggregates(resulted_csv_file, os.path.join(output_directory, provider_directory))
             except Exception as e:
                 print("Error during aggregates:", e)
         elif choice == '4':
             try:
-                generate_fancy_maps(storage_directory, maps_output_directory, color_configuration, custom_font)
+                generate_fancy_maps(input_directory_plots, os.path.join(maps_output_directory, provider_directory), color_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
         elif choice == '5':
