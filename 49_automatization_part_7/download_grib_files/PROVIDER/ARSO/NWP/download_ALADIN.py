@@ -46,9 +46,7 @@ def download_gribs(latest_model_run_url, output_directory):
             # Generate the local filename for the downloaded ZIP file
             local_filename = f"{parameter_name}_{year}_{month}_{day}_{model_run}.zip"
             local_filepath = os.path.join(model_run_directory, local_filename)
-            
-            print(latest_model_run_url)
-            print(local_filepath)
+
             # Download the file using the provided function
             download_grib_file(latest_model_run_url, local_filepath)
             
