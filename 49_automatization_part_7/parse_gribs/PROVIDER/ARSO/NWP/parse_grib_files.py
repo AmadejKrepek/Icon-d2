@@ -58,14 +58,15 @@ def process_data(filepath, bbox, index):
     parameter_name = None   
     
     for grb in grbs:
+        parameter_name = grb.name
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
         valid_date = grb.validDate
-        parameter_name = grb.name
         base_datetime = valid_date
-               
-        time_range = timedelta(hours=index)
-        valid_date = base_datetime + time_range
+        
+        if (parameter_name == "Total Precipitation"):
+            time_range = timedelta(hours=index)
+            valid_date = base_datetime + time_range
         
                 
     grbs.close()
@@ -96,8 +97,6 @@ def create_output_folders(year, month, day, model_run, parameter_name, output_di
 
 def save_parameter_data(parameter_data, output_directory, year, month, day, model_run):
     for parameter_name, data_list in parameter_data.items():
-        print(parameter_name)
-        print(data_list)
         parameter_df_list = [data_item[0] for data_item in data_list]
         combined_df = pd.concat(parameter_df_list, ignore_index=True)
         parameter_name = parameter_name.replace(" ", "_")

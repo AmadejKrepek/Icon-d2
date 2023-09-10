@@ -9,10 +9,10 @@ def select_item(prompt, items):
     selected_item = items[choice]
     return selected_item
 
-def choose_aggregates():
+def choose_aggregates(provider_directory):
     storage_path = './data'
     base_path = './output'
-    base_path = os.path.join(storage_path, base_path)
+    base_path = os.path.join(storage_path, base_path, provider_directory)
     
     available_subdirectories = os.listdir(base_path)
     selected_subdirectory = select_item("Select a subdirectory:", available_subdirectories)
