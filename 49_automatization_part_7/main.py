@@ -121,13 +121,12 @@ def main():
         elif choice == '3':
             try:
                 if resulted_csv_file is None:
-                    resulted_csv_file = choose_aggregates(provider_directory)
-                create_aggregates(resulted_csv_file, os.path.join(output_directory, provider_directory))
+                    resulted_csv_file = choose_aggregates(provider_directory, model_directory)
+                create_aggregates(resulted_csv_file, os.path.join(output_directory, provider_directory, model_directory))
             except Exception as e:
                 print("Error during aggregates:", e)
         elif choice == '4':
             try:
-                input_directory_plots = os.path.join(input_directory_plots, provider_directory)
                 generate_fancy_maps(input_directory_plots, os.path.join(maps_output_directory, provider_directory, model_directory), color_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
