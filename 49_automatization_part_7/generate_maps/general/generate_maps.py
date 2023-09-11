@@ -26,9 +26,9 @@ def create_variable_plot(model: MapsModel):
     region = world[world['NAME'].isin(countries)]
 
     LAT_MIN = 45.1512
-    LAT_MAX = 47.1512
+    LAT_MAX = 47.1212
     LON_MIN = 12.9955
-    LON_MAX = 16.7955
+    LON_MAX = 16.7355
 
     # Create bounding box for the region
     bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
