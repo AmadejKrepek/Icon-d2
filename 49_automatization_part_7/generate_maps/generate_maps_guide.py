@@ -19,6 +19,8 @@ def list_and_select(base_path, item_type):
 def generate_fancy_maps(base_path, output_directory, color_configuration, custom_font):
     current_path = base_path
     selected_items = []
+    provider_directory = None
+    model_directory = None
 
     while True:
         selected_item = list_and_select(current_path, "item")
@@ -28,7 +30,20 @@ def generate_fancy_maps(base_path, output_directory, color_configuration, custom
         if os.path.isfile(os.path.join(current_path, selected_item)):
             break
 
+        # Check if the selected item is the provider or model directory
+        if selected_item in ["DWD", "ARSO"]:  # Adjust these values to match your provider names
+            provider_directory = selected_item
+        elif selected_item in ["IconD2", "Aladin"]:  # Adjust these values to match your model names
+            model_directory = selected_item
+        else:
+            print(f"Invalid selection or not found...please add your provider or model run there: {selected_item}")
+            break
+
         current_path = os.path.join(current_path, selected_item)
+
+    # Combine the provider and model directories with the output_directory
+    if provider_directory and model_directory:
+        output_directory = os.path.join(output_directory, provider_directory, model_directory)
 
     # Construct input_filename based on user selections
     input_filename = construct_input_filename(base_path, *selected_items)
@@ -37,4 +52,5 @@ def generate_fancy_maps(base_path, output_directory, color_configuration, custom
     print(f"Constructed input filename: {input_filename}")
 
     create_maps(input_filename, output_directory, color_configuration, custom_font)
+
 
