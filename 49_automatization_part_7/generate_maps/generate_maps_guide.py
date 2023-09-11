@@ -35,9 +35,6 @@ def generate_fancy_maps(base_path, output_directory, color_configuration, custom
             provider_directory = selected_item
         elif selected_item in ["IconD2", "Aladin"]:  # Adjust these values to match your model names
             model_directory = selected_item
-        else:
-            print(f"Invalid selection or not found...please add your provider or model run there: {selected_item}")
-            break
 
         current_path = os.path.join(current_path, selected_item)
 
