@@ -36,8 +36,8 @@ def create_maps(input_filename, output_directory, color_configuration, custom_fo
         if variable not in df.columns:
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
         else: 
-            output_filepath, model_run_formatted_date, selected_formatted_date = extract_output_names(input_filename, variable, output_directory)
-            model = MapsModel(df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, custom_font)
+            output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_output_names(input_filename, variable, output_directory)
+            model = MapsModel(df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider, custom_font)
             create_variable_plot(model)
 
 

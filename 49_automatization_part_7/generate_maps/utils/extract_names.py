@@ -8,6 +8,11 @@ def extract_output_names(input_filename, variable, output_directory):
         model_run_day = parts[-3]
         model_run = parts[-2]
         output_variable_name = variable.replace(' ', '_').lower()
+        model_run_model = parts[-8].upper()
+        provider = parts[-9].upper()
+
+        if model_run_model == "ICOND2":
+            model_run_model = "ICON-D2"
 
         selected_file_name = parts[-1]
         selected_file_name_parts = selected_file_name.split('_')
@@ -48,7 +53,7 @@ def extract_output_names(input_filename, variable, output_directory):
         model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
         model_run_formatted_date = model_run_formatted_date + f" {model_run} UTC"
 
-        if (output_variable_name == "max_total_precipitation"):
+        if (output_variable_name == "max_total_precipitation" or output_variable_name == "sum_total_precipitation"):
             selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day} {selected_end_hour}:{selected_end_minute}", "%Y-%m-%d %H:%M")
             selected_formatted_date = selected_date_components.strftime("velja do %d. %m. %Y ob %H:%M")
         else:      
@@ -67,4 +72,4 @@ def extract_output_names(input_filename, variable, output_directory):
         output_filename = f'{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
         output_filepath = os.path.join(output_directory, output_filename)
         
-        return output_filepath, model_run_formatted_date, selected_formatted_date
+        return output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider

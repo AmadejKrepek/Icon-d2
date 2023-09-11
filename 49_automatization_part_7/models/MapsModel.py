@@ -1,5 +1,5 @@
 class MapsModel:
-    def __init__(self, df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, custom_font):
+    def __init__(self, df, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider, custom_font):
         self.df = df
         self.variable = variable
         self.title = title
@@ -10,4 +10,6 @@ class MapsModel:
         self.output_filepath = output_filepath
         self.model_run_formatted_date = model_run_formatted_date
         self.selected_formatted_date = selected_formatted_date
+        self.model_run_model = model_run_model
+        self.provider = provider
         self.custom_font = custom_font
