@@ -26,9 +26,9 @@ def create_variable_plot(model: MapsModel):
     region = world[world['NAME'].isin(countries)]
 
     LAT_MIN = 45.1512
-    LAT_MAX = 47.1512
+    LAT_MAX = 47.1212
     LON_MIN = 12.9955
-    LON_MAX = 16.7955
+    LON_MAX = 16.7355
 
     # Create bounding box for the region
     bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
@@ -49,19 +49,21 @@ def create_variable_plot(model: MapsModel):
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
     
-    norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
-    if (model.variable == "max Total Precipitation"):
-        alpha = 0.7
-
     alpha = 1.0
     
-    if (model.variable == "max Total Precipitation"):
+    norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
+    if (model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation"):
+        alpha = 0.7
+    
+    if (model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation"):
         shaded_relief = createShadedRelief('../data/shading/sencenje_250.tif')
         extent_coordinates = get_extent_coordinates('../data/shading/sencenje_250.tif')
         ax.imshow(shaded_relief, extent=(extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'], extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
     ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=alpha)
 
     stride = 4
+    if (model.model_run_model == "ALADIN"):
+        stride = 2
 
     # Iterate through the grid and add text for variable values
     for i in range(0, len(lat_values), stride):
@@ -72,7 +74,7 @@ def create_variable_plot(model: MapsModel):
             # Extract variable value and convert to integer
             var_val = int(round(variable_clipped[i, j]))
             # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
-            if model.variable == "max Total Precipitation":
+            if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
                 if (max_value > 0):
                     if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
                         ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
@@ -106,8 +108,8 @@ def create_variable_plot(model: MapsModel):
     
     # Set title and source information
     fig.text(0.5, 0.795 + header_padding, f'{model.selected_formatted_date}', ha='center', **title_font)
-    fig.text(0.897, 0.125, "vir podatkov: DWD", ha="right", **subtitle_font)
-    fig.text(0.127, 0.125, f'ICON-D2 ({model.model_run_formatted_date})', ha="left", **subtitle_font)
+    fig.text(0.897, 0.125, f"vir podatkov: {model.provider}", ha="right", **subtitle_font)
+    fig.text(0.127, 0.125, f'{model.model_run_model} ({model.model_run_formatted_date})', ha="left", **subtitle_font)
     fig.text(0.897, 0.795 + header_padding, model.title, ha='right', **title_font)
 
     cax_height = 0.02
