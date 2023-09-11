@@ -15,11 +15,17 @@ import traceback
 
 from matplotlib.font_manager import FontProperties
 
+provider_models = {
+    "DWD": ["IconD2", "Model2", "Model3"],  # Add the names of DWD models here
+    "ARSO": ["Aladin", "ModelA", "ModelB"]  # Add the names of ARSO models here
+}
+
 # Global variable to store the provider's directory
 provider_directory = "DWD"
+model_directory = "IconD2"
 
 def choose_nwp_provider():
-    global provider_directory
+    global provider_directory, model_directory
     print("Choose NWP provider:")
     print("1. DWD (German Weather Service)")
     print("2. ARSO (Slovenian Environment Agency)")
@@ -28,25 +34,48 @@ def choose_nwp_provider():
 
     if choice == '1':
         provider_directory = "DWD"
+        available_models = provider_models["DWD"]
+        print("Choose NWP model for DWD:")
+        for i, model in enumerate(available_models, start=1):
+            print(f"{i}. {model}")
+        
+        model_choice = input("Enter the model number: ")
+        if model_choice.isdigit() and 1 <= int(model_choice) <= len(available_models):
+            model_directory = available_models[int(model_choice) - 1]
+        else:
+            print("Invalid model choice. Defaulting to IconD2.")
         return getDWDGribFileNames, downloadDWD, parse_gribs_DWD
     elif choice == '2':
         provider_directory = "ARSO"
+        available_models = provider_models["ARSO"]
+        print("Choose NWP model for ARSO:")
+        for i, model in enumerate(available_models, start=1):
+            print(f"{i}. {model}")
+        
+        model_choice = input("Enter the model number: ")
+        if model_choice.isdigit() and 1 <= int(model_choice) <= len(available_models):
+            model_directory = available_models[int(model_choice) - 1]
+        else:
+            print("Invalid model choice. Defaulting to Aladin.")
         return getARSOGribFileNames, downloadALADIN, parse_gribs_ARSO
     else:
         print("Invalid choice. Defaulting to DWD (German Weather Service).")
         return getDWDGribFileNames, downloadDWD, parse_gribs_DWD
 
 def download_and_parse(output_directory_gribs, output_directory, temp_directory, getGribFileNames, download_function, parse_gribs):
-    global provider_directory  # Access the global provider_directory variable
+    global provider_directory, model_directory  # Access the global provider_directory and model_directory variables
     try:
         filenames = getGribFileNames()
 
         for filename in filenames:
-            # Append provider_directory after output_directory_gribs
-            resulted_gribs_directory = download_function.download_gribs(filename, os.path.join(output_directory_gribs, provider_directory))
+            # Create provider and model directories
+            provider_model_directory = os.path.join(output_directory_gribs, provider_directory, model_directory)
+            os.makedirs(provider_model_directory, exist_ok=True)
+            
+            resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
         
-        # Append provider_directory after output_directory
-        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory), temp_directory)
+        # Append provider_directory and model_directory after output_directory
+        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory), temp_directory)
         print(f"Downloaded and parsed {resulted_csv_file}")
         return resulted_csv_file
     except Exception as e:
@@ -99,7 +128,7 @@ def main():
         elif choice == '4':
             try:
                 input_directory_plots = os.path.join(input_directory_plots, provider_directory)
-                generate_fancy_maps(input_directory_plots, os.path.join(maps_output_directory, provider_directory), color_configuration, custom_font)
+                generate_fancy_maps(input_directory_plots, os.path.join(maps_output_directory, provider_directory, model_directory), color_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
         elif choice == '5':
