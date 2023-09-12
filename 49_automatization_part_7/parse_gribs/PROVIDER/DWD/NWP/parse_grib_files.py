@@ -1,5 +1,7 @@
 from datetime import timedelta
 from parse_gribs.utils.remove_directories import removeDirectories
+from parse_gribs.utils.remove_coordinates import delete_coordinates
+from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
 import pandas as pd
 import glob
 import sys
@@ -73,15 +75,19 @@ def process_data(filepath, bbox, index):
     
     if variable_data is None:
         return None
-    
+        
     # Create a DataFrame with the extracted data
     df = pd.DataFrame()
     df["Latitude"] = latitudes.ravel()
     df["Longitude"] = longitudes.ravel()
     df[parameter_name] = variable_data.ravel()
+    
+    df[parameter_name] = convertToOneDecimalPlace(df, parameter_name)
 
     # Perform the bounding box filter
     df = crop_dataframe_to_bbox(df, bbox)
+    
+    df = delete_coordinates(df)
     
     # Convert valid date to datetime and add forecast time to it
     valid_date = pd.to_datetime(valid_date)
