@@ -14,6 +14,8 @@ from generate_maps.general.create_dynamic_maps import create_maps
 from parse_settings.read import read_colors
 from matplotlib.font_manager import FontProperties
 
+from utils.tools import changeCoordinatesConfiguration, changeGroupedCoordinatesConfiguration
+
 provider_models = {
     "DWD": ["IconD2"],
     "ARSO": ["Aladin"]
@@ -77,15 +79,6 @@ def download_and_parse(output_directory_gribs, output_directory, temp_directory,
         print("Error during download and parse:", e)
         return None
 
-def changeCoordinatesConfiguration(model_directory):
-    if model_directory == "IconD2":
-        return "./configuration/coordinates/icon_d2_lat_lon.csv"
-    elif model_directory == "Aladin":
-        return "./configuration/coordinates/aladin_lat_lon.csv"
-    else:
-        print("Invalid configuration coordinates for this model. Exiting.")
-        sys.exit(1)
-
 def main():
     start_time = time.time()
 
@@ -110,6 +103,7 @@ def main():
 
     getGribFileNames, download_function, parse_gribs, provider_directory, model_directory = choose_nwp_provider()
     coordinates_configuration = changeCoordinatesConfiguration(model_directory)
+    grouped_coordinates_configuration = changeGroupedCoordinatesConfiguration(model_directory)
         
     while True:
         print("\nOptions:")
@@ -133,12 +127,13 @@ def main():
                 print("Error during aggregates:", e)
         elif choice == '3':
             try:
-                generate_fancy_maps(os.path.join(input_directory_plots, provider_directory, model_directory), os.path.join(maps_output_directory, provider_directory, model_directory), color_configuration, custom_font)
+                generate_fancy_maps(os.path.join(input_directory_plots, provider_directory, model_directory), os.path.join(maps_output_directory, provider_directory, model_directory), color_configuration, grouped_coordinates_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
         elif choice == '4':
             getGribFileNames, download_function, parse_gribs, provider_directory, model_directory = choose_nwp_provider()
             coordinates_configuration = changeCoordinatesConfiguration(model_directory)
+            grouped_coordinates_configuration = changeGroupedCoordinatesConfiguration(model_directory)
         elif choice == '5':
             print("Exiting the script.")
             break
