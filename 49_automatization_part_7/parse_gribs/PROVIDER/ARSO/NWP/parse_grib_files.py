@@ -49,47 +49,6 @@ def crop_dataframe_to_bbox(df, bbox):
     df = df.loc[lat_filter & lon_filter]
     return df
 
-def process_data(filepath, bbox, index):
-    # Load the files with GRIB2 data using pygrib
-    grbs = pygrib.open(filepath)
-    
-    # Retrieve the desired variable
-    variable_data = None
-    parameter_name = None   
-    
-    for grb in grbs:
-        parameter_name = grb.name
-        variable_data = grb.values
-        latitudes, longitudes = grb.latlons()        
-        valid_date = grb.validDate
-        base_datetime = valid_date
-        
-        if (parameter_name == "Total Precipitation"):
-            time_range = timedelta(hours=index)
-            valid_date = base_datetime + time_range
-        
-                
-    grbs.close()
-    
-    if variable_data is None:
-        return None
-    
-    # Create a DataFrame with the extracted data
-    df = pd.DataFrame()
-    df["Latitude"] = latitudes.ravel()
-    df["Longitude"] = longitudes.ravel()
-    df[parameter_name] = variable_data.ravel()
-
-    # Perform the bounding box filter
-    df = crop_dataframe_to_bbox(df, bbox)
-    
-    # Convert valid date to datetime and add forecast time to it
-    valid_date = pd.to_datetime(valid_date)
-    df["ValidDate"] = valid_date
-    
-    return df, parameter_name
-
-
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
     os.makedirs(model_run_dir, exist_ok=True)
@@ -106,6 +65,41 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         combined_df.to_csv(output_path, index=False)
     return output_path
 
+def process_data(filepath, bbox, index):
+    # Load the files with GRIB2 data using pygrib
+    grbs = pygrib.open(filepath)
+    
+    # Initialize a dictionary to store parameter data
+    parameter_data = {}
+        
+    for grb in grbs:
+        parameter_name = grb.name
+        variable_data = grb.values
+        latitudes, longitudes = grb.latlons()        
+        valid_date = grb.validDate
+        
+        valid_date = valid_date + timedelta(hours=index)
+        
+        # Create a DataFrame for the parameter
+        df = pd.DataFrame()
+        df["Latitude"] = latitudes.ravel()
+        df["Longitude"] = longitudes.ravel()
+        df[parameter_name] = variable_data.ravel()
+
+        # Perform the bounding box filter
+        df = crop_dataframe_to_bbox(df, bbox)
+
+        # Convert valid date to datetime and add forecast time to it
+        valid_date = pd.to_datetime(valid_date)
+        df["ValidDate"] = valid_date
+        
+        # Store the DataFrame in the dictionary with parameter name as key
+        parameter_data[parameter_name] = df
+                
+    grbs.close()
+    
+    return parameter_data
+
 def parse_gribs(source_data_dir, output_directory, temp_directory):    
     os.makedirs(output_directory, exist_ok=True)
 
@@ -117,9 +111,7 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
     filenames = sorted(filenames)
 
     parameter_data = {}  # Dictionary to store data for each parameter
-    
-    index = 0
-    
+        
     for file in filenames:
         print("Processing", file)
         with zipfile.ZipFile(file, 'r') as zip_ref:
@@ -128,29 +120,34 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         # Get a list of all extracted GRB files
         grb_files = [f for f in os.listdir(temp_directory) if f.endswith(".grb")]
         
+        index = 0
+        
         for grb_file in grb_files:
+            print("Processing", grb_file)
             temp_decompressed_path = os.path.join(temp_directory, grb_file)
             
-            data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
-            index = index + 1
+            processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
             
-            if data is not None:
-                if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
-                    data[parameter_name] = kelvin_to_celsius(data[parameter_name])
-                elif parameter_name == "maximum Wind 10m" or parameter_name == "10 metre V wind component":
-                    data[parameter_name] = ms_to_kmh(data[parameter_name])
-                
-                date_str = os.path.splitext(grb_file)[0]  # Extract date and time from the GRB file name
-                year = date_str[4:8]
-                month = date_str[8:10]
-                day = date_str[10:12]
-                model_run = date_str[12:14]
-                            
-                if parameter_name not in parameter_data:
-                    parameter_data[parameter_name] = []
-                
-                data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
-                parameter_data[parameter_name].append((data, data_date))
+            for parameter_name, data in processed_data.items():
+                if data is not None:
+                    if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
+                        data[parameter_name] = kelvin_to_celsius(data[parameter_name])
+                    elif parameter_name == "maximum Wind 10m" or parameter_name == "10 metre V wind component":
+                        data[parameter_name] = ms_to_kmh(data[parameter_name])
+                    
+                    date_str = os.path.splitext(grb_file)[0]  # Extract date and time from the GRB file name
+                    year = date_str[4:8]
+                    month = date_str[8:10]
+                    day = date_str[10:12]
+                    model_run = date_str[12:14]
+                                
+                    if parameter_name not in parameter_data:
+                        parameter_data[parameter_name] = []
+                    
+                    data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d %H:%M:%S")
+                    parameter_data[parameter_name].append((data, data_date))
+            
+            index = index + 1
             
             os.remove(temp_decompressed_path)
 
