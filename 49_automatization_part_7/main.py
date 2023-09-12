@@ -70,7 +70,7 @@ def download_and_parse(output_directory_gribs, output_directory, temp_directory,
             resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
 
         # Append provider_directory and model_directory after output_directory
-        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory), temp_directory)
+        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory), output_directory_gribs)
         print(f"Downloaded and parsed {resulted_csv_file}")
         return resulted_csv_file
     except Exception as e:

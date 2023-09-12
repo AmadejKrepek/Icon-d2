@@ -1,4 +1,5 @@
 from datetime import timedelta
+from parse_gribs.utils.remove_directories import removeDirectories
 import pandas as pd
 import glob
 import sys
@@ -102,6 +103,7 @@ def process_data(filepath, bbox, index):
 
 def parse_gribs(source_data_dir, output_directory, temp_directory):    
     os.makedirs(output_directory, exist_ok=True)
+    delete_directory = source_data_dir
 
     if not os.path.isdir(source_data_dir):
         print(f"Source data directory '{source_data_dir}' does not exist. Please provide the correct path.")
@@ -150,6 +152,9 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
             index = index + 1
             
             os.remove(temp_decompressed_path)
+        os.remove(file)
+        
+        removeDirectories(delete_directory)
 
     # Save data for each parameter to separate CSV files
     return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
