@@ -1,4 +1,5 @@
 import pandas as pd
+from get_aggregates.utils.add_lat_lon_from_csv import add_lat_lon_columns_from_configuration_file
 
 def aggregate_data(df, agg_column, agg_function):
     if agg_function == 'sum':
@@ -8,8 +9,9 @@ def aggregate_data(df, agg_column, agg_function):
     elif agg_function == 'min':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].min()
 
-def create_aggregates(csv_file, output_folder):
+def create_aggregates(csv_file, output_folder, configuration_file):
     df = pd.read_csv(csv_file)
+    df = add_lat_lon_columns_from_configuration_file(df, configuration_file)
     
     # Convert 'ValidDate' column to datetime format
     df['ValidDate'] = pd.to_datetime(df['ValidDate'])
@@ -35,7 +37,7 @@ def create_aggregates(csv_file, output_folder):
         day = filename_parts[year_index + 2]
         model_run = filename_parts[year_index + 3].split(".")[0]
 
-        agg_column = df.columns[2]
+        agg_column = df.columns[0]
 
         print(f"Parameter name: {parameter_name}")
         print(f"Year: {year}")
@@ -134,7 +136,6 @@ def create_aggregates(csv_file, output_folder):
     
     adjusted_parameter_name = parameter_name.replace("_", " ")
     aggregated_data.rename(columns={agg_column: f'{agg_function} {adjusted_parameter_name}'}, inplace=True)
-    
     aggregated_data.to_csv(output_path, index=False)
 
     print(f"Aggregated data written to {output_path}")
