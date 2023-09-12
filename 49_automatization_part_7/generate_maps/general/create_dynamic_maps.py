@@ -1,10 +1,11 @@
 from .generate_maps import create_variable_plot
 from ..utils.extract_names import extract_output_names
+from get_aggregates.utils.add_lat_lon_from_csv import add_lat_lon_columns_from_configuration_file
 import pandas as pd
 import matplotlib.colors as mcolors
 from models.MapsModel import MapsModel
 
-def create_maps(input_filename, output_directory, color_configuration, custom_font):
+def create_maps(input_filename, output_directory, color_configuration, coordinates_configuration, custom_font):
     precipitation_colors = color_configuration["precipitation_colors"]
     temperature_colors = color_configuration["temperature_colors"]
     wind_max_2m_colors = color_configuration["wind_max_2m_colors"]
@@ -33,6 +34,7 @@ def create_maps(input_filename, output_directory, color_configuration, custom_fo
 
     for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:        
         df = pd.read_csv(input_filename)
+        df = add_lat_lon_columns_from_configuration_file(df, coordinates_configuration)
         if variable not in df.columns:
             print(f"Variable '{variable}' not found in the CSV file. Skipping...")
         else: 
