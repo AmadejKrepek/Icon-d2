@@ -1,5 +1,7 @@
 import pandas as pd
+from parse_gribs.utils.remove_coordinates import delete_coordinates
 from get_aggregates.utils.add_lat_lon_from_csv import add_lat_lon_columns_from_configuration_file
+from get_aggregates.utils.create_aggregated_coordinates import extract_and_save_lat_lon
 
 def aggregate_data(df, agg_column, agg_function):
     if agg_function == 'sum':
@@ -12,6 +14,10 @@ def aggregate_data(df, agg_column, agg_function):
 def create_aggregates(csv_file, output_folder, configuration_file):
     df = pd.read_csv(csv_file)
     df = add_lat_lon_columns_from_configuration_file(df, configuration_file)
+    
+    # Initialize variables for value1 and value2
+    provider_name = None
+    model_name = None
     
     # Convert 'ValidDate' column to datetime format
     df['ValidDate'] = pd.to_datetime(df['ValidDate'])
@@ -36,9 +42,24 @@ def create_aggregates(csv_file, output_folder, configuration_file):
         month = filename_parts[year_index + 1]
         day = filename_parts[year_index + 2]
         model_run = filename_parts[year_index + 3].split(".")[0]
+        
+        # Split the file path into parts
+        path_parts = csv_file.split('\\')
 
+        # Check if there are enough parts in the path to extract value1 and value2
+        if len(path_parts) >= 4:
+            provider_name = path_parts[2]
+            model_name = path_parts[3]
+
+        # Check if both value1 and value2 were found
+        if provider_name is not None and model_name is not None:
+            print(f"Value 1: {provider_name}")
+            print(f"Value 2: {model_name}")
+        else:
+            print("Value1 and/or Value2 not found in the file path.")
+        
         agg_column = df.columns[0]
-
+        print(csv_file)
         print(f"Parameter name: {parameter_name}")
         print(f"Year: {year}")
         print(f"Month: {month}")
@@ -136,6 +157,11 @@ def create_aggregates(csv_file, output_folder, configuration_file):
     
     adjusted_parameter_name = parameter_name.replace("_", " ")
     aggregated_data.rename(columns={agg_column: f'{agg_function} {adjusted_parameter_name}'}, inplace=True)
+    
+    extract_and_save_lat_lon(aggregated_data, provider_name, model_name)
+    
+    aggregated_data = delete_coordinates(aggregated_data)
+    
     aggregated_data.to_csv(output_path, index=False)
 
     print(f"Aggregated data written to {output_path}")

@@ -16,7 +16,7 @@ def list_and_select(base_path, item_type):
     selected_item = choose_directory(items, item_type)
     return selected_item
 
-def generate_fancy_maps(base_path, output_directory, color_configuration, custom_font):
+def generate_fancy_maps(base_path, output_directory, color_configuration, coordinates_configuration, custom_font):
     current_path = base_path
     selected_items = []
 
@@ -35,6 +35,6 @@ def generate_fancy_maps(base_path, output_directory, color_configuration, custom
     # Now you can use the input_filename to perform further operations
     print(f"Constructed input filename: {input_filename}")
 
-    create_maps(input_filename, output_directory, color_configuration, custom_font)
+    create_maps(input_filename, output_directory, color_configuration, coordinates_configuration, custom_font)
 
 
