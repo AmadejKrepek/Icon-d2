@@ -1,6 +1,6 @@
 import os
+import sys
 import time
-import traceback
 from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNames as getDWDGribFileNames
 from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2 as downloadDWD
 from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNames as getARSOGribFileNames
@@ -75,13 +75,22 @@ def download_and_parse(output_directory_gribs, output_directory, temp_directory,
         return resulted_csv_file
     except Exception as e:
         print("Error during download and parse:", e)
-        traceback.print_exc()
         return None
+
+def changeCoordinatesConfiguration(model_directory):
+    if model_directory == "IconD2":
+        return "./configuration/coordinates/icon_d2_lat_lon.csv"
+    elif model_directory == "Aladin":
+        return "./configuration/coordinates/aladin_lat_lon.csv"
+    else:
+        print("Invalid configuration coordinates for this model. Exiting.")
+        sys.exit(1)
 
 def main():
     start_time = time.time()
 
     color_configuration = read_colors.read_colors("./configuration/colors.config")
+    coordinate_configuration = None
 
     font_path = '../assets/fonts/'
 
@@ -100,7 +109,8 @@ def main():
     resulted_csv_file = None
 
     getGribFileNames, download_function, parse_gribs, provider_directory, model_directory = choose_nwp_provider()
-
+    coordinates_configuration = changeCoordinatesConfiguration(model_directory)
+        
     while True:
         print("\nOptions:")
         print("1. Run download_and_parse script")
@@ -117,18 +127,18 @@ def main():
             try:
                 if resulted_csv_file is None:
                     resulted_csv_file = choose_aggregates(output_directory, provider_directory, model_directory)
-                create_aggregates(resulted_csv_file, os.path.join(output_directory, provider_directory, model_directory))
+                create_aggregates(resulted_csv_file, os.path.join(output_directory, provider_directory, model_directory), coordinates_configuration)
                 resulted_csv_file = None
             except Exception as e:
                 print("Error during aggregates:", e)
         elif choice == '3':
             try:
-                generate_fancy_maps(input_directory_plots, maps_output_directory, color_configuration, custom_font)
+                generate_fancy_maps(os.path.join(input_directory_plots, provider_directory, model_directory), os.path.join(maps_output_directory, provider_directory, model_directory), color_configuration, custom_font)
             except Exception as e:
-                traceback.print_exc()
                 print("Error during map generation:", e)
         elif choice == '4':
             getGribFileNames, download_function, parse_gribs, provider_directory, model_directory = choose_nwp_provider()
+            coordinates_configuration = changeCoordinatesConfiguration(model_directory)
         elif choice == '5':
             print("Exiting the script.")
             break
