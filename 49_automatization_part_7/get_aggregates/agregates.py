@@ -50,6 +50,9 @@ def create_aggregates(csv_file, output_folder, configuration_file):
         if len(path_parts) >= 4:
             provider_name = path_parts[2]
             model_name = path_parts[3]
+        
+        print(csv_file)
+        print(path_parts)
 
         # Check if both value1 and value2 were found
         if provider_name is not None and model_name is not None:
