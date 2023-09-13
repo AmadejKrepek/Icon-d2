@@ -57,6 +57,9 @@ def create_aggregates(csv_file, output_folder, configuration_file):
             print("This is neither Windows nor Linux.")
             sys.exit(1)
             
+        if path_parts[0] == '.':
+            path_parts.pop(0)
+            
         if (path_parts is None):
             print("Path parts not found. Aggregates.py")
             sys.exit(1)
