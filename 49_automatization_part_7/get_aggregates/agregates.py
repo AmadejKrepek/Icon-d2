@@ -2,6 +2,8 @@ import pandas as pd
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from get_aggregates.utils.add_lat_lon_from_csv import add_lat_lon_columns_from_configuration_file
 from get_aggregates.utils.create_aggregated_coordinates import extract_and_save_lat_lon
+import platform
+import sys
 
 def aggregate_data(df, agg_column, agg_function):
     if agg_function == 'sum':
@@ -44,7 +46,20 @@ def create_aggregates(csv_file, output_folder, configuration_file):
         model_run = filename_parts[year_index + 3].split(".")[0]
         
         # Split the file path into parts
-        path_parts = csv_file.split('\\')
+        path_parts = None
+        if platform.system() == 'Windows':
+            print("This is a Windows operating system.")
+            path_parts = csv_file.split('\\')
+        elif platform.system() == 'Linux':
+            print("This is a Linux operating system.")
+            path_parts = csv_file.split('/')
+        else:
+            print("This is neither Windows nor Linux.")
+            sys.exit(1)
+            
+        if (path_parts is None):
+            print("Path parts not found. Aggregates.py")
+            sys.exit(1)
 
         # Check if there are enough parts in the path to extract value1 and value2
         if len(path_parts) >= 4:
