@@ -56,7 +56,7 @@ def insert_parameter_data(parameter_name, data_list):
         # Create a cursor object
         cursor = conn.cursor()
 
-        # Extract start_date, end_date, and interval
+        # Extract start_date, end_date, and interval from the first data item
         start_date, end_date, interval = extract_dates_interval(data_list[0][0])
 
         # Create a new table based on the parameter name
@@ -74,22 +74,23 @@ def insert_parameter_data(parameter_name, data_list):
 
         logger.info(f"Created table '{parameter_table_name}'.")
 
-        # Insert data into the new table
-        for data_item in data_list:
-            parameter_df = data_item[0]
+        # Merge all data into one DataFrame
+        combined_data = pd.concat([data_item[0] for data_item in data_list], ignore_index=True)
 
-            parameter_values = parameter_df[parameter_name]  # Convert Series to a list
+        # Convert the Series to a list for the specified parameter
+        parameter_values = combined_data[parameter_name].tolist()
 
-            cursor.execute(sql.SQL("""
-                INSERT INTO {}
-                ({}, start_date, end_date, interval)
-                VALUES (%s, %s, %s, %s)
-            """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name)), (
-                parameter_values,
-                start_date,
-                end_date,
-                interval
-            ))
+        # Insert the entire dataset into the new table
+        cursor.execute(sql.SQL("""
+            INSERT INTO {}
+            ({}, start_date, end_date, interval)
+            VALUES (%s, %s, %s, %s)
+        """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name)), (
+            parameter_values,
+            start_date,
+            end_date,
+            interval
+        ))
 
         conn.commit()
 
