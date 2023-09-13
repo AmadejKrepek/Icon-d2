@@ -12,3 +12,9 @@ Python Program which convert grib files to beautiful visualization of meteorolog
   - Create aggregates (min, max, avg)
   - Generate meteorological maps
 
+# Installation
+1. First install python 3.9 (recommended with Anaconda)
+2. conda install geopandas
+3. conda install -c conda-forge pygrib
+4. conda install -c conda-forge gdal
+
