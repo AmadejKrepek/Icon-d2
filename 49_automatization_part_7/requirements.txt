@@ -4,17 +4,6 @@ pandas==1.5.1
 numpy==1.25.2
 shapely==2.0.1
 scipy==1.9.3
-gdal
-pyproj
-geopandas
-bs4==4.11.2
-bz2
-pygrib
 zipfile==3.10.0
 
-with conda:
-conda install -c conda-forge pygrib
-conda install -c conda-forge geopandas
-conda install -c conda-forge pyproj
-conda install -c conda-forge gdal
-conda install -c conda-forge shapely
+beautifulsoup4==4.11.2
