@@ -77,8 +77,8 @@ def insert_parameter_data(parameter_name, data_list):
         # Insert data into the new table
         for data_item in data_list:
             parameter_df = data_item[0]
-            parameter_values = parameter_df[parameter_name].tolist()  # Convert Series to a list
-            print(parameter_values)
+
+            parameter_values = parameter_df[parameter_name]  # Convert Series to a list
 
             cursor.execute(sql.SQL("""
                 INSERT INTO {}
