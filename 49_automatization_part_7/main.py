@@ -88,6 +88,7 @@ def main():
     font_path = '../assets/fonts/'
 
     custom_font = FontProperties(fname=font_path + 'font.ttf')
+    print(custom_font.get_name())
 
     storage_directory = "./data"
 
