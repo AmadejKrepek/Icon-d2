@@ -18,3 +18,9 @@ Python Program which convert grib files to beautiful visualization of meteorolog
 3. conda install -c conda-forge pygrib
 4. conda install -c conda-forge gdal
 
+5. pip install python-env
+6. conda install -c anaconda psycopg2
+
+# Imporant
+Don't need requirements.txt for now!
+
