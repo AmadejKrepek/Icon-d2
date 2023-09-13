@@ -2,6 +2,7 @@ from datetime import timedelta
 from parse_gribs.utils.remove_directories import removeDirectories
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
+from database_inserter.insert_to_db import insert_parameter_data
 import pandas as pd
 import glob
 import sys
@@ -163,6 +164,8 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         os.remove(file)
         
     removeDirectories(deleted_directory)
+
+    insert_parameter_data(parameter_name, parameter_data[parameter_name])
 
     # Save data for each parameter to separate CSV files
     return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
