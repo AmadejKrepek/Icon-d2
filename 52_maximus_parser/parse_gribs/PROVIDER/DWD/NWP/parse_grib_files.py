@@ -4,6 +4,8 @@ from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
 from database.insert_to_db import insert_parameter_data
 from database.get_ids import get_model_id, get_provider_id
+from database.check import check_model_run_exists
+from database.parameter import create_parameter_table
 import pandas as pd
 import glob
 import sys
@@ -127,6 +129,8 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     parameter_data = {}  # Dictionary to store data for each parameter
     
     index = 0
+
+    last_model_run = None
     
     for file in filenames:
         print("Processing", file)
@@ -160,6 +164,7 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
             month = date_str[4:6]
             day = date_str[6:8]
             model_run = date_str[8:]
+            last_model_run = model_run
                         
             if parameter_name not in parameter_data:
                 parameter_data[parameter_name] = []
@@ -172,9 +177,18 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         
     removeDirectories(deleted_directory)
 
-    provider_id = get_provider_id(provider_name)
-    model_id = get_model_id(model_name)
-    insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name])
+    if last_model_run.startswith('0'):
+        # Remove leading zeros
+        last_model_run = last_model_run.lstrip('0')
+
+    parameter_table_name = parameter_name.replace(" ", "_").lower()
+    create_parameter_table(parameter_table_name, parameter_name)
+    
+    if not check_model_run_exists(parameter_table_name, last_model_run):
+        provider_id = get_provider_id(provider_name)
+        model_id = get_model_id(model_name)
+        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name)
 
     # Save data for each parameter to separate CSV files
-    return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    return None
