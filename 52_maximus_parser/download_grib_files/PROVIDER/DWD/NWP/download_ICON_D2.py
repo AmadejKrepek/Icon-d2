@@ -78,8 +78,6 @@ def download_gribs(latest_model_run_filename, output_directory):
 
             download_grib_file(url, output_path)
 
-            print(f"Downloaded: {original_filename}")
-
         print("Download complete.")
         return model_run_dir
     else:

@@ -133,7 +133,6 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     last_model_run = None
     
     for file in filenames:
-        print("Processing", file)
         with bz2.BZ2File(file, 'rb') as compressed_file:
             data = compressed_file.read()
         original_filename = os.path.splitext(os.path.basename(file))[0]
