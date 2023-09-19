@@ -15,13 +15,14 @@ load_dotenv()
 
 def extract_dates_interval(data):
     logger.info("Extracting dates and interval...")
-    # Extract start_date from the first row of valid_date column
+    
+    # Extract start_date from the first row of the ValidDate column
     start_date = data['ValidDate'].iloc[0]
     
-    # Extract end_date from the last row of valid_date column
+    # Extract end_date from the last row of the ValidDate column
     end_date = data['ValidDate'].iloc[-1]
     
-    # Calculate interval as the difference between consecutive rows of valid_date
+    # Calculate interval as the difference between consecutive rows of ValidDate
     interval = (data['ValidDate'] - data['ValidDate'].shift()).iloc[1]
     
     return start_date, end_date, interval
@@ -56,9 +57,6 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
         # Create a cursor object
         cursor = conn.cursor()
 
-        # Extract start_date, end_date, and interval from the first data item
-        start_date, end_date, interval = extract_dates_interval(data_list[0][0])
-
         # Create a new table based on the parameter name
         parameter_table_name = parameter_name.replace(" ", "_").lower()
         cursor.execute(sql.SQL("""
@@ -79,10 +77,25 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
         # Initialize combined_data_list as an empty list
         combined_data_list = []
 
+        # Initialize start_date and end_date
+        start_date = None
+        end_date = None            
+
         # Iterate through data_list and append parameter values for each DataFrame as a nested list
         for data_item in data_list:
+            current_start_date, current_end_date, interval = extract_dates_interval(data_item[0])
             parameter_values = data_item[0][parameter_name].tolist()
             combined_data_list.append(parameter_values)
+
+            # Update start_date with the first start_date in the loop
+            if start_date is None:
+                start_date = current_start_date
+            
+            # Update end_date with the current_end_date in each iteration
+            end_date = current_end_date
+
+        print(f"Start date: {start_date}")
+        print(f"End date: {end_date}")
 
         # Insert the entire dataset into the new table
         cursor.execute(sql.SQL("""
