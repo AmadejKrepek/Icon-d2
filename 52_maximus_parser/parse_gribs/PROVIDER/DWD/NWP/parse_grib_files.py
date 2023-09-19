@@ -155,9 +155,6 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
             provider_name = parts[3]
             model_name = parts[4]
 
-            print("Provider Name:", provider_name)
-            print("Model Name:", model_name)
-
             date_str = original_filename.split("_")[4]
             year = date_str[:4]
             month = date_str[4:6]
@@ -177,8 +174,6 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
 
     provider_id = get_provider_id(provider_name)
     model_id = get_model_id(model_name)
-    print(f"Provider id: {provider_id}")
-    print(f"Model id: {model_id}")
     insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name])
 
     # Save data for each parameter to separate CSV files
