@@ -52,7 +52,7 @@ def flatten_extend(matrix):
          flat_list.extend(row)
     return flat_list
 
-def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
+def insert_parameter_data(provider_id, model_id, parameter_name, data_list, model_run, parameter_table_name):
     try:
         # Access the environment variables
         DB_USERNAME = os.getenv("DB_USERNAME")
@@ -75,23 +75,6 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
 
         # Create a cursor object
         cursor = conn.cursor()
-
-        # Create a new table based on the parameter name
-        parameter_table_name = parameter_name.replace(" ", "_").lower()
-        cursor.execute(sql.SQL("""
-            CREATE TABLE IF NOT EXISTS {}
-            (
-                id SERIAL PRIMARY KEY,
-                provider_id VARCHAR,
-                model_id VARCHAR,
-                {} DOUBLE PRECISION[],
-                start_date TIMESTAMP,
-                end_date TIMESTAMP,
-                interval INTERVAL
-            )
-        """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name)))
-
-        logger.info(f"Created table '{parameter_table_name}'.")
 
         # Initialize combined_data_list as an empty list
         combined_data_list = []
@@ -118,11 +101,12 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
         # Insert the entire dataset into the new table
         cursor.execute(sql.SQL("""
             INSERT INTO {}
-            (provider_id, model_id, {}, start_date, end_date, interval)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (provider_id, model_id, model_run, {}, start_date, end_date, interval)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name)), (
             provider_id,
             model_id,
+            model_run,
             combined_data_list,  # Pass the entire nested list as a parameter
             start_date,
             end_date,
