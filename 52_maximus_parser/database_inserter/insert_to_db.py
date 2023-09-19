@@ -32,7 +32,7 @@ def flatten_extend(matrix):
          flat_list.extend(row)
     return flat_list
 
-def insert_parameter_data(parameter_name, data_list):
+def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
     try:
         # Access the environment variables
         DB_USERNAME = os.getenv("DB_USERNAME")
@@ -65,6 +65,8 @@ def insert_parameter_data(parameter_name, data_list):
             CREATE TABLE IF NOT EXISTS {}
             (
                 id SERIAL PRIMARY KEY,
+                provider_id VARCHAR,
+                model_id VARCHAR,
                 {} DOUBLE PRECISION[],
                 start_date TIMESTAMP,
                 end_date TIMESTAMP,
@@ -82,16 +84,15 @@ def insert_parameter_data(parameter_name, data_list):
             parameter_values = data_item[0][parameter_name].tolist()
             combined_data_list.append(parameter_values)
 
-        # Convert the Series to a list for the specified parameter
-        parameter_values = combined_data_list
-
         # Insert the entire dataset into the new table
         cursor.execute(sql.SQL("""
             INSERT INTO {}
-            ({}, start_date, end_date, interval)
-            VALUES (%s, %s, %s, %s)
+            (provider_id, model_id, {}, start_date, end_date, interval)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name)), (
-            parameter_values,
+            provider_id,
+            model_id,
+            combined_data_list,  # Pass the entire nested list as a parameter
             start_date,
             end_date,
             interval

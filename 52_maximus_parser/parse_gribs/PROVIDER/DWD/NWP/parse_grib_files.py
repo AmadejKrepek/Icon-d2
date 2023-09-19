@@ -9,6 +9,7 @@ import sys
 import os
 import bz2
 import pygrib
+import psycopg2
 
 # to nicely display maps we need to adjust coordinates to make sure it fits
 DEVIATION_LAT_MIN = 0.15
@@ -96,6 +97,76 @@ def process_data(filepath, bbox, index):
     
     return df, parameter_name
 
+def get_provider_id(provider_name):
+    try:
+        # Access the environment variables
+        DB_USERNAME = os.getenv("DB_USERNAME")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        DB_HOST = os.getenv("DB_HOST")
+        DB_PORT = os.getenv("DB_PORT")
+        DB_NAME = os.getenv("DB_NAME")
+
+        # Establish a connection to the PostgreSQL database
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USERNAME,
+            password=DB_PASSWORD
+        )
+
+        # Create a cursor object
+        cursor = conn.cursor()
+
+        # Check if the provider exists in the database
+        cursor.execute("SELECT id FROM provider WHERE name = %s", (provider_name,))
+        provider_id = cursor.fetchone()
+
+        # Close the cursor and the connection
+        cursor.close()
+        conn.close()
+
+        return provider_id
+
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+def get_model_id(model_name):
+    try:
+        # Access the environment variables
+        DB_USERNAME = os.getenv("DB_USERNAME")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        DB_HOST = os.getenv("DB_HOST")
+        DB_PORT = os.getenv("DB_PORT")
+        DB_NAME = os.getenv("DB_NAME")
+
+        # Establish a connection to the PostgreSQL database
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USERNAME,
+            password=DB_PASSWORD
+        )
+
+        # Create a cursor object
+        cursor = conn.cursor()
+
+        # Check if the model exists in the database
+        cursor.execute("SELECT id FROM model WHERE name = %s", (model_name,))
+        model_id = cursor.fetchone()
+
+        # Close the cursor and the connection
+        cursor.close()
+        conn.close()
+
+        return model_id
+
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
 
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
@@ -148,6 +219,16 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
 
             data[parameter_name] = convertToOneDecimalPlace(data, parameter_name)
             
+            # Split the filename using "/" as the separator
+            parts = file.split("/")
+
+            # Extract provider_name and model_name from the appropriate positions in the split parts
+            provider_name = parts[3]
+            model_name = parts[4]
+
+            print("Provider Name:", provider_name)
+            print("Model Name:", model_name)
+
             date_str = original_filename.split("_")[4]
             year = date_str[:4]
             month = date_str[4:6]
@@ -165,7 +246,11 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         
     removeDirectories(deleted_directory)
 
-    insert_parameter_data(parameter_name, parameter_data[parameter_name])
+    provider_id = get_provider_id(provider_name)
+    model_id = get_model_id(model_name)
+    print(f"Provider id: {provider_id}")
+    print(f"Model id: {model_id}")
+    insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name])
 
     # Save data for each parameter to separate CSV files
     return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
