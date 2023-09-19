@@ -74,11 +74,16 @@ def insert_parameter_data(parameter_name, data_list):
 
         logger.info(f"Created table '{parameter_table_name}'.")
 
-        # Merge all data into one DataFrame
-        combined_data = pd.concat([data_item[0] for data_item in data_list], ignore_index=True)
+        # Initialize combined_data_list as an empty list
+        combined_data_list = []
+
+        # Iterate through data_list and append parameter values for each DataFrame as a nested list
+        for data_item in data_list:
+            parameter_values = data_item[0][parameter_name].tolist()
+            combined_data_list.append(parameter_values)
 
         # Convert the Series to a list for the specified parameter
-        parameter_values = combined_data[parameter_name].tolist()
+        parameter_values = combined_data_list
 
         # Insert the entire dataset into the new table
         cursor.execute(sql.SQL("""
