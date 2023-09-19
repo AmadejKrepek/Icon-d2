@@ -13,19 +13,38 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env
 load_dotenv()
 
-def extract_dates_interval(data):
-    logger.info("Extracting dates and interval...")
-    
+def extract_dates(data):
     # Extract start_date from the first row of the ValidDate column
     start_date = data['ValidDate'].iloc[0]
     
     # Extract end_date from the last row of the ValidDate column
     end_date = data['ValidDate'].iloc[-1]
     
-    # Calculate interval as the difference between consecutive rows of ValidDate
-    interval = (data['ValidDate'] - data['ValidDate'].shift()).iloc[1]
-    
-    return start_date, end_date, interval
+    return start_date, end_date
+
+def get_interval_from_latest_df(data_list):
+    # Check if data_list has at least two elements
+    if len(data_list) < 2:
+        return None
+
+    # Get the second-to-last and last DataFrames in data_list
+    second_to_last_df = data_list[-2][0]
+    latest_df = data_list[-1][0]
+
+    # Sort both DataFrames by the 'ValidDate' column
+    second_to_last_df = second_to_last_df.sort_values(by='ValidDate')
+    latest_df = latest_df.sort_values(by='ValidDate')
+
+    # Extract start_date from the first row of ValidDate column in the second-to-last DataFrame
+    start_date = second_to_last_df['ValidDate'].iloc[0]
+
+    # Extract end_date from the first row of ValidDate column in the last DataFrame
+    end_date = latest_df['ValidDate'].iloc[0]
+
+    # Calculate interval as the difference between end_date and start_date
+    interval = end_date - start_date
+
+    return interval
 
 def flatten_extend(matrix):
     flat_list = []
@@ -83,7 +102,7 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
 
         # Iterate through data_list and append parameter values for each DataFrame as a nested list
         for data_item in data_list:
-            current_start_date, current_end_date, interval = extract_dates_interval(data_item[0])
+            current_start_date, current_end_date = extract_dates(data_item[0])
             parameter_values = data_item[0][parameter_name].tolist()
             combined_data_list.append(parameter_values)
 
@@ -94,8 +113,7 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list):
             # Update end_date with the current_end_date in each iteration
             end_date = current_end_date
 
-        print(f"Start date: {start_date}")
-        print(f"End date: {end_date}")
+        interval = get_interval_from_latest_df(data_list)
 
         # Insert the entire dataset into the new table
         cursor.execute(sql.SQL("""
