@@ -6,12 +6,14 @@ from database.insert_to_db import insert_parameter_data
 from database.get_ids import get_model_id, get_provider_id
 from database.check import check_model_run_exists
 from database.parameter import create_parameter_table
+from database.utils.remove_characters import remove_leading_zeros
 import pandas as pd
 import glob
 import sys
 import os
 import bz2
 import pygrib
+import numpy as np
 
 # to nicely display maps we need to adjust coordinates to make sure it fits
 DEVIATION_LAT_MIN = 0.15
@@ -29,6 +31,11 @@ def kelvin_to_celsius(kelvin):
 
 def ms_to_kmh(ms):
     return ms * 3.6
+
+def replace_zeros_with_null(value):
+    if value == 0.0:
+        return None
+    return value
 
 def crop_dataframe_to_bbox(df, bbox):
     """
@@ -86,8 +93,6 @@ def process_data(filepath, bbox, index):
     df["Longitude"] = longitudes.ravel()
     df[parameter_name] = variable_data.ravel()
     
-    df[parameter_name] = convertToOneDecimalPlace(df, parameter_name)
-
     # Perform the bounding box filter
     df = crop_dataframe_to_bbox(df, bbox)
     
@@ -146,8 +151,6 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         if data is not None:
             if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                 data[parameter_name] = kelvin_to_celsius(data[parameter_name])
-            elif parameter_name == "maximum Wind 10m" or parameter_name == "10 metre V wind component":
-                data[parameter_name] = ms_to_kmh(data[parameter_name])
 
             data[parameter_name] = convertToOneDecimalPlace(data, parameter_name)
             
@@ -176,10 +179,7 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         
     removeDirectories(deleted_directory)
 
-    if last_model_run.startswith('0'):
-        # Remove leading zeros
-        last_model_run = last_model_run.lstrip('0')
-
+    last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     create_parameter_table(parameter_table_name, parameter_name)
     
