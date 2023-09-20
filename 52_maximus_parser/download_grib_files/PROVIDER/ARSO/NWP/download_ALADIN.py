@@ -50,7 +50,6 @@ def download_gribs(latest_model_run_url, output_directory):
             # Download the file using the provided function
             download_grib_file(latest_model_run_url, local_filepath)
             
-            print(f"Downloaded {local_filename} to {model_run_directory}")
             return model_run_directory
         else:
             print("Invalid filename format")

@@ -6,26 +6,25 @@ def read_variable_names_from_file(file_path):
         variable_names = [line.strip() for line in f if line.strip()]
     return variable_names
 
-def getGribFileNames(selected_params):
+def getGribFileName(param):
     print("Script started at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    param = param[0]
 
     variable_names_file = "./configuration/parameters/icon_d2.config"
     variable_names = read_variable_names_from_file(variable_names_file)
     data = download_and_extract_log_file()
 
     print("Selected parameters:")
-    for param in selected_params:
-        print(param)
+    print(param)
 
     print("Searching for model runs...")
     filenames = []
-    for param in selected_params:
-        latest_file = get_latest_model_run_filename(data, param)
-        if latest_file:
-            filenames.append(latest_file)
-            print(f"Latest model run filename for parameter '{param}': {latest_file}")
-        else:
-            print(f"No regular-lat-lon model run found for parameter '{param}'.")
+    latest_file = get_latest_model_run_filename(data, param)
+    if latest_file:
+        filenames.append(latest_file)
+        print(f"Latest model run filename for parameter '{param}': {latest_file}")
+    else:
+        print(f"No regular-lat-lon model run found for parameter '{param}'.")
 
     if not filenames:
         print("No filenames available for the selected parameters.")
@@ -33,3 +32,4 @@ def getGribFileNames(selected_params):
     print("Script finished at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     return filenames
+

@@ -2,6 +2,11 @@ from datetime import timedelta
 from parse_gribs.utils.remove_directories import removeDirectories
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
+from database.insert_to_db import insert_parameter_data
+from database.get_ids import get_model_id, get_provider_id
+from database.check import check_model_run_exists
+from database.parameter import create_parameter_table
+from database.utils.remove_characters import remove_leading_zeros
 import pandas as pd
 import glob
 import sys
@@ -135,7 +140,6 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         index = 0
         
         for grb_file in grb_files:
-            print("Processing", grb_file)
             temp_decompressed_path = os.path.join(temp_directory, grb_file)
             
             processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
@@ -147,11 +151,19 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                     elif parameter_name == "maximum Wind 10m" or parameter_name == "10 metre V wind component":
                         data[parameter_name] = ms_to_kmh(data[parameter_name])
                     
+                    # Split the filename using "/" as the separator
+                    parts = file.split("/")
+
+                    # Extract provider_name and model_name from the appropriate positions in the split parts
+                    provider_name = parts[3]
+                    model_name = parts[4]
+
                     date_str = os.path.splitext(grb_file)[0]  # Extract date and time from the GRB file name
                     year = date_str[4:8]
                     month = date_str[8:10]
                     day = date_str[10:12]
                     model_run = date_str[12:14]
+                    last_model_run = model_run
                                 
                     if parameter_name not in parameter_data:
                         parameter_data[parameter_name] = []
@@ -166,5 +178,17 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         
         removeDirectories(delete_directory)
 
+    last_model_run = remove_leading_zeros(last_model_run)
+    parameter_table_name = parameter_name.replace(" ", "_").lower()
+    parameter_table_name = parameter_table_name + "_" + model_name.lower()
+    create_parameter_table(parameter_table_name, parameter_name)
+
+    if not check_model_run_exists(parameter_table_name, last_model_run):
+        provider_id = get_provider_id(provider_name)
+        model_id = get_model_id(model_name)
+        insert_parameter_data(provider_id, model_id, parameter_name, 
+                              parameter_data[parameter_name], last_model_run,
+                              parameter_table_name)
     # Save data for each parameter to separate CSV files
-    return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    return None
