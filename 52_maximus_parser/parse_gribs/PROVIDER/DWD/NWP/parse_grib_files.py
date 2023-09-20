@@ -181,6 +181,7 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
 
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
+    parameter_table_name = parameter_table_name + "_" + model_name.lower()
     create_parameter_table(parameter_table_name, parameter_name)
     
     if not check_model_run_exists(parameter_table_name, last_model_run):
