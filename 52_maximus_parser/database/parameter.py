@@ -28,7 +28,7 @@ def create_parameter_table(parameter_table_name, parameter_name):
 
         cursor = conn.cursor()
 
-        # Create the SQL statement for table creation
+        # Create the SQL statement for table creation with a dynamic table name
         create_table_sql = sql.SQL("""
             CREATE TABLE IF NOT EXISTS {}
             (
@@ -36,12 +36,12 @@ def create_parameter_table(parameter_table_name, parameter_name):
                 provider_id VARCHAR,
                 model_id VARCHAR,
                 model_run INT,
-                {} DOUBLE PRECISION[],
-                start_date TIMESTAMP,
-                end_date TIMESTAMP,
+                data REAL[][],
+                start_date TIMESTAMPTZ,
+                end_date TIMESTAMPTZ,
                 interval INTERVAL
             )
-        """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name))
+        """).format(sql.Identifier(parameter_table_name))
 
         # Execute the SQL statement
         cursor.execute(create_table_sql)
