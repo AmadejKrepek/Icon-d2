@@ -1,3 +1,3 @@
+def convertToOneDecimalPlace(df, column_name):
+    return df[column_name].round(1)
 
-def convertToOneDecimalPlace(df, parameter_name):
-    return df[parameter_name].round(1)
