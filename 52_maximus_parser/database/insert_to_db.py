@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 import logging
+import pytz
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -21,6 +23,10 @@ def extract_dates(data):
     end_date = data['ValidDate'].iloc[-1]
     
     return start_date, end_date
+
+def replaceZeroValuesWithNull(combined_data_list):
+    result = [[None if value == 0.0 else value for value in nested_array] for nested_array in combined_data_list]
+    return result
 
 def get_interval_from_latest_df(data_list):
     # Check if data_list has at least two elements
@@ -60,7 +66,6 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list, mode
         DB_HOST = os.getenv("DB_HOST")
         DB_PORT = os.getenv("DB_PORT")
         DB_NAME = os.getenv("DB_NAME")
-
         logger.info("Establishing a connection to the PostgreSQL database...")
         # Establish a connection to the PostgreSQL database
         conn = psycopg2.connect(
@@ -83,9 +88,14 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list, mode
         start_date = None
         end_date = None            
 
+        local_timezone = pytz.timezone('Europe/Ljubljana')
+
         # Iterate through data_list and append parameter values for each DataFrame as a nested list
         for data_item in data_list:
-            current_start_date, current_end_date = extract_dates(data_item[0])
+            current_start_date, current_end_date = extract_dates(data_item[0])  # Implement extract_dates function
+
+            df = data_item[0][parameter_name]                
+
             parameter_values = data_item[0][parameter_name].tolist()
             combined_data_list.append(parameter_values)
 
@@ -96,14 +106,24 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list, mode
             # Update end_date with the current_end_date in each iteration
             end_date = current_end_date
 
-        interval = get_interval_from_latest_df(data_list)
+        # Add a local timezone (replace 'America/New_York' with your desired timezone)
+        start_date = start_date.tz_localize('UTC').astimezone(local_timezone)
+        end_date = end_date.tz_localize('UTC').astimezone(local_timezone)
 
-        # Insert the entire dataset into the new table
-        cursor.execute(sql.SQL("""
+        interval = get_interval_from_latest_df(data_list)  # Implement get_interval_from_latest_df function
+
+        if parameter_name == "Total Precipitation":
+            combined_data_list = replaceZeroValuesWithNull(combined_data_list)
+
+        # Insert the entire dataset into the new table with dynamic table name
+        insert_data_sql = sql.SQL("""
             INSERT INTO {}
-            (provider_id, model_id, model_run, {}, start_date, end_date, interval)
+            (provider_id, model_id, model_run, data, start_date, end_date, interval)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """).format(sql.Identifier(parameter_table_name), sql.Identifier(parameter_name)), (
+        """).format(sql.Identifier(parameter_table_name))
+
+        # Execute the SQL statement
+        cursor.execute(insert_data_sql, (
             provider_id,
             model_id,
             model_run,
