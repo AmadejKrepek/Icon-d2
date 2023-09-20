@@ -1,10 +1,14 @@
 import os
 import time
 import logging
+import traceback
 
-from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNames as getDWDGribFileNames
+from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileName as getDWDGribFileNames
+from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNames as getARSOGribFileNames
 from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2 as downloadDWD
+from download_grib_files.PROVIDER.ARSO.NWP import download_ALADIN as downloadALADIN
 from parse_gribs.PROVIDER.DWD.NWP.parse_grib_files import parse_gribs as parse_gribs_DWD
+from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_gribs_ARSO
 
 logging.basicConfig(
     filename='scheduler.log',
@@ -14,31 +18,41 @@ logging.basicConfig(
 )
 
 provider_models = {
-    "DWD": ["IconD2"],
+    "DWD": {
+        "IconD2": {
+            "schedule": [(22, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
+            "params": ["tot_prec", "vmax_10m", "t_2m"],  # Parameters for IconD2
+        },
+    },
+    "ARSO": {
+        "Aladin": {
+            "schedule": [(0, 15), (6, 15), (12, 15), (18, 15)],
+            "params": ["tot_prec"],  # Parameters for Aladin FAKE FOR NOW ONLY total precipitation
+        },
+    },
 }
 
-selected_params = ["tot_prec"]
-
-def download_and_parse(output_directory_gribs, output_directory, getGribFileNames, download_function, parse_gribs, provider_directory, model_directory):
+def download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNames, download_function, parse_gribs, provider_directory, model_directory, param):
     try:
-        filenames = getGribFileNames(selected_params)
+        if model_directory == "IconD2":
+            filenames = getGribFileNames([param])
+        else:
+            filenames = getGribFileNames()  # Use without parameter selection for Aladin
+
+        print(model_directory)
 
         for filename in filenames:
-            # Create provider and model directories
             provider_model_directory = os.path.join(output_directory_gribs, provider_directory, model_directory)
             os.makedirs(provider_model_directory, exist_ok=True)
 
             resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
-        
-        if (resulted_gribs_directory is None):
-            return None
 
-        # Append provider_directory and model_directory after output_directory
         resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory), output_directory_gribs)
         print(f"Downloaded and parsed {resulted_csv_file}")
         return resulted_csv_file
     except Exception as e:
         print("Error during download and parse:", e)
+        
         return None
 
 storage_directory = "./data"
@@ -46,29 +60,31 @@ output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files"
 output_directory = os.path.join(storage_directory, "output")
 
 def run_job():
-    for provider_directory, available_models in provider_models.items():
-        for model_directory in available_models:
+    current_hour = int(time.strftime("%H"))
+    current_minute = int(time.strftime("%M"))
+
+    for provider_directory, models in provider_models.items():
+        for model_directory, model_info in models.items():
             try:
-                logging.info(f"Provider: {provider_directory}, model: {model_directory}")
+                model_schedule = model_info["schedule"]
+                model_params = model_info["params"]
 
-                resulted_csv_file = download_and_parse(output_directory_gribs, output_directory, getDWDGribFileNames, downloadDWD, parse_gribs_DWD, provider_directory, model_directory)
+                for (scheduled_hour, scheduled_minute) in model_schedule:
+                    if current_hour == scheduled_hour and current_minute == scheduled_minute:
+                        logging.info(f"Provider: {provider_directory}, model: {model_directory}, param: {model_params}")
+                        getGribFileNamesFunc = getDWDGribFileNames if provider_directory == "DWD" else getARSOGribFileNames
+                        download_function = downloadDWD if provider_directory == "DWD" else downloadALADIN
+                        parse_gribs_function = parse_gribs_DWD if provider_directory == "DWD" else parse_gribs_ARSO
 
-                logging.info("Download and parse completed successfully.")
+                        for param in model_params:
+                            download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNamesFunc, download_function, parse_gribs_function, provider_directory, model_directory, param)
             except Exception as e:
-                logging.error(f"Error downloading and parsing data: {str(e)}")
-
-
-# Define the specified hours
-specified_hours = [0, 3, 6, 9, 12, 15, 18, 21]
+                error_message = f"Error downloading and parsing data: {str(e)}"
+                traceback_str = traceback.format_exc()  # Get the traceback as a string
+                logging.error(f"{error_message}\n{traceback_str}")
 
 run_job()
 
 while True:
-    current_hour = int(time.strftime("%H"))
-    current_minute = int(time.strftime("%M"))
-
-    if current_hour in specified_hours and current_minute == 44:
-        run_job()  # Call the function when the time matches
-        time.sleep(60)  # Sleep for a minute to avoid repeated calls in the same minute
-    else:
-        time.sleep(30)  # Check every 30 seconds
+    run_job()
+    time.sleep(30)
