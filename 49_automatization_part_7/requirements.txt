@@ -1,4 +1,9 @@
-matplotlib==3.4.3
-pandas==1.3.3
-numpy==1.21.2
-shapely==1.7.1
+urllib3==1.26.12
+matplotlib==3.6.2
+pandas==1.5.1
+numpy==1.25.2
+shapely==2.0.1
+scipy==1.9.3
+zipfile==3.10.0
+
+beautifulsoup4==4.11.2

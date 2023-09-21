@@ -102,6 +102,7 @@ def main():
     resulted_csv_file = None
 
     getGribFileNames, download_function, parse_gribs, provider_directory, model_directory = choose_nwp_provider()
+    print(f"Provider: {provider_directory}, model: {model_directory}")
     coordinates_configuration = changeCoordinatesConfiguration(model_directory)
     grouped_coordinates_configuration = changeGroupedCoordinatesConfiguration(model_directory)
         
@@ -132,6 +133,7 @@ def main():
                 print("Error during map generation:", e)
         elif choice == '4':
             getGribFileNames, download_function, parse_gribs, provider_directory, model_directory = choose_nwp_provider()
+            print(f"Provider: {provider_directory}, model: {model_directory}")
             coordinates_configuration = changeCoordinatesConfiguration(model_directory)
             grouped_coordinates_configuration = changeGroupedCoordinatesConfiguration(model_directory)
         elif choice == '5':

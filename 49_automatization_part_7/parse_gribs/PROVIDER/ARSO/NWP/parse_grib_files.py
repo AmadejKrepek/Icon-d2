@@ -77,6 +77,10 @@ def process_data(filepath, bbox, index):
         
     for grb in grbs:
         parameter_name = grb.name
+        
+        if parameter_name != "Total Precipitation":
+            continue
+        
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
         valid_date = grb.validDate
