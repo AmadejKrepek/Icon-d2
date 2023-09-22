@@ -26,7 +26,7 @@ provider_models = {
     },
     "ARSO": {
         "Aladin": {
-            "schedule": [(21, 30), (3, 30), (9, 30), (15, 30)],
+            "schedule": [(23, 30), (5, 30), (11, 30), (17, 30)],
             "params": ["tot_prec"],  # Parameters for Aladin FAKE FOR NOW ONLY total precipitation
         },
     },
