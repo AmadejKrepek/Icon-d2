@@ -179,12 +179,13 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         
     removeDirectories(deleted_directory)
 
+    start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
     create_parameter_table(parameter_table_name, parameter_name)
     
-    if not check_model_run_exists(parameter_table_name, last_model_run):
+    if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
         provider_id = get_provider_id(provider_name)
         model_id = get_model_id(model_name)
         insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name)
