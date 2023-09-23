@@ -3,6 +3,7 @@ import psycopg2
 import csv
 from dotenv import load_dotenv
 import os
+import traceback
 
 # Load environment variables from .env
 load_dotenv()
@@ -71,28 +72,7 @@ def select_table():
         print("Invalid input. Please enter a valid number.")
         return None
 
-def append_interval_to_nested_arrays(data):
-    try:
-        for i in range(len(data)):
-            start_date, end_date, interval, nested_data = data[i]
-            current_date = start_date
-            interval_seconds = int(interval.total_seconds())
-            updated_nested_data = []
-            for _ in range(len(nested_data)):
-                updated_day_data = [current_date, *nested_data[_]]
-                updated_nested_data.append(updated_day_data)
-                current_date += timedelta(seconds=interval_seconds)
-            data[i] = (start_date, end_date, interval, updated_nested_data)
-
-        return data
-
-    except Exception as e:
-        # Log the error and display a more informative message
-        error_message = f"An error occurred: {str(e)}"
-        print(error_message)
-        return None
-
-def aggregate_data_by_date(data, selected_date):
+def aggregate_data_by_date(data, selected_date, aggregation_func=max):
     try:
         # Filter data for the selected date
         filtered_data = [row for row in data if row[0].date() == selected_date]
@@ -108,13 +88,15 @@ def aggregate_data_by_date(data, selected_date):
             print(f"No values found for aggregation on date: {selected_date}.")
             return None
 
-        # Initialize aggregated values with the first coordinate values
-        aggregated_values = values_to_aggregate[0]
+        # Initialize a list to store aggregated values
+        aggregated_values = []
 
-        # Iterate through the coordinates and aggregate
-        for values in values_to_aggregate[1:]:
-            for i, value in enumerate(values):
-                aggregated_values[i] += value
+        # Iterate through the coordinates and aggregate element-wise
+        for i in range(len(values_to_aggregate[0])):
+            values_at_index = [nested_array[i] if nested_array[i] is not None else 0.0 for nested_array in values_to_aggregate[0]]
+            print(values_at_index)
+            aggregated_value = aggregation_func(values_at_index)
+            aggregated_values.append(aggregated_value)
 
         return aggregated_values
 
@@ -124,6 +106,8 @@ def aggregate_data_by_date(data, selected_date):
         print(error_message)
         return None
 
+
+
 def write_aggregated_data_to_csv(selected_date, aggregated_values, output_file):
     try:
         # Prepare data for CSV
@@ -132,7 +116,7 @@ def write_aggregated_data_to_csv(selected_date, aggregated_values, output_file):
         # Write data to CSV file
         with open(output_file, "w", newline="") as csv_file:
             csv_writer = csv.writer(csv_file)
-            csv_writer.writerow(["Date", "Aggregated_Values"])  # CSV header
+            csv_writer.writerow(["Date"] + [f"Aggregated_Value_{i+1}" for i in range(len(aggregated_values))])  # CSV header
             csv_writer.writerow(data_to_write)
 
         print(f"CSV file '{output_file}' created successfully.")
@@ -166,13 +150,6 @@ def read_data_and_generate_csv(table_name, output_file):
             print("No data found in the selected table.")
             return
 
-        # Append interval to nested arrays
-        data = append_interval_to_nested_arrays(data)
-
-        if not data:
-            print("Error occurred while appending interval to nested arrays.")
-            return
-
         # Get unique dates from the data
         unique_dates = set(row[0].date() for row in data)
 
@@ -198,10 +175,9 @@ def read_data_and_generate_csv(table_name, output_file):
             return
 
         # Aggregate data for the selected date
-        aggregated_values = aggregate_data_by_date(data, selected_date)
+        aggregated_values = aggregate_data_by_date(data, selected_date, aggregation_func=max)
 
         if not aggregated_values:
-            print("Error occurred while aggregating data.")
             return
 
         # Write aggregated data to CSV file
