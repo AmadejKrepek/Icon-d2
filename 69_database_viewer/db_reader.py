@@ -1,4 +1,6 @@
 import csv
+from datetime import datetime, timedelta
+import re
 
 def select_record_and_aggregate(cursor, table_name):
     try:
@@ -44,7 +46,7 @@ def select_record_and_aggregate(cursor, table_name):
         except ValueError:
             print("Invalid input. Please enter a valid number.")
             return
-
+        
         # Ask the user to select an aggregation method
         print("Available aggregations:")
         print("1. Max")
@@ -63,7 +65,21 @@ def select_record_and_aggregate(cursor, table_name):
             return
 
         # Aggregate the data based on the selected record, model run, and aggregation choice
-        aggregated_data = aggregate_data(cursor, table_name, selected_record[0], selected_model_run, selected_aggregation)
+        aggregated_data, start_date, end_date = aggregate_data(cursor, table_name, selected_record[0], selected_model_run, selected_aggregation)
+
+        selected_date = selectTimeSeriesDates(start_date, end_date)
+
+        filtered_data = filterDataBySelectedDate(aggregated_data, selected_date)
+
+        # Define the file name where you want to write the filtered data
+        output_file = "filtered_data.txt"  # You can change the file name and extension
+
+        # Write the filtered data to the file
+        with open(output_file, "w") as file:
+            for record in filtered_data:
+                file.write(str(record) + "\n")
+
+        print(f"Filtered data has been written to {output_file}")
 
         if not aggregated_data:
             return
@@ -76,14 +92,52 @@ def select_record_and_aggregate(cursor, table_name):
         error_message = f"An error occurred: {str(e)}"
         print(error_message)
 
+def filterDataBySelectedDate(timestamped_data, selected_date):
+    filtered_data = []
+    for record in timestamped_data:
+        for entry in record:
+            entry_date_str = entry['date']
+            entry_date = datetime.strptime(entry_date_str, "%Y-%m-%d %H:%M:%S")
+            if entry_date.date() == selected_date.date():
+                filtered_data.append(entry)
+    return filtered_data
+
+def selectTimeSeriesDates(start_date, end_date):
+    # Create a list of dates within the range
+    date_range = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+
+    # Display the list of dates for user selection
+    print("Select a date from the available options:")
+    for idx, date in enumerate(date_range):
+        print(f"{idx + 1}. {date.strftime('%Y-%m-%d')}")
+
+    # User input to select a specific date
+    selected_date_idx = int(input("Enter the number of the selected date: ")) - 1
+
+    # Get the selected date
+    selected_date = date_range[selected_date_idx]
+
+    return selected_date
+
+def createTimeStampedData(aggregated_data, start_date, interval):
+    result = []
+    current_date = start_date
+    for data in aggregated_data:
+        for value in data[3]:
+            timestamped_values = []
+            for v in value:
+                timestamped_values.append({"date": current_date.strftime("%Y-%m-%d %H:%M:%S"), "value": v})
+            result.append(timestamped_values)
+            current_date += interval
+    return result
+
 def extract_data(aggregated_data):
     start_date = aggregated_data[0][0]
     end_date = aggregated_data[0][1]
     interval = aggregated_data[0][2]
-    print(len(aggregated_data[0][3]))
-    for item in aggregated_data[0][3]:
-        #print(item)
-        break;
+    
+    data = createTimeStampedData(aggregated_data, start_date, interval)
+    return data, start_date, end_date
 
 def aggregate_data(cursor, table_name, selected_record, selected_model_run, aggregation_choice):
     try:
@@ -106,9 +160,9 @@ def aggregate_data(cursor, table_name, selected_record, selected_model_run, aggr
         # Fetch aggregated data
         aggregated_data = cursor.fetchall()
 
-        aggregated_data = extract_data(aggregated_data)
+        aggregated_data, start_date, end_date = extract_data(aggregated_data)
 
-        return aggregated_data
+        return aggregated_data, start_date, end_date
 
     except Exception as e:
         # Log the error and display a more informative message
