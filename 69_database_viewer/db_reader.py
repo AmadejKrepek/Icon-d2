@@ -71,32 +71,24 @@ def select_table():
         print("Invalid input. Please enter a valid number.")
         return None
 
-def select_record(cursor, table_name):
+def select_date_for_aggregation(data):
     try:
-        # Query to retrieve the rows from the selected table
-        cursor.execute(f"SELECT DISTINCT start_date, end_date, model_run FROM {table_name} ORDER BY start_date DESC")
+        # Get unique dates from the data
+        unique_dates = list(set([row[0].date() for row in data]))
 
-        # Fetch all available rows
-        rows = cursor.fetchall()
-
-        if not rows:
-            print(f"No rows found in table '{table_name}'.")
+        if not unique_dates:
+            print("No valid dates found in the data.")
             return None
 
-        print("Available rows:")
-        for i, (start_date, end_date, model_run) in enumerate(rows, start=1):
-            print(f"{i}. Start Date: {start_date}, End Date: {end_date}, Model Run: {model_run}")
+        print("Available dates for aggregation:")
+        for i, date in enumerate(unique_dates, start=1):
+            print(f"{i}. {date}")
 
         try:
-            row_index = int(input("Enter the number of the row you want to choose: ")) - 1
-            if 0 <= row_index < len(rows):
-                selected_row = rows[row_index]
-                start_date, end_date, model_run = selected_row
-                print("Selected row:")
-                print(f"Start Date: {start_date}")
-                print(f"End Date: {end_date}")
-                print(f"Model Run: {model_run}")
-                return start_date, end_date, model_run
+            date_index = int(input("Enter the number of the date you want to choose for aggregation: ")) - 1
+            if 0 <= date_index < len(unique_dates):
+                selected_date = unique_dates[date_index]
+                return selected_date
             else:
                 print("Invalid selection.")
                 return None
@@ -110,10 +102,6 @@ def select_record(cursor, table_name):
         print(error_message)
         return None
 
-def replace_none_with_zero(data):
-    # Replace None (null) values with 0.0 in the data
-    return [[0.0 if value is None or value == 'null' else value for value in row] for row in data]
-
 def select_aggregation():
     print("Available aggregations:")
     print("1. Max")
@@ -123,7 +111,12 @@ def select_aggregation():
     try:
         aggregation_choice = int(input("Enter the number of the aggregation you want to perform: "))
         if aggregation_choice in [1, 2, 3]:
-            return aggregation_choice
+            if aggregation_choice == 1:
+                return "MAX"
+            elif aggregation_choice == 2:
+                return "MIN"
+            elif aggregation_choice == 3:
+                return "AVG"
         else:
             print("Invalid selection.")
             return None
@@ -131,26 +124,30 @@ def select_aggregation():
         print("Invalid input. Please enter a valid number.")
         return None
 
-def aggregate_data(cursor, table_name, aggregation_choice):
+def aggregate_data_by_date(data, selected_date, aggregation_choice):
     try:
-        aggregation_sql = ""
-        if aggregation_choice == 1:
-            aggregation_sql = f"MAX(value) AS aggregated_data"
-        elif aggregation_choice == 2:
-            aggregation_sql = f"MIN(value) AS aggregated_data"
-        elif aggregation_choice == 3:
-            aggregation_sql = f"AVG(value) AS aggregated_data"
+        # Filter data for the selected date
+        filtered_data = [row for row in data if row[0].date() == selected_date]
 
-        # Query to retrieve aggregated data from the selected table, unnesting the 'data' column
-        cursor.execute(f"""
-            SELECT {aggregation_sql}
-            FROM {table_name}, unnest(data) as t (value);
-        """)
+        if not filtered_data:
+            print(f"No data found for the selected date: {selected_date}.")
+            return None
 
-        # Fetch aggregated data
-        aggregated_data = cursor.fetchall()
+        # Extract the values to be aggregated
+        values_to_aggregate = [row[1] for row in filtered_data]
 
-        return aggregated_data
+        # Perform aggregation (max, min, or average) on the values
+        if aggregation_choice == "MAX":
+            aggregated_value = max(values_to_aggregate)
+        elif aggregation_choice == "MIN":
+            aggregated_value = min(values_to_aggregate)
+        elif aggregation_choice == "AVG":
+            aggregated_value = sum(values_to_aggregate) / len(values_to_aggregate)
+        else:
+            print("Invalid aggregation choice.")
+            return None
+
+        return aggregated_value
 
     except Exception as e:
         # Log the error and display a more informative message
@@ -158,7 +155,7 @@ def aggregate_data(cursor, table_name, aggregation_choice):
         print(error_message)
         return None
 
-def read_data_and_generate_csv(table_name, parameter_name, output_file, aggregation_choice):
+def read_data_and_generate_csv(table_name, output_file):
     try:
         # Establish a connection to the PostgreSQL database
         conn = psycopg2.connect(
@@ -172,30 +169,47 @@ def read_data_and_generate_csv(table_name, parameter_name, output_file, aggregat
         # Create a cursor object
         cursor = conn.cursor()
 
-        selected_row = select_record(cursor, table_name)
-        if not selected_row:
+        # Query to retrieve data from the selected table
+        cursor.execute(f"SELECT start_date, end_date, interval, data FROM {table_name}")
+
+        # Fetch all data
+        data = cursor.fetchall()
+
+        if not data:
+            print("No data found in the selected table.")
             return
 
-        # Aggregate the data based on the selected aggregation choice
-        aggregated_data = aggregate_data(cursor, table_name, aggregation_choice)
+        # Append start_date and end_date with interval to every nested array in the "data" column
+        for i in range(len(data)):
+            start_date, end_date, interval, nested_data = data[i]
+            current_date = start_date
+            interval_seconds = int(interval.total_seconds())
+            updated_nested_data = []
+            for day_data in nested_data:
+                current_date += timedelta(seconds=interval_seconds)
+                updated_day_data = [current_date, *day_data]
+                updated_nested_data.append(updated_day_data)
+            data[i] = (start_date, end_date, updated_nested_data)
 
-        if not aggregated_data:
-            print("No data found for the selected aggregation.")
+        selected_date = select_date_for_aggregation(data)
+        if not selected_date:
             return
 
-        # Replace None (null) values with 0.0
-        aggregated_data = replace_none_with_zero(aggregated_data)
+        aggregation_choice = select_aggregation()
+        if not aggregation_choice:
+            return
 
-        # Prepare data for CSV
-        csv_data = [[aggregated_value] for aggregated_value in aggregated_data]
+        # Aggregate data by the selected date and aggregation choice
+        aggregated_value = aggregate_data_by_date(data, selected_date, aggregation_choice)
 
-        # Write data to CSV file
-        with open(output_file, "w", newline="") as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow([parameter_name])  # CSV header
-            csv_writer.writerows(csv_data)
+        if aggregated_value is not None:
+            # Write data to CSV file
+            with open(output_file, "w", newline="") as csv_file:
+                csv_writer = csv.writer(csv_file)
+                csv_writer.writerow(["Valid Date", f"Aggregated ({aggregation_choice}) Value"])  # CSV header
+                csv_writer.writerow([selected_date, aggregated_value])  # Aggregated data row
 
-        print(f"CSV file '{output_file}' created successfully.")
+            print(f"CSV file '{output_file}' created successfully.")
 
         # Close the cursor and the connection
         cursor.close()
