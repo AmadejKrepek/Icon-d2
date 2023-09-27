@@ -1,9 +1,12 @@
+from parse_settings.read.read_colors import read_colors
 import psycopg2
 import os
 from dotenv import load_dotenv
 import csv
 from datetime import datetime, timedelta
 import pandas as pd
+from generate_maps.create import create_maps
+from matplotlib.font_manager import FontProperties
 
 # Load environment variables from .env
 load_dotenv()
@@ -67,7 +70,7 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
         cursor = conn.cursor()
 
         # Query the data from the specified table
-        cursor.execute(f"SELECT start_date, end_date, interval, data FROM {table_name} LIMIT 1")
+        cursor.execute(f"SELECT start_date, end_date, interval, model_run, data FROM {table_name} LIMIT 1")
 
         # Fetch all rows
         rows = cursor.fetchall()
@@ -81,7 +84,7 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
 
         if rows:
             for row in rows:
-                start_date, end_date, interval, data = row
+                start_date, end_date, interval, model_run, data = row
                 current_date = start_date
                 interval_seconds = int(interval.total_seconds())
 
@@ -123,7 +126,7 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
 
             print(f"CSV file '{output_file}' created successfully.")
 
-            return df, initial_start_date, initial_end_date, initial_interval
+            return df, initial_start_date, initial_end_date, initial_interval, model_run
 
         else:
             print(f"No data found in table '{table_name}'.")
@@ -260,7 +263,13 @@ if __name__ == "__main__":
                         if agg_function in ["sum", "max", "min"]:
                             print(f"Aggregated data using {agg_function}:")
                             # Perform aggregation here using provider_id, model_id, and selected_record
-                            df, start_date, end_date, interval = write_data_to_csv_with_coordinates(selected_table, "./data/output_with_coordinates.csv", provider_id, model_id)
+                            df, start_date, end_date, interval, model_run = write_data_to_csv_with_coordinates(selected_table, "./data/output_with_coordinates.csv", provider_id, model_id)
+                            color_configuration = read_colors("../assets/colors/colors.config")
+                            storage_directory = "./data"
+                            maps_output_directory = os.path.join(storage_directory, 'public/plots')
+                            font_path = '../assets/fonts/'
+                            custom_font = FontProperties(fname=font_path + 'font.ttf')
+                            create_maps(model_run, df, maps_output_directory, color_configuration, custom_font, start_date, end_date, interval)
                         else:
                             print("Invalid aggregation function. Please choose from 'sum', 'max', or 'min'.")
                     else:
