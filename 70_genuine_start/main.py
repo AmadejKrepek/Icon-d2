@@ -123,7 +123,7 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
 
             print(f"CSV file '{output_file}' created successfully.")
 
-            return df, initial_start_date, initial_end_date, interval
+            return df, initial_start_date, initial_end_date, initial_interval
 
         else:
             print(f"No data found in table '{table_name}'.")
@@ -152,4 +152,4 @@ if __name__ == "__main__":
     provider_id = "6be8cea2-f29b-4198-aa68-10c57845ad25"  # Replace with the desired provider_id as a string
     model_id = "581e4233-dc8c-44d3-b351-c115dc32fc53"  # Replace with the desired model_id as a string
 
-    df = write_data_to_csv_with_coordinates(table_name, output_file, provider_id, model_id)
+    df, start_date, end_date, interval = write_data_to_csv_with_coordinates(table_name, output_file, provider_id, model_id)
