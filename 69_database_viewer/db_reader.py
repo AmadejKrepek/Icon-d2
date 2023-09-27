@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime, timedelta
-import re
+import traceback
+import pandas as pd
 
 def select_record_and_aggregate(cursor, table_name):
     try:
@@ -71,6 +72,20 @@ def select_record_and_aggregate(cursor, table_name):
 
         filtered_data = filterDataBySelectedDate(aggregated_data, selected_date)
 
+        grouped_data = groupDataByIndexAndDate(filtered_data)
+        data_frames = [pd.DataFrame(date_values) for date_values in grouped_data.values()]
+        # Define the output file name
+        output_file = "output.csv"
+
+        # Concatenate the list of DataFrames into a single DataFrame
+        combined_df = pd.concat(data_frames, axis=1)
+
+        # Write the combined DataFrame to a CSV file
+        combined_df.to_csv(output_file, index=False)
+
+        print(f"CSV file '{output_file}' created successfully.")
+
+
         # Define the file name where you want to write the filtered data
         output_file = "filtered_data.txt"  # You can change the file name and extension
 
@@ -85,12 +100,25 @@ def select_record_and_aggregate(cursor, table_name):
             return
 
         # Write aggregated data to CSV file
-        write_aggregated_data_to_csv(selected_record[0], selected_model_run, selected_aggregation, aggregated_data)
+        write_aggregated_data_to_csv(selected_record[0], selected_model_run, selected_aggregation, grouped_data)
 
     except Exception as e:
         # Log the error and display a more informative message
         error_message = f"An error occurred: {str(e)}"
         print(error_message)
+
+def groupDataByIndexAndDate(filtered_data):
+    grouped_data = {}
+    for entry in filtered_data:
+        index = entry['index']  # Replace 'index' with the actual key you want to use for grouping
+        date = entry['date'].split()[0]  # Extract date without time
+        if index not in grouped_data:
+            grouped_data[index] = {}
+        if date not in grouped_data[index]:
+            grouped_data[index][date] = []
+        grouped_data[index][date].append(entry)
+    return grouped_data
+
 
 def filterDataBySelectedDate(timestamped_data, selected_date):
     filtered_data = []
@@ -122,13 +150,16 @@ def selectTimeSeriesDates(start_date, end_date):
 def createTimeStampedData(aggregated_data, start_date, interval):
     result = []
     current_date = start_date
+    index = 0
     for data in aggregated_data:
         for value in data[3]:
             timestamped_values = []
             for v in value:
-                timestamped_values.append({"date": current_date.strftime("%Y-%m-%d %H:%M:%S"), "value": v})
+                timestamped_values.append({'index': index, "date": current_date.strftime("%Y-%m-%d %H:%M:%S"), "value": v})
+                index += 1
             result.append(timestamped_values)
             current_date += interval
+            index = 0
     return result
 
 def extract_data(aggregated_data):
@@ -160,9 +191,9 @@ def aggregate_data(cursor, table_name, selected_record, selected_model_run, aggr
         # Fetch aggregated data
         aggregated_data = cursor.fetchall()
 
-        aggregated_data, start_date, end_date = extract_data(aggregated_data)
-
-        return aggregated_data, start_date, end_date
+        # Create a DataFrame from the fetched data
+        df = pd.DataFrame(aggregated_data, columns=["start_date", "end_date", "interval", "aggregated_data"])
+        return df
 
     except Exception as e:
         # Log the error and display a more informative message
@@ -172,15 +203,34 @@ def aggregate_data(cursor, table_name, selected_record, selected_model_run, aggr
 
 def write_aggregated_data_to_csv(selected_record, selected_model_run, selected_aggregation, aggregated_data):
     try:
-        # Prepare data for CSV
-        csv_data = [[start_date, end_date, aggregated_value] for start_date, end_date, aggregated_value in aggregated_data]
-
-        # Write data to CSV file
+        header = "Aggregated Value"  # Hardcoded header
+        # Define the output file name
         output_file = f"aggregated_data_{selected_record}_{selected_model_run}_{selected_aggregation}.csv"
+
+        # Initialize an empty list to store 'value' entries
+        values = []
+
+        # Iterate through the list of dictionaries
+        for data_dict in aggregated_data:
+            for date_values in data_dict.values():
+                for entry in date_values:
+                    values.append(entry['value'])
+
+        # Create a list of dictionaries with the hardcoded header
+        data = [{header: value} for value in values]
+
+        # Create a CSV file and write the data
         with open(output_file, "w", newline="") as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow(["Start Date", "End Date", "Aggregated Value"])  # CSV header
-            csv_writer.writerows(csv_data)
+            fieldnames = [header]
+
+            # Initialize the DictWriter
+            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+            # Write the header row
+            csv_writer.writeheader()
+
+            # Write the data
+            csv_writer.writerows(data)
 
         print(f"CSV file '{output_file}' created successfully.")
 
