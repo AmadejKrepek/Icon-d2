@@ -144,12 +144,130 @@ def createAgregates(csv_data, agg_function, table_name):
         return df.groupby(['Latitude', 'Longitude'])[agg_column].max()
     elif agg_function == 'min':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].min()
-    
-if __name__ == "__main__":
-    # Specify the table name, output file name, provider_id, and model_id
-    table_name = "total_precipitation_icond2"  # Replace with your table name
-    output_file = "./data/output_with_coordinates.csv"  # Replace with your desired output file name
-    provider_id = "6be8cea2-f29b-4198-aa68-10c57845ad25"  # Replace with the desired provider_id as a string
-    model_id = "581e4233-dc8c-44d3-b351-c115dc32fc53"  # Replace with the desired model_id as a string
 
-    df, start_date, end_date, interval = write_data_to_csv_with_coordinates(table_name, output_file, provider_id, model_id)
+def list_tables():
+    try:
+        # Establish a connection to the PostgreSQL database
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USERNAME,
+            password=DB_PASSWORD
+        )
+
+        # Create a cursor object
+        cursor = conn.cursor()
+
+        # Query to get a list of tables in the database
+        cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+
+        # Fetch all table names
+        tables = cursor.fetchall()
+
+        # Close the cursor and the connection
+        cursor.close()
+        conn.close()
+
+        return [table[0] for table in tables]
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+
+def display_records(table_name):
+    try:
+        # Establish a connection to the PostgreSQL database
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USERNAME,
+            password=DB_PASSWORD
+        )
+
+        # Create a cursor object
+        cursor = conn.cursor()
+
+        # Query to fetch only specific columns from the specified table
+        cursor.execute(f"SELECT start_date, end_date, model_run FROM {table_name}")
+
+        # Fetch all records
+        records = cursor.fetchall()
+
+        # Close the cursor and the connection
+        cursor.close()
+        conn.close()
+
+        return records
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+
+if __name__ == "__main__":
+    # List all available tables
+    tables = list_tables()
+
+    if not tables:
+        print("No tables found in the database.")
+    else:
+        print("Available tables:")
+        for idx, table in enumerate(tables):
+            print(f"{idx + 1}. {table}")
+
+        # Let the user choose a table
+        table_choice = input("Enter the number of the table you want to view records for: ")
+
+        try:
+            table_choice = int(table_choice)
+            if 1 <= table_choice <= len(tables):
+                selected_table = tables[table_choice - 1]
+
+                # Determine the provider_id and model_id based on the table name
+                if selected_table.endswith("_icond2"):
+                    provider_id = "6be8cea2-f29b-4198-aa68-10c57845ad25"  # Set the appropriate ID for icond2
+                    model_id = "581e4233-dc8c-44d3-b351-c115dc32fc53"  # Set the appropriate ID for icond2
+                elif selected_table.endswith("_aladin"):
+                    provider_id = "another_provider_id"  # Set the appropriate ID for aladin
+                    model_id = "another_model_id"  # Set the appropriate ID for aladin
+                else:
+                    print("Invalid table name format. The table name should end with '_icond2' or '_aladin'.")
+                    exit(1)
+
+                records = display_records(selected_table)
+
+                if not records:
+                    print(f"No records found in table '{selected_table}'.")
+                else:
+                    print(f"Records in table '{selected_table}':")
+                    for idx, record in enumerate(records, start=1):
+                        start_date, end_date, model_run = record
+                        print(f"{idx}. Start Date: {start_date}, End Date: {end_date}, Model Run: {model_run}")
+
+                # Let the user choose a specific record
+                record_choice = input("Enter the number of the record you want to select: ")
+
+                try:
+                    record_choice = int(record_choice)
+                    if 1 <= record_choice <= len(records):
+                        selected_record = records[record_choice - 1]
+
+                        # Let the user choose an aggregation function
+                        agg_function = input("Choose an aggregation function (sum, max, min): ")
+
+                        # Perform aggregation if the choice is valid
+                        if agg_function in ["sum", "max", "min"]:
+                            print(f"Aggregated data using {agg_function}:")
+                            # Perform aggregation here using provider_id, model_id, and selected_record
+                            df, start_date, end_date, interval = write_data_to_csv_with_coordinates(selected_table, "./data/output_with_coordinates.csv", provider_id, model_id)
+                        else:
+                            print("Invalid aggregation function. Please choose from 'sum', 'max', or 'min'.")
+                    else:
+                        print("Invalid record number. Please enter a valid number.")
+                except ValueError:
+                    print("Invalid input. Please enter a valid number.")
+            else:
+                print("Invalid table number. Please enter a valid number.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
