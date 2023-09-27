@@ -55,7 +55,7 @@ def get_latitudes_and_longitudes(provider_id, model_id):
         print(f"Error: {e}")
         return None, None
 
-def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, model_id):
+def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, selected_model_run, date_choice, table_name, output_file, provider_id, model_id):
     try:
         # Establish a connection to the PostgreSQL database
         conn = psycopg2.connect(
@@ -70,16 +70,18 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
         cursor = conn.cursor()
 
         # Query the data from the specified table
-        cursor.execute(f"SELECT start_date, end_date, interval, model_run, data FROM {table_name} LIMIT 1")
+        # Modify the SQL query to select data based on conditions
+        cursor.execute(
+            f"SELECT start_date, end_date, interval, model_run, data FROM {table_name} "
+            f"WHERE start_date = %s AND end_date = %s AND model_run = %s",
+            (selected_start_date, selected_end_date, selected_model_run)
+        )
 
         # Fetch all rows
         rows = cursor.fetchall()
 
         csv_data = []
-        initial_start_date = None
-        initial_end_date = None
-        initial_interval = None
-        index = None
+        init_interval = None
         latitudes, longitudes = get_latitudes_and_longitudes(provider_id, model_id)
 
         if rows:
@@ -88,10 +90,8 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
                 current_date = start_date
                 interval_seconds = int(interval.total_seconds())
 
-                if initial_start_date == None:
-                    initial_start_date = start_date
-                    initial_end_date = end_date
-                    initial_interval = interval
+                if init_interval == None:
+                    init_interval = interval
 
                 for day_data in data:
                     current_date += timedelta(seconds=interval_seconds)
@@ -119,14 +119,17 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
                         # Increment the coordinate index
                         coordinate_index += 1
 
+            df = pd.DataFrame(csv_data, columns=['Datetime', agg_function + '_' + table_name, 'Latitude', 'Longitude'])
 
-            df = createAgregates(csv_data, 'max', table_name)
+            df, selected_date = filterSpecificDate(df, date_choice, init_interval)
+
+            df = createAgregates(df, agg_function, table_name)
 
             df.to_csv(output_file)
 
             print(f"CSV file '{output_file}' created successfully.")
 
-            return df, initial_start_date, initial_end_date, initial_interval, model_run
+            return df, selected_date
 
         else:
             print(f"No data found in table '{table_name}'.")
@@ -138,8 +141,36 @@ def write_data_to_csv_with_coordinates(table_name, output_file, provider_id, mod
     except Exception as e:
         print(f"Error: {e}")
 
-def createAgregates(csv_data, agg_function, table_name):
-    df = pd.DataFrame(csv_data, columns=['Datetime', agg_function + '_' + table_name, 'Latitude', 'Longitude'])
+def filterSpecificDate(df, date_choice, interval):
+    try:
+        selected_date = None
+        date_choice = int(date_choice)
+        if 1 <= date_choice <= len(predefined_dates):
+            selected_date = predefined_dates[date_choice - 1]
+            # Convert selected_date to a datetime object
+            selected_date = datetime.strptime(selected_date, "%Y-%m-%d")
+
+            # Extract year, month, and day from the selected date
+            year = selected_date.year
+            month = selected_date.month
+            day = selected_date.day
+
+            # Filter the data for the same year, month, and day and perform aggregation
+            df_filtered = df[
+                (df['Datetime'].dt.year == year) &
+                (df['Datetime'].dt.month == month) &
+                (df['Datetime'].dt.day == day)
+            ]
+
+            # Perform aggregation here using df_filtered
+            return df_filtered, selected_date
+        else:
+            print("Invalid date number. Please enter a valid number.")
+    except ValueError:
+        print("Invalid input. Please enter a valid number.")
+
+
+def createAgregates(df, agg_function, table_name):
     agg_column = df.columns[1]
     if agg_function == 'sum':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].sum()
@@ -232,8 +263,8 @@ if __name__ == "__main__":
                     provider_id = "6be8cea2-f29b-4198-aa68-10c57845ad25"  # Set the appropriate ID for icond2
                     model_id = "581e4233-dc8c-44d3-b351-c115dc32fc53"  # Set the appropriate ID for icond2
                 elif selected_table.endswith("_aladin"):
-                    provider_id = "another_provider_id"  # Set the appropriate ID for aladin
-                    model_id = "another_model_id"  # Set the appropriate ID for aladin
+                    provider_id = "66b97430-1782-4793-906d-f77b4303373b"  # Set the appropriate ID for aladin
+                    model_id = "62490a51-1f97-4858-874b-267ea06bdbcc"  # Set the appropriate ID for aladin
                 else:
                     print("Invalid table name format. The table name should end with '_icond2' or '_aladin'.")
                     exit(1)
@@ -256,6 +287,26 @@ if __name__ == "__main__":
                     if 1 <= record_choice <= len(records):
                         selected_record = records[record_choice - 1]
 
+                        selected_start_date, selected_end_date, selected_model_run = selected_record
+                        print(selected_start_date)
+                        print(selected_end_date)
+                        print(selected_model_run)
+
+                        # Generate predefined dates within the range of selected_start_date to selected_end_date
+                        predefined_dates = []
+                        current_date = selected_start_date
+
+                        while current_date <= selected_end_date:
+                            predefined_dates.append(current_date.strftime("%Y-%m-%d"))
+                            current_date += timedelta(days=1)
+
+                        # Display the predefined dates and let the user choose one
+                        print("Predefined Dates within the Range:")
+                        for idx, date in enumerate(predefined_dates, start=1):
+                            print(f"{idx}. {date}")
+
+                        date_choice = input("Enter the number of the date for aggregation: ")
+
                         # Let the user choose an aggregation function
                         agg_function = input("Choose an aggregation function (sum, max, min): ")
 
@@ -263,13 +314,13 @@ if __name__ == "__main__":
                         if agg_function in ["sum", "max", "min"]:
                             print(f"Aggregated data using {agg_function}:")
                             # Perform aggregation here using provider_id, model_id, and selected_record
-                            df, start_date, end_date, interval, model_run = write_data_to_csv_with_coordinates(selected_table, "./data/output_with_coordinates.csv", provider_id, model_id)
+                            df, selected_date = write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, selected_model_run, date_choice, selected_table, "./data/output_with_coordinates.csv", provider_id, model_id)
                             color_configuration = read_colors("../assets/colors/colors.config")
                             storage_directory = "./data"
                             maps_output_directory = os.path.join(storage_directory, 'public/plots')
                             font_path = '../assets/fonts/'
                             custom_font = FontProperties(fname=font_path + 'font.ttf')
-                            create_maps(model_run, df, maps_output_directory, color_configuration, custom_font, start_date, end_date, interval)
+                            create_maps(model_run, df, maps_output_directory, color_configuration, custom_font, start_date, end_date, selected_date)
                         else:
                             print("Invalid aggregation function. Please choose from 'sum', 'max', or 'min'.")
                     else:
