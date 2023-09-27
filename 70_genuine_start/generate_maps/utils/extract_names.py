@@ -7,6 +7,10 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
         model_run_day = start_date.day
         output_variable_name = variable
 
+        print(start_date)
+        print(end_date)
+        print(selected_date)
+
         parts = variable.split('_')
         selected_aggregate = parts[0]
         last_part = parts[-1]

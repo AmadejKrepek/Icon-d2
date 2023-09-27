@@ -1,5 +1,6 @@
 from parse_settings.read.read_colors import read_colors
 import psycopg2
+from psycopg2 import sql
 import os
 from dotenv import load_dotenv
 import csv
@@ -69,13 +70,17 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
         # Create a cursor object
         cursor = conn.cursor()
 
+        # Define the table name as an SQL Identifier
+        table_identifier = sql.Identifier(table_name)
+
         # Query the data from the specified table
-        # Modify the SQL query to select data based on conditions
-        cursor.execute(
-            f"SELECT start_date, end_date, interval, model_run, data FROM {table_name} "
-            f"WHERE start_date = %s AND end_date = %s AND model_run = %s",
-            (selected_start_date, selected_end_date, selected_model_run)
-        )
+        # Use the table_identifier in the SQL query
+        query = sql.SQL("SELECT start_date, end_date, interval, model_run, data FROM {} "
+                        "WHERE start_date = %s AND end_date = %s AND model_run = %s").format(table_identifier)
+
+        # Execute the SQL query with the provided parameters
+        cursor.execute(query, (selected_start_date, selected_end_date, selected_model_run))
+
 
         # Fetch all rows
         rows = cursor.fetchall()
@@ -124,10 +129,6 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
             df, selected_date = filterSpecificDate(df, date_choice, init_interval)
 
             df = createAgregates(df, agg_function, table_name)
-
-            df.to_csv(output_file)
-
-            print(f"CSV file '{output_file}' created successfully.")
 
             return df, selected_date
 
@@ -223,8 +224,13 @@ def display_records(table_name):
         # Create a cursor object
         cursor = conn.cursor()
 
-        # Query to fetch only specific columns from the specified table
-        cursor.execute(f"SELECT start_date, end_date, model_run FROM {table_name}")
+        # Define the table name as an SQL Identifier
+        table_identifier = sql.Identifier(table_name)
+
+        # Use the table_identifier in the SQL query
+        cursor.execute(
+            sql.SQL("SELECT start_date, end_date, model_run FROM {}").format(table_identifier)
+        )
 
         # Fetch all records
         records = cursor.fetchall()
@@ -288,9 +294,6 @@ if __name__ == "__main__":
                         selected_record = records[record_choice - 1]
 
                         selected_start_date, selected_end_date, selected_model_run = selected_record
-                        print(selected_start_date)
-                        print(selected_end_date)
-                        print(selected_model_run)
 
                         # Generate predefined dates within the range of selected_start_date to selected_end_date
                         predefined_dates = []
@@ -320,7 +323,7 @@ if __name__ == "__main__":
                             maps_output_directory = os.path.join(storage_directory, 'public/plots')
                             font_path = '../assets/fonts/'
                             custom_font = FontProperties(fname=font_path + 'font.ttf')
-                            create_maps(model_run, df, maps_output_directory, color_configuration, custom_font, start_date, end_date, selected_date)
+                            create_maps(model_run, df, maps_output_directory, color_configuration, custom_font, selected_start_date, selected_end_date, selected_date)
                         else:
                             print("Invalid aggregation function. Please choose from 'sum', 'max', or 'min'.")
                     else:
