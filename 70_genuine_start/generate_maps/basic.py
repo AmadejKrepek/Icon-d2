@@ -65,6 +65,9 @@ def create_variable_plot(model: MapsModel):
     if (model.model_run_model == "ALADIN"):
         stride = 2
 
+    if model.variable == 'max_total_precipitation_icond2':
+        stride = 3
+
     # Iterate through the grid and add text for variable values
     for i in range(0, len(lat_values), stride):
         for j in range(0, len(lon_values), stride):
