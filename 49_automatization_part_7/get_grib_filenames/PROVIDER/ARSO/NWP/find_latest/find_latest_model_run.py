@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+
 def get_latest_model_run_filenames(base_url):
     print("Fetching available model run filenames...")
     response = requests.get(base_url)
@@ -21,7 +22,7 @@ def get_latest_model_run_filenames(base_url):
         match = re.search(date_format, href)
         if match:
             date = match.group(0)
-            
+
             # Extract the model run (HHmm) from the filename
             model_run_match = re.search(r'nwp_\d{8}-(\d{4})\.zip', href)
             if model_run_match:

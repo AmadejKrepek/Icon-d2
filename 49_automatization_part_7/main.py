@@ -21,6 +21,7 @@ provider_models = {
     "ARSO": ["Aladin"]
 }
 
+
 def choose_nwp_provider():
     while True:
         print("Choose NWP provider:")
@@ -60,7 +61,9 @@ def choose_nwp_provider():
         else:
             print("Invalid choice. Please select a valid option.")
 
-def download_and_parse(output_directory_gribs, output_directory, temp_directory, getGribFileNames, download_function, parse_gribs, provider_directory, model_directory):
+
+def download_and_parse(output_directory_gribs, output_directory, temp_directory, getGribFileNames, download_function,
+                       parse_gribs, provider_directory, model_directory):
     try:
         filenames = getGribFileNames()
 
@@ -72,12 +75,15 @@ def download_and_parse(output_directory_gribs, output_directory, temp_directory,
             resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
 
         # Append provider_directory and model_directory after output_directory
-        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory), output_directory_gribs)
+        resulted_csv_file = parse_gribs(resulted_gribs_directory,
+                                        os.path.join(output_directory, provider_directory, model_directory),
+                                        output_directory_gribs)
         print(f"Downloaded and parsed {resulted_csv_file}")
         return resulted_csv_file
     except Exception as e:
         print("Error during download and parse:", e)
         return None
+
 
 def main():
     start_time = time.time()
@@ -105,7 +111,7 @@ def main():
     print(f"Provider: {provider_directory}, model: {model_directory}")
     coordinates_configuration = changeCoordinatesConfiguration(model_directory)
     grouped_coordinates_configuration = changeGroupedCoordinatesConfiguration(model_directory)
-        
+
     while True:
         print("\nOptions:")
         print("1. Run download_and_parse script")
@@ -117,18 +123,24 @@ def main():
         choice = input("\nEnter your choice: ")
 
         if choice == '1':
-            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory, temp_directory, getGribFileNames, download_function, parse_gribs, provider_directory, model_directory)
+            resulted_csv_file = download_and_parse(output_directory_gribs, output_directory, temp_directory,
+                                                   getGribFileNames, download_function, parse_gribs, provider_directory,
+                                                   model_directory)
         elif choice == '2':
             try:
                 if resulted_csv_file is None:
                     resulted_csv_file = choose_aggregates(output_directory, provider_directory, model_directory)
-                create_aggregates(resulted_csv_file, os.path.join(output_directory, provider_directory, model_directory), coordinates_configuration)
+                create_aggregates(resulted_csv_file,
+                                  os.path.join(output_directory, provider_directory, model_directory),
+                                  coordinates_configuration)
                 resulted_csv_file = None
             except Exception as e:
                 print("Error during aggregates:", e)
         elif choice == '3':
             try:
-                generate_fancy_maps(os.path.join(input_directory_plots, provider_directory, model_directory), os.path.join(maps_output_directory, provider_directory, model_directory), color_configuration, grouped_coordinates_configuration, custom_font)
+                generate_fancy_maps(os.path.join(input_directory_plots, provider_directory, model_directory),
+                                    os.path.join(maps_output_directory, provider_directory, model_directory),
+                                    color_configuration, grouped_coordinates_configuration, custom_font)
             except Exception as e:
                 print("Error during map generation:", e)
         elif choice == '4':
@@ -147,6 +159,7 @@ def main():
     execution_time_seconds = end_time - start_time
     execution_time_formatted = time.strftime("%H:%M:%S", time.gmtime(execution_time_seconds))
     print("Script finished. Execution time:", execution_time_formatted)
+
 
 if __name__ == "__main__":
     main()
