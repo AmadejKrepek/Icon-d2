@@ -21,7 +21,7 @@ provider_models = {
     "DWD": {
         "IconD2": {
             "schedule": [(22, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
-            "params": ["tot_prec", "vmax_10m", "t_2m"],  # Parameters for IconD2
+            "params": ["h_snow", "snow_con", "snow_gsp", "v_10m", "cape_ml", "dbz_850", "dbz_cmax", "dbz_ctmax", "tot_prec", "vmax_10m", "t_2m"],  # Parameters for IconD2
         },
     },
     "ARSO": {
