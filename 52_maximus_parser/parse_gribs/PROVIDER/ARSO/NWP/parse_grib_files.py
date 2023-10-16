@@ -102,7 +102,6 @@ def process_data(filepath, bbox, index):
 
         # Perform the bounding box filter
         df = crop_dataframe_to_bbox(df, bbox)
-
         df = delete_coordinates(df)
 
         # Convert valid date to datetime and add forecast time to it
@@ -191,5 +190,5 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                               parameter_data[parameter_name], last_model_run,
                               parameter_table_name)
     # Save data for each parameter to separate CSV files
-    #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
     return None
