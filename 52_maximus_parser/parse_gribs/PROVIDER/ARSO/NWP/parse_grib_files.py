@@ -84,6 +84,7 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         
         if parameter_name != "Total Precipitation":
+            index = 0
             continue
         
         variable_data = grb.values
@@ -127,7 +128,6 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
     filenames = sorted(filenames)
 
     parameter_data = {}  # Dictionary to store data for each parameter
-        
     for file in filenames:
         print("Processing", file)
         with zipfile.ZipFile(file, 'r') as zip_ref:
@@ -135,10 +135,10 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
             
         # Get a list of all extracted GRB files
         grb_files = [f for f in os.listdir(temp_directory) if f.endswith(".grb")]
-        
+        sorted_grb_files = sorted(grb_files)
         index = 0
         
-        for grb_file in grb_files:
+        for grb_file in sorted_grb_files:
             temp_decompressed_path = os.path.join(temp_directory, grb_file)
             
             processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
