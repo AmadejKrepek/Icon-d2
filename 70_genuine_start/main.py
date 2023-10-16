@@ -339,7 +339,7 @@ if __name__ == "__main__":
                             maps_output_directory = os.path.join(storage_directory, 'public/plots')
                             font_path = '../assets/fonts/'
                             custom_font = FontProperties(fname=font_path + 'font.ttf')
-                            create_maps(model_run, df, maps_output_directory, color_configuration, custom_font, selected_start_date, selected_end_date, selected_date)
+                            create_maps(selected_model_run, df, maps_output_directory, color_configuration, custom_font, selected_start_date, selected_end_date, selected_date)
                         else:
                             print("Invalid aggregation function. Please choose from 'sum', 'max', or 'min'.")
                     else:
