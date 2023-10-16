@@ -73,14 +73,13 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
         # Define the table name as an SQL Identifier
         table_identifier = sql.Identifier(table_name)
 
-        # Query the data from the specified table
+       # Query the data from the specified table
         # Use the table_identifier in the SQL query
         query = sql.SQL("SELECT start_date, end_date, interval, model_run, data FROM {} "
                         "WHERE start_date = %s AND end_date = %s AND model_run = %s").format(table_identifier)
 
         # Execute the SQL query with the provided parameters
         cursor.execute(query, (selected_start_date, selected_end_date, selected_model_run))
-
 
         # Fetch all rows
         rows = cursor.fetchall()
@@ -124,9 +123,13 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
                         # Increment the coordinate index
                         coordinate_index += 1
 
-            df = pd.DataFrame(csv_data, columns=['Datetime', agg_function + '_' + table_name, 'Latitude', 'Longitude'])
+            agg_name = agg_function + '_' + table_name
 
-            df, selected_date = filterSpecificDate(df, date_choice, init_interval)
+            df = pd.DataFrame(csv_data, columns=['Datetime', agg_name, 'Latitude', 'Longitude'])
+
+            df, selected_date = filterSpecificDate(df, date_choice, end_date)
+
+            df = convert_data(df, agg_name)
 
             df = createAgregates(df, agg_function, table_name)
 
@@ -142,7 +145,7 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
     except Exception as e:
         print(f"Error: {e}")
 
-def filterSpecificDate(df, date_choice, interval):
+def filterSpecificDate(df, date_choice, end_date):
     try:
         selected_date = None
         date_choice = int(date_choice)
@@ -179,6 +182,17 @@ def createAgregates(df, agg_function, table_name):
         return df.groupby(['Latitude', 'Longitude'])[agg_column].max()
     elif agg_function == 'min':
         return df.groupby(['Latitude', 'Longitude'])[agg_column].min()
+
+def convert_ms_to_kmh(ms):
+    return ms * 3.6
+
+def convert_data(df, table_name):
+    if (table_name.startswith('max_10_metre_v_wind_component_icond2') or table_name.startswith('max_maximum_wind_10m_icon_d2')):
+        # Access the third column (index 2) and apply the conversion function
+        print('Converted kmh to ms...')
+        df[table_name] = df[table_name].apply(convert_ms_to_kmh)
+
+    return df
 
 def list_tables():
     try:
@@ -227,10 +241,12 @@ def display_records(table_name):
         # Define the table name as an SQL Identifier
         table_identifier = sql.Identifier(table_name)
 
-        # Use the table_identifier in the SQL query
-        cursor.execute(
-            sql.SQL("SELECT start_date, end_date, model_run FROM {}").format(table_identifier)
-        )
+        query = sql.SQL("SELECT start_date, end_date, model_run FROM {} "
+                "ORDER BY start_date DESC "
+                "LIMIT 40").format(table_identifier)
+        
+        # Execute the SQL query
+        cursor.execute(query)
 
         # Fetch all records
         records = cursor.fetchall()
