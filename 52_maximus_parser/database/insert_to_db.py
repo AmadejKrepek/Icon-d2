@@ -25,7 +25,7 @@ def extract_dates(data):
     return start_date, end_date
 
 def replaceZeroValuesWithNull(combined_data_list):
-    result = [[None if value == 0.0 else value for value in nested_array] for nested_array in combined_data_list]
+    result = [[None if value <= 0.0 else value for value in nested_array] for nested_array in combined_data_list]
     return result
 
 def get_interval_from_latest_df(data_list):
@@ -111,8 +111,7 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list, mode
         end_date = end_date.tz_localize('UTC').astimezone(local_timezone)
 
         interval = get_interval_from_latest_df(data_list)  # Implement get_interval_from_latest_df function
-
-        if parameter_name == "Total Precipitation":
+        if parameter_name != "2 metre temperature":
             combined_data_list = replaceZeroValuesWithNull(combined_data_list)
 
         # Insert the entire dataset into the new table with dynamic table name

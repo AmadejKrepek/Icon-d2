@@ -20,13 +20,13 @@ logging.basicConfig(
 provider_models = {
     "DWD": {
         "IconD2": {
-            "schedule": [(22, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
-            "params": ["tot_prec", "vmax_10m", "t_2m"],  # Parameters for IconD2
+            "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
+            "params": ["h_snow", "snow_con", "snow_gsp", "v_10m", "cape_ml", "dbz_850", "dbz_cmax", "dbz_cmax", "tot_prec", "vmax_10m", "t_2m"],  # Parameters for IconD2
         },
     },
     "ARSO": {
         "Aladin": {
-            "schedule": [(21, 30), (3, 30), (9, 30), (15, 30)],
+            "schedule": [(23, 30), (5, 30), (11, 30), (17, 30)],
             "params": ["tot_prec"],  # Parameters for Aladin FAKE FOR NOW ONLY total precipitation
         },
     },
@@ -37,6 +37,7 @@ def download_and_parse_one_param(output_directory_gribs, output_directory, getGr
         if model_directory == "IconD2":
             filenames = getGribFileNames([param])
         else:
+            print('you call me again?')
             filenames = getGribFileNames()  # Use without parameter selection for Aladin
 
         print(model_directory)
@@ -77,6 +78,7 @@ def run_job():
                         parse_gribs_function = parse_gribs_DWD if provider_directory == "DWD" else parse_gribs_ARSO
 
                         for param in model_params:
+                            print(f"Which param???? {param}")
                             download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNamesFunc, download_function, parse_gribs_function, provider_directory, model_directory, param)
             except Exception as e:
                 error_message = f"Error downloading and parsing data: {str(e)}"

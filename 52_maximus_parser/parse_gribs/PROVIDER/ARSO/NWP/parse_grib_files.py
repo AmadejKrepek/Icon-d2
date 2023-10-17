@@ -84,6 +84,7 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         
         if parameter_name != "Total Precipitation":
+            index = 0
             continue
         
         variable_data = grb.values
@@ -102,7 +103,6 @@ def process_data(filepath, bbox, index):
 
         # Perform the bounding box filter
         df = crop_dataframe_to_bbox(df, bbox)
-
         df = delete_coordinates(df)
 
         # Convert valid date to datetime and add forecast time to it
@@ -128,7 +128,6 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
     filenames = sorted(filenames)
 
     parameter_data = {}  # Dictionary to store data for each parameter
-        
     for file in filenames:
         print("Processing", file)
         with zipfile.ZipFile(file, 'r') as zip_ref:
@@ -136,10 +135,10 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
             
         # Get a list of all extracted GRB files
         grb_files = [f for f in os.listdir(temp_directory) if f.endswith(".grb")]
-        
+        sorted_grb_files = sorted(grb_files)
         index = 0
         
-        for grb_file in grb_files:
+        for grb_file in sorted_grb_files:
             temp_decompressed_path = os.path.join(temp_directory, grb_file)
             
             processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
@@ -178,17 +177,18 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         
         removeDirectories(delete_directory)
 
+    start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
     create_parameter_table(parameter_table_name, parameter_name)
 
-    if not check_model_run_exists(parameter_table_name, last_model_run):
+    if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
         provider_id = get_provider_id(provider_name)
         model_id = get_model_id(model_name)
         insert_parameter_data(provider_id, model_id, parameter_name, 
                               parameter_data[parameter_name], last_model_run,
                               parameter_table_name)
     # Save data for each parameter to separate CSV files
-    #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
     return None

@@ -1,7 +1,8 @@
 import os
 import psycopg2
+from pandas import Timestamp
 
-def check_model_run_exists(table_name, model_run):
+def check_model_run_exists(table_name, model_run, start_date):
     try:
         # Access the environment variables
         DB_USERNAME = os.getenv("DB_USERNAME")
@@ -23,22 +24,30 @@ def check_model_run_exists(table_name, model_run):
         cursor = conn.cursor()
         print(f"Model run: {model_run}")
         print(f"Table name: {table_name}")
-        # Check if a record with the same model_run exists
+
+        # Check if a record with the same model_run and start_date exists
         cursor.execute(f"""
-            SELECT model_run FROM "{table_name}"
-            WHERE model_run = %s;
-        """, (model_run,))
+            SELECT model_run, start_date FROM "{table_name}"
+            WHERE model_run = %s AND start_date = %s;
+        """, (model_run, start_date))
 
-        existing_model_run = cursor.fetchone()
-        print(f"Existing model run: {existing_model_run}")
+        existing_record = cursor.fetchone()
+        print(f"Existing record (model_run, start_date): {existing_record}")
 
-        if existing_model_run:
-            print("Record with the same model_run already exists. Returning False.")
-            return True
-        else:
-            print("No record with the same model_run found. Returning True.")
-            return False
+        if existing_record:
+            existing_model_run, existing_start_date = existing_record
+            formatted_timestamp = existing_start_date.strftime("%Y-%m-%d %H:%M:%S")
+            formatted_timestamp = Timestamp(formatted_timestamp)
 
+            print(f"Existing start date: {start_date}")
+
+            if formatted_timestamp == start_date:
+                print("Record with the same model_run and start_date exists.")
+                return True
+            else:
+                print("Record with the same model_run and start_date does not exist!")
+                return False
+            
         # Close the cursor and the connection
         cursor.close()
         conn.close()
