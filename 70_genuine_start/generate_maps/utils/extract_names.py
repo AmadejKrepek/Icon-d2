@@ -36,9 +36,13 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
         selected_start_minute = start_date.minute
         selected_end_year = end_date.year
         selected_end_month = end_date.month
-        selected_end_day = end_date.day
-        selected_end_hour = end_date.hour
-        selected_end_minute = end_date.minute
+        selected_end_day = selected_date.day
+        selected_end_hour = selected_date.hour
+        selected_end_minute = selected_date.minute
+
+        if (selected_date.day == end_date.day):
+             selected_end_hour = end_date.hour
+             selected_end_minute = end_date.minute
 
         # Continue with the rest of your code
         formatted_start_datetime = "_".join([str(selected_start_year), str(selected_start_month), str(selected_start_day), str(selected_start_hour), str(selected_start_minute)])
