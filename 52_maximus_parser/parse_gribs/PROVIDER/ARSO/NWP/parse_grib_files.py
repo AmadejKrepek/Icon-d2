@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from parse_gribs.utils.remove_directories import removeDirectories
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
@@ -84,9 +84,8 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         
         if parameter_name != "Total Precipitation":
-            index = 0
             continue
-        
+
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
         valid_date = grb.validDate
@@ -127,6 +126,9 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
     filenames = glob.glob(os.path.join(source_data_dir, "*.zip"))
     filenames = sorted(filenames)
 
+    start_date = None
+    end_date = None
+
     parameter_data = {}  # Dictionary to store data for each parameter
     for file in filenames:
         print("Processing", file)
@@ -166,7 +168,15 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                                 
                     if parameter_name not in parameter_data:
                         parameter_data[parameter_name] = []
-                    
+
+                    if start_date is None:
+                        # Create a UTC timezone object
+                        utc_timezone = timezone.utc
+
+                        # Create a datetime object in UTC time zone
+                        start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
+                        end_date = start_date + timedelta(days=3)
+
                     data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d %H:%M:%S")
                     parameter_data[parameter_name].append((data, data_date))
             
@@ -177,7 +187,7 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         
         removeDirectories(delete_directory)
 
-    start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
+    #start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
@@ -188,7 +198,7 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         model_id = get_model_id(model_name)
         insert_parameter_data(provider_id, model_id, parameter_name, 
                               parameter_data[parameter_name], last_model_run,
-                              parameter_table_name)
+                              parameter_table_name, start_date, end_date)
     # Save data for each parameter to separate CSV files
     # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
     return None
