@@ -16,7 +16,8 @@ def extract_temperature_data(url):
         for metData in metData_list:
             domain_title = metData.find("domain_title").text
             temperature = metData.find("t").text
-            temperature_data.append([domain_title, temperature])
+            valid_utc = metData.find("valid_UTC").text
+            temperature_data.append([domain_title, temperature, valid_utc])
         return temperature_data
     else:
         print(f"Failed to fetch XML data from the URL: {url}. Status code: {response.status_code}")
@@ -31,15 +32,15 @@ with open("temperature_data.csv", "w", newline="") as csvfile:
     csvwriter = csv.writer(csvfile)
 
     # Create a header row in the CSV file
-    header = ["Station", "Temperature"]
+    header = ["Station", "Temperature", "Valid_UTC"]
     csvwriter.writerow(header)
 
     # Write data for station 1
     for data in temperature_data1:
-        csvwriter.writerow([f"Auto_{data[0]}", data[1]])
+        csvwriter.writerow([f"Auto_{data[0]}", data[1], data[2]])
 
     # Write data for station 2
     for data in temperature_data2:
-        csvwriter.writerow([f"Obs_{data[0]}", data[1]])
+        csvwriter.writerow([f"Obs_{data[0]}", data[1], data[2]])
 
-print("Temperature data for both stations has been successfully written to temperature_data.csv")
+print("Temperature data for both stations with valid UTC has been successfully written to temperature_data.csv")
