@@ -11,3 +11,6 @@ content.log.bz2
 logs
 
 *.bz2
+
+.DS_Store
+.idea
