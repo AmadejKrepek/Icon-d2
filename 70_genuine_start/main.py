@@ -187,7 +187,7 @@ def convert_ms_to_kmh(ms):
     return ms * 3.6
 
 def convert_data(df, table_name):
-    if (table_name.startswith('max_10_metre_v_wind_component_icond2') or table_name.startswith('max_maximum_wind_10m_icon_d2')):
+    if (table_name.startswith('max_10_metre_v_wind_component_icond2') or table_name.startswith('max_maximum_wind_10m_icond2')):
         # Access the third column (index 2) and apply the conversion function
         print('Converted kmh to ms...')
         df[table_name] = df[table_name].apply(convert_ms_to_kmh)
