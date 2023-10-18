@@ -1,7 +1,11 @@
 import os
 from datetime import datetime
+import pytz
 
 def extract_output_names(model_run, variable, output_directory, start_date, end_date, selected_date):
+        # Specify your local timezone (for example, 'US/Eastern')
+        local_timezone = pytz.timezone('Europe/Ljubljana')
+
         model_run_year = start_date.year
         model_run_month = start_date.month
         model_run_day = start_date.day
@@ -29,11 +33,15 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
         selected_year = selected_date.year
         selected_month = selected_date.month
         selected_day = selected_date.day
+
         selected_start_year = start_date.year
         selected_start_month = start_date.month
         selected_start_day = start_date.day
         selected_start_hour = start_date.hour
         selected_start_minute = start_date.minute
+
+        end_date = end_date.astimezone(local_timezone)
+
         selected_end_year = end_date.year
         selected_end_month = end_date.month
         selected_end_day = selected_date.day
