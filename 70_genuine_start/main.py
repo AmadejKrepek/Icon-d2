@@ -282,11 +282,11 @@ if __name__ == "__main__":
 
                 # Determine the provider_id and model_id based on the table name
                 if selected_table.endswith("_icond2"):
-                    provider_id = "6be8cea2-f29b-4198-aa68-10c57845ad25"  # Set the appropriate ID for icond2
-                    model_id = "581e4233-dc8c-44d3-b351-c115dc32fc53"  # Set the appropriate ID for icond2
+                    provider_id = os.getenv("DWD_PROVIDER_ID") # Set the appropriate ID for icond2
+                    model_id = os.getenv("DWD_MODEL_ID")  # Set the appropriate ID for icond2
                 elif selected_table.endswith("_aladin"):
-                    provider_id = "66b97430-1782-4793-906d-f77b4303373b"  # Set the appropriate ID for aladin
-                    model_id = "62490a51-1f97-4858-874b-267ea06bdbcc"  # Set the appropriate ID for aladin
+                    provider_id = os.getenv("ARSO_PROVIDER_ID")  # Set the appropriate ID for aladin
+                    model_id = os.getenv("ARSO_MODEL_ID")  # Set the appropriate ID for aladin
                 else:
                     print("Invalid table name format. The table name should end with '_icond2' or '_aladin'.")
                     exit(1)
