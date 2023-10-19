@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from generate_maps.create import create_maps
 from matplotlib.font_manager import FontProperties
+import pytz
 
 # Load environment variables from .env
 load_dotenv()
@@ -91,10 +92,18 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
         if rows:
             for row in rows:
                 start_date, end_date, interval, model_run, data = row
+                # Convert start_date and end_date to the Slovenia (Europe/Ljubljana) timezone
+                start_date = start_date.astimezone(pytz.timezone('Europe/Ljubljana'))
+                end_date = end_date.astimezone(pytz.timezone('Europe/Ljubljana'))
+
+                # Check if the interval is 2 hours and adjust it to 1 hour if necessary.
+                if interval == timedelta(hours=2):
+                    interval = timedelta(hours=1)
+
                 current_date = start_date
                 interval_seconds = int(interval.total_seconds())
 
-                if init_interval == None:
+                if init_interval is None:
                     init_interval = interval
 
                 for day_data in data:
