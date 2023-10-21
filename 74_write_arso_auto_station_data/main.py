@@ -8,6 +8,39 @@ from psycopg2 import sql
 import re
 from datetime import datetime
 import pytz
+import logging
+from logging.handlers import TimedRotatingFileHandler
+
+# Set up logging
+log_dir = 'logs'  # Base directory for log files
+
+# Get the current date
+current_date = datetime.now()
+year, month, day = current_date.year, current_date.month, current_date.day
+
+# Define the folder structure
+log_year_dir = os.path.join(log_dir, str(year))
+log_month_dir = os.path.join(log_year_dir, str(month))
+log_day_dir = os.path.join(log_month_dir, str(day))
+
+# Create the log directories if they don't exist
+os.makedirs(log_day_dir, exist_ok=True)
+
+# Define the custom log file name based on the year, month, and day
+log_filename = os.path.join(log_day_dir, "daily_log.log")
+
+# Configure logging with TimedRotatingFileHandler
+handler = TimedRotatingFileHandler(log_filename, when="midnight", interval=1, backupCount=7)
+handler.suffix = "%Y-%m-%d_%H-%M-%S.log"  # Include timestamp in log file name
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s'
+)
+logging.getLogger('').addHandler(handler)
+
+# Create a custom log formatter
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(log_formatter)
 
 # Load environment variables from .env
 load_dotenv()
@@ -56,7 +89,7 @@ def extract_temperature_data(url):
             temperature_data.append([station_name, temperature, valid_utc_datetime])
         return temperature_data
     else:
-        print(f"Failed to fetch XML data from the URL: {url}. Status code: {response.status_code}")
+        logging.error(f"Failed to fetch XML data from the URL: {url}. Status code: {response.status_code}")
         return []
 
 import re
@@ -124,5 +157,8 @@ for i, url in enumerate(stations):
 # Close the database connection
 conn.close()
 
-print("Temperature data for all stations with valid UTC has been successfully inserted into the database, "
-      "and duplicates were ignored.")
+# Close the logger when done
+logging.shutdown()
+
+logging.info("Temperature data for all stations with valid UTC has been successfully inserted into the database, and duplicates were ignored.")
+
