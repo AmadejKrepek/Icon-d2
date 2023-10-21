@@ -11,8 +11,14 @@ import pytz
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+# Load environment variables from .env
+load_dotenv()
+
 # Set up logging
-log_dir = 'logs'  # Base directory for log files
+log_dir = os.getenv("LOG_PATH_DIR")
+
+if not log_dir:
+    log_dir = "logs"
 
 # Get the current date
 current_date = datetime.now()
@@ -41,9 +47,6 @@ logging.getLogger('').addHandler(handler)
 # Create a custom log formatter
 log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(log_formatter)
-
-# Load environment variables from .env
-load_dotenv()
 
 # Get database connection parameters from environment variables
 db_params = {
