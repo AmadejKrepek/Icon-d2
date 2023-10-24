@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 
@@ -44,12 +44,13 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     end_date = end_date.astimezone(local_timezone)
 
     if variable == "max_total_precipitation_aladin" or variable == "max_total_precipitation_icond2":
-        # Check if the time is 00:00 and adjust it to 23:59
-        if selected_date.hour == 0 and selected_date.minute == 0:
-            selected_date = selected_date.replace(hour=23, minute=59)
+        # Check if the time is 00:00 and adjust it to 00:00 of the next day
+        if selected_date.day is not end_date.day:
+            selected_date = selected_date + timedelta(days=1)  # Add one day to the selected_date
+            selected_date = selected_date.replace(hour=0, minute=0)  # Set the time to 00:00 of the
 
-    selected_end_year = end_date.year
-    selected_end_month = end_date.month
+    selected_end_year = selected_date.year
+    selected_end_month = selected_date.month
     selected_end_day = selected_date.day
     selected_end_hour = selected_date.hour
     selected_end_minute = selected_date.minute
@@ -57,8 +58,6 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     if selected_date.day == end_date.day:
         selected_end_hour = end_date.hour
         selected_end_minute = end_date.minute
-
-
 
     # Continue with the rest of your code
     formatted_start_datetime = "_".join(
@@ -76,9 +75,9 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     if (output_variable_name.startswith(
             "max_total_precipitation_") or output_variable_name == "sum_total_precipitation"):
         selected_date_components = datetime.strptime(
-            f"{selected_year}-{selected_month}-{selected_day} {selected_end_hour}:{selected_end_minute}",
+            f"{selected_end_year}-{selected_end_month}-{selected_end_day} {selected_end_hour}:{selected_end_minute}",
             "%Y-%m-%d %H:%M")
-        selected_formatted_date = selected_date_components.strftime("velja do %d. %m. %Y ob %H:%M")
+        selected_formatted_date = selected_date_components.strftime("velja do %d. %m. %Y ob %H.%M")
     else:
         selected_date_components = datetime.strptime(f"{selected_year}-{selected_month}-{selected_day}", "%Y-%m-%d")
         selected_formatted_date = selected_date_components.strftime("%d. %m. %Y")
