@@ -20,7 +20,7 @@ logging.basicConfig(
 provider_models = {
     "DWD": {
         "IconD2": {
-            "schedule": [(16, 41), (0, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
+            "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
             "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850", "dbz_cmax"],  # Parameters for IconD2
         },
     },
