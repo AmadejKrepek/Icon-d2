@@ -1,6 +1,7 @@
 import csv
 import requests
 import xml.etree.ElementTree as ET
+import re
 
 # URLs to the XML files for two stations
 url1 = "https://meteo.arso.gov.si/uploads/probase/www/observ/surface/text/sl/observationAms_si_latest.xml"
@@ -26,6 +27,27 @@ def extract_temperature_data(url):
         print(f"Failed to fetch XML data from the URL: {url}. Status code: {response.status_code}")
         return []
 
+# Format station name using the same logic as before
+def format_station_name(domain_title, is_auto_station):
+    # Replace special characters and single whitespaces with a single underscore
+    station_name = re.sub(r'[-;_\s]+', '_', domain_title)
+
+    # Remove all dots
+    station_name = re.sub(r'\.', '', station_name)
+
+    # Remove trailing underscores
+    station_name = station_name.rstrip('_')
+
+    # Convert to lowercase
+    formatted_name = station_name.strip().lower()
+
+    slashes_remove_formatted_name = formatted_name.replace("/", "_")
+
+    # Add prefix based on the URL
+    prefix = "auto" if is_auto_station else "obs"
+
+    return f"{prefix}_{slashes_remove_formatted_name}"
+
 # Extract temperature data for both stations
 temperature_data1 = extract_temperature_data(url1)
 temperature_data2 = extract_temperature_data(url2)
@@ -40,10 +62,12 @@ with open("temperature_data.csv", "w", newline="") as csvfile:
 
     # Write data for station 1
     for data in temperature_data1:
-        csvwriter.writerow([f"Auto_{data[0]}", data[1], data[2], data[3], data[4], data[5]])
+        formatted_station_name = format_station_name(data[0], True)  # True for auto station
+        csvwriter.writerow([formatted_station_name, data[1], data[2], data[3], data[4], data[5]])
 
     # Write data for station 2
     for data in temperature_data2:
-        csvwriter.writerow([f"Obs_{data[0]}", data[1], data[2], data[3], data[4], data[5]])
+        formatted_station_name = format_station_name(data[0], False)  # False for observation station
+        csvwriter.writerow([formatted_station_name, data[1], data[2], data[3], data[4], data[5]])
 
 print("Temperature data for both stations with valid UTC, latitude, longitude, and altitude has been successfully written to temperature_data.csv")
