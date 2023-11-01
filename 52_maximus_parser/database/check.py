@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 import psycopg2
 from pandas import Timestamp
@@ -40,8 +41,10 @@ def check_model_run_exists(table_name, model_run, start_date):
             formatted_timestamp = Timestamp(formatted_timestamp)
 
             print(f"Existing start date: {start_date}")
-
-            if formatted_timestamp == start_date:
+            time_difference = existing_start_date - start_date
+            duration_to_compare = timedelta(minutes=1)
+            print(f"TIme difference: {time_difference}")
+            if time_difference < duration_to_compare:
                 print("Record with the same model_run and start_date exists.")
                 return True
             else:

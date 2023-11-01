@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, timezone, datetime
 from parse_gribs.utils.remove_directories import removeDirectories
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
@@ -78,7 +78,7 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         base_datetime = valid_date
         
-        if parameter_name == 'Total Precipitation':
+        if parameter_name == 'Total Precipitation' or parameter_name == 'maximum Wind 10m':
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
                 
@@ -148,6 +148,9 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
         index = index + 1
 
+        start_date = None
+        end_date = None
+
         if data is not None:
             if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                 data[parameter_name] = kelvin_to_celsius(data[parameter_name])
@@ -170,6 +173,14 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
                         
             if parameter_name not in parameter_data:
                 parameter_data[parameter_name] = []
+
+            if start_date is None:
+                # Create a UTC timezone object
+                utc_timezone = timezone.utc
+
+                # Create a datetime object in UTC time zone
+                start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
+                end_date = start_date + timedelta(days=2)
             
             data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
             parameter_data[parameter_name].append((data, data_date))
@@ -188,7 +199,8 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
         provider_id = get_provider_id(provider_name)
         model_id = get_model_id(model_name)
-        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name)
+        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name,
+                              start_date, end_date)
 
     # Save data for each parameter to separate CSV files
     #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)

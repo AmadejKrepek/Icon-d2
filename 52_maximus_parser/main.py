@@ -21,12 +21,12 @@ provider_models = {
     "DWD": {
         "IconD2": {
             "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
-            "params": ["h_snow", "snow_con", "snow_gsp", "v_10m", "cape_ml", "dbz_850", "dbz_cmax", "dbz_cmax", "tot_prec", "vmax_10m", "t_2m"],  # Parameters for IconD2
+            "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850", "dbz_cmax"],  # Parameters for IconD2
         },
     },
     "ARSO": {
         "Aladin": {
-            "schedule": [(23, 30), (5, 30), (11, 30), (17, 30)],
+            "schedule": [(9, 10), (23, 30), (5, 30), (11, 30), (17, 30)],
             "params": ["tot_prec"],  # Parameters for Aladin FAKE FOR NOW ONLY total precipitation
         },
     },
