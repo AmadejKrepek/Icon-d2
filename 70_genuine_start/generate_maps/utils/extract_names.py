@@ -55,7 +55,7 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     selected_end_hour = selected_date.hour
     selected_end_minute = selected_date.minute
 
-    if selected_date.day == end_date.day:
+    if selected_day == end_date.day:
         selected_end_hour = end_date.hour
         selected_end_minute = end_date.minute
 
