@@ -62,7 +62,7 @@ def create_variable_plot(model: MapsModel):
     ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=alpha)
 
     stride = 4
-    if (model.model_run_model == "ALADIN"):
+    if model.model_run_model == "ALADIN":
         stride = 2
 
     if model.variable == 'max_total_precipitation_icond2':
