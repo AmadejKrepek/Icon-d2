@@ -1,0 +1,4 @@
+from station_latitude_merger.sl_merger import create_stations_with_lat_lon
+from dotenv import load_dotenv
+load_dotenv()
+create_stations_with_lat_lon()
