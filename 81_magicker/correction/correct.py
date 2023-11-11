@@ -15,16 +15,16 @@ def correct_data(df_stations, df_grid):
     df_merged = pd.merge(df_grid, df_stations, left_on='station_index', right_index=True, how='left')
 
     # Keep only necessary columns for further comparison
-    df_merged = df_merged[['Datetime', 'Latitude_x', 'Longitude_x', 'Value', 'ValidUtc']]
+    df_merged = df_merged[['Datetime', 'Value', 'Latitude_x', 'Longitude_x', 'ValidUtc']]
 
     # Replace the 'Value' column in df_merged with the 'Temperature' column where Datetime and ValidUtc match
     df_merged.loc[df_merged['Datetime'] == df_merged['ValidUtc'], 'Value'] = df_merged['Value']
 
     # Drop unnecessary columns
-    df_result = df_merged.drop(['Latitude_x', 'Longitude_x', 'ValidUtc'], axis=1)
+    df_result = df_merged.drop(['ValidUtc'], axis=1)
 
     # Rename columns
-    df_result = df_result.rename(columns={'Latitude_x': 'Latitude'})
+    df_result = df_result.rename(columns={'Latitude_x': 'Latitude', 'Longitude_x': 'Longitude'})
 
     # Sort the DataFrame by the 'Datetime' column
     df_result = df_result.sort_values(by='Datetime')
