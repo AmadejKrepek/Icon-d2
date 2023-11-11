@@ -12,8 +12,9 @@ def create_stations_with_lat_lon(start_date, end_date):
     conn_stations = establish_stations_database_connection()
     data = get_lat_lon(conn_stations)
     data = get_station_data(conn_stations, data, start_date, end_date)
-    df = pd.DataFrame(data, columns=['Latitude', 'Longitude', 'StationName', 'ValidUtc', 'Temperature'])
+    df = pd.DataFrame(data, columns=['Latitude', 'Longitude', 'StationName', 'Temperature', 'ValidUtc'])
     return df
+
 
 def get_station_data(conn, data, start_date, end_date):
     updated_data = []
@@ -24,6 +25,7 @@ def get_station_data(conn, data, start_date, end_date):
             valid_utc_formatted = valid_utc.strftime('%Y-%m-%d %H:%M:%S') + '+00:00'
             updated_data.append([latitude, longitude, station_name, temperature, valid_utc_formatted])
     return updated_data
+
 
 def retrieve_data_for_interval(conn, table, valid_utc_column, start_date, end_date):
     # Create a cursor to execute SQL queries
