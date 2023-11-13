@@ -1,8 +1,8 @@
 import pandas as pd
 
-
 import pandas as pd
 from scipy.spatial import cKDTree
+
 
 def correct_data(df_stations, df_grid):
     # Create a KDTree for stations
@@ -34,7 +34,8 @@ def correct_data(df_stations, df_grid):
     df_result = df_result.sort_values(by='Datetime')
 
     # Replace 'Temperature' values in 'Value' where 'Temperature' is not None or NaT
-    df_result['Value'] = df_result.apply(lambda row: row['Temperature'] if pd.notna(row['Temperature']) else row['Value'], axis=1)
+    df_result['Value'] = df_result.apply(
+        lambda row: row['Temperature'] if pd.notna(row['Temperature']) else row['Value'], axis=1)
 
     # Reset the index of the resulting DataFrame
     df_result = df_result.reset_index(drop=True)
