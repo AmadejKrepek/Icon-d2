@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pytz
 
+from filter.filter_df import filter_dataframes_on_datetime
 from station_latitude_merger.sl_merger import create_stations_with_lat_lon
 from grid_merger.g_merger import create_grid_with_lat_lon
 from filter.filter_stations import filter_hourly_intervals
@@ -26,7 +27,10 @@ df_grid = create_grid_with_lat_lon("2_metre_temperature_icond2", start_date, end
 
 df_grid.to_csv('original.csv')
 
-df_stations_filtered = filter_hourly_intervals(df_stations)
+df_stations_filtered = filter_hourly_intervals(df_stations, 'ValidUtc')
+df_grid_filtered = filter_hourly_intervals(df_grid, 'Datetime')
+
+df_grid, df_stations = filter_dataframes_on_datetime(df_grid, df_stations, 'Datetime', 'ValidUtc')
 
 df_corrected_grid = correct_data(df_stations_filtered, df_grid)
 
