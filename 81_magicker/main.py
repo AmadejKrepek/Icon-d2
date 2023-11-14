@@ -24,11 +24,12 @@ df_stations = create_stations_with_lat_lon(start_date, end_date)
 
 df_grid = create_grid_with_lat_lon("2_metre_temperature_icond2", start_date, end_date, model_run)
 
+df_grid.to_csv('original.csv')
+
 df_stations_filtered = filter_hourly_intervals(df_stations)
 
 df_corrected_grid = correct_data(df_stations_filtered, df_grid)
 
-df_grid.to_csv('original.csv')
 df_corrected_grid.to_csv('corrected_original.csv')
 
 # Only change grid there

@@ -3,41 +3,40 @@ import pandas as pd
 import pandas as pd
 from scipy.spatial import cKDTree
 
+import pandas as pd
+from scipy.spatial import cKDTree
+from tqdm import tqdm
+
+
 
 def correct_data(df_stations, df_grid):
-    # Create a KDTree for stations
+    # Create a KDTree for station coordinates
     tree_stations = cKDTree(df_stations[['Latitude', 'Longitude']].values)
 
-    # Query the tree for each grid point to find the nearest station
-    df_grid['station_index'] = tree_stations.query(df_grid[['Latitude', 'Longitude']].values)[1]
+    # Create a copy of df_grid to store the corrected values
+    corrected_data = df_grid.copy()
 
-    # Merge the DataFrames based on the station_index
-    df_merged = pd.merge(df_grid, df_stations, left_on='station_index', right_index=True, how='left')
+    # Add new columns 'Station_Temperature' and 'Station_Name'
+    corrected_data['Station_Temperature'] = None
+    corrected_data['Station_Name'] = None
 
-    # Keep only necessary columns for further comparison
-    df_merged = df_merged[['Datetime', 'Value', 'Latitude_x', 'Longitude_x', 'ValidUtc', 'Temperature']]
+    # Find the index of the closest station in df_stations for the first interval for every station
+    _, station_indices_first = tree_stations.query(df_grid.loc[df_grid['Datetime'] == df_grid.iloc[0]['Datetime']][['Latitude', 'Longitude']].values)
 
-    # Replace the 'Value' column in df_merged with the 'Temperature' column where Datetime and ValidUtc match
-    tolerance = pd.Timedelta(seconds=1)  # Adjust the tolerance as needed
-    df_merged['Datetime'] = pd.to_datetime(df_merged['Datetime'])
-    df_merged['ValidUtc'] = pd.to_datetime(df_merged['ValidUtc'])
-    mask = (df_merged['Datetime'] - df_merged['ValidUtc']).abs() < tolerance
-    df_merged.loc[mask, 'Value'] = df_merged['Temperature']
+    # Iterate through each unique timestamp in df_grid with tqdm for a progress bar
+    for timestamp in tqdm(corrected_data['Datetime'].unique(), desc='Correcting data'):
+        # Filter df_grid for the current timestamp
+        df_grid_timestamp = corrected_data[corrected_data['Datetime'] == timestamp]
 
-    # Drop unnecessary columns
-    df_result = df_merged.drop(['ValidUtc'], axis=1)
+        # Find the index of the closest station in df_stations for all points in the timestamp
+        _, station_indices = tree_stations.query(df_grid_timestamp[['Latitude', 'Longitude']].values)
 
-    # Rename columns
-    df_result = df_result.rename(columns={'Latitude_x': 'Latitude', 'Longitude_x': 'Longitude'})
+        # Get the corresponding indices from the first interval for all stations in the timestamp
+        station_indices_first_timestamp = station_indices_first[station_indices]
 
-    # Sort the DataFrame by the 'Datetime' column
-    df_result = df_result.sort_values(by='Datetime')
+        # Update the 'Value', 'Station_Temperature', and 'Station_Name' columns in df_grid
+        corrected_data.loc[corrected_data['Datetime'] == timestamp, 'Value'] = df_stations.iloc[station_indices_first_timestamp]['Temperature'].values
+        corrected_data.loc[corrected_data['Datetime'] == timestamp, 'Station_Temperature'] = df_stations.iloc[station_indices_first_timestamp]['Temperature'].values
+        corrected_data.loc[corrected_data['Datetime'] == timestamp, 'Station_Name'] = df_stations.iloc[station_indices_first_timestamp]['StationName'].values
 
-    # Replace 'Temperature' values in 'Value' where 'Temperature' is not None or NaT
-    df_result['Value'] = df_result.apply(
-        lambda row: row['Temperature'] if pd.notna(row['Temperature']) else row['Value'], axis=1)
-
-    # Reset the index of the resulting DataFrame
-    df_result = df_result.reset_index(drop=True)
-
-    return df_result
+    return corrected_data
