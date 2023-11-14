@@ -1,13 +1,5 @@
-import pandas as pd
-
-import pandas as pd
-from scipy.spatial import cKDTree
-
-import pandas as pd
 from scipy.spatial import cKDTree
 from tqdm import tqdm
-
-
 
 def correct_data(df_stations, df_grid):
     # Create a KDTree for station coordinates
@@ -39,4 +31,19 @@ def correct_data(df_stations, df_grid):
         corrected_data.loc[corrected_data['Datetime'] == timestamp, 'Station_Temperature'] = df_stations.iloc[station_indices_first_timestamp]['Temperature'].values
         corrected_data.loc[corrected_data['Datetime'] == timestamp, 'Station_Name'] = df_stations.iloc[station_indices_first_timestamp]['StationName'].values
 
+        # Mark duplicate indexes as None except for the first occurrence
+        for station_index in set(station_indices_first_timestamp):
+            df_grid_station = corrected_data[corrected_data['Station_Name'] == df_stations.iloc[station_index]['StationName']]
+            duplicate_indexes = df_grid_station[df_grid_station.duplicated(subset=['Datetime'], keep='first')].index
+            duplicate_indexes = duplicate_indexes[duplicate_indexes != df_grid_station.index[0]]  # Exclude the first occurrence
+            corrected_data.loc[duplicate_indexes, ['Value', 'Station_Temperature', 'Station_Name']] = None
+
+    # Replace None values with original data from df_grid
+    corrected_data[['Value']] = corrected_data[['Value']].combine_first(df_grid[['Value']])
+
     return corrected_data
+
+
+
+
+

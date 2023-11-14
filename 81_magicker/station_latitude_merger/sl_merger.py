@@ -13,6 +13,9 @@ def create_stations_with_lat_lon(start_date, end_date):
     data = get_lat_lon(conn_stations)
     data = get_station_data(conn_stations, data, start_date, end_date)
     df = pd.DataFrame(data, columns=['Latitude', 'Longitude', 'StationName', 'Temperature', 'ValidUtc'])
+    # Set data types for Latitude and Longitude columns
+    df = df.astype({'Latitude': 'float64', 'Longitude': 'float64'})
+    df[['Latitude', 'Longitude']] = df[['Latitude', 'Longitude']].round(14)
     return df
 
 
