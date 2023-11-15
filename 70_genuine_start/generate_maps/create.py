@@ -31,6 +31,7 @@ def create_maps(model_run, df, output_directory, color_configuration, custom_fon
         ("max_10_metre_v_wind_component_icond2", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_ticks, wind_max_2m_contour_levels),
         ("max_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precipitation_ticks, precipitation_contour_leves),
         ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precipitation_ticks, precipitation_contour_leves),
+        ("max_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]",  cmap_precipitation, precipitation_ticks, precipitation_contour_leves),
     ]
 
     for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:        
