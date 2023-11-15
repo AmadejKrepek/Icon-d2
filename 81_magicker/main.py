@@ -6,7 +6,7 @@ from filter.filter_df import filter_dataframes_on_datetime
 from station_latitude_merger.sl_merger import create_stations_with_lat_lon
 from grid_merger.g_merger import create_grid_with_lat_lon
 from filter.filter_stations import filter_hourly_intervals
-from correction.correct import correct_data
+from correction.correct_temperature import correct_data_temperature
 from validation.compare import compare_values
 from generate_maps.plot import create_plot
 from intervaler.interval import create_interval
@@ -32,10 +32,9 @@ df_grid_filtered = filter_hourly_intervals(df_grid, 'Datetime')
 
 df_grid, df_stations = filter_dataframes_on_datetime(df_grid, df_stations, 'Datetime', 'ValidUtc')
 
+df_corrected_grid = correct_data_temperature(df_stations_filtered, df_grid)
 
-#df_corrected_grid = correct_data(df_stations_filtered, df_grid)
-
-#df_corrected_grid.to_csv('corrected_original.csv')
+df_corrected_grid.to_csv('corrected_original.csv')
 
 # Only change grid there
 df_grid_selected_date = create_interval(start_date, df_grid)

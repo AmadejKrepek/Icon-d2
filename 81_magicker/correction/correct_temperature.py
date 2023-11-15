@@ -1,7 +1,7 @@
 from scipy.spatial import cKDTree
 from tqdm import tqdm
 
-def correct_data(df_stations, df_grid):
+def correct_data_temperature(df_stations, df_grid):
     # Create a KDTree for station coordinates
     tree_stations = cKDTree(df_stations[['Latitude', 'Longitude']].values)
 
