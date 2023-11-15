@@ -31,5 +31,5 @@ def create_frames(df, agg_name):
     # Create the animation
     animation = FuncAnimation(fig, update, frames=frames_range, repeat=True)
 
-    # Display the animation
-    plt.show()
+    # Save the animation as a video file (e.g., MP4)
+    animation.save('./data/test.gif', writer='pillow', fps=1)  # Adjust fps as needed
