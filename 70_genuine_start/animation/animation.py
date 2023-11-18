@@ -1,35 +1,30 @@
-import pandas as pd
-from matplotlib import pyplot as plt
-from matplotlib.animation import FuncAnimation
+import os
+from PIL import Image
+from natsort import natsorted
 
 
-def create_frames(df, agg_name):
-    # Assuming your DataFrame has a 'Datetime' column
-    df['Datetime'] = pd.to_datetime(df['Datetime'])
+def create_gif_from_png(directory_path, output_filename, duration=500):
+    directory_path = os.path.dirname(directory_path)
 
-    # Sort the DataFrame by timestamp
-    df = df.sort_values(by='Datetime')
+    # Get all PNG files in the specified directory
+    png_files = [f for f in os.listdir(directory_path) if f.endswith('.png')]
 
-    # Extract unique hours from the 'Datetime' column
-    unique_hours = df['Datetime'].dt.hour.unique()
+    # Sort the files based on their names (assuming the names represent the order)
+    # Use natsorted to sort the files naturally
+    png_files = natsorted(png_files)
 
-    # Create a figure and axis for the plot
-    fig, ax = plt.subplots()
+    # Create a list to store the images
+    images = []
 
-    # Function to update the plot for each animation frame
-    def update(frame):
-        ax.clear()
-        hour_df = df[df['Datetime'].dt.hour == frame]
-        # Plot your data here based on 'hour_df'
-        # For example, you can scatter plot latitude and longitude:
-        ax.scatter(hour_df['Longitude'], hour_df['Latitude'], c=hour_df[agg_name], cmap='viridis')
-        ax.set_title(f'Hour {frame}')
+    # Read each PNG file and append it to the list
+    for png_file in png_files:
+        image_path = os.path.join(directory_path, png_file)
+        img = Image.open(image_path)
+        images.append(img)
 
-    # Set the range of frames (unique hours in the 'Datetime' column)
-    frames_range = unique_hours
+    # Get the directory path from the output_filename
+    output_directory = os.path.dirname(output_filename)
 
-    # Create the animation
-    animation = FuncAnimation(fig, update, frames=frames_range, repeat=True)
-
-    # Save the animation as a video file (e.g., MP4)
-    animation.save('./data/test.gif', writer='pillow', fps=1)  # Adjust fps as needed
+    # Save the images as a GIF file
+    output_filepath = os.path.join(output_directory, 'output.gif')
+    images[0].save(output_filepath, save_all=True, append_images=images[1:], duration=duration, loop=0)

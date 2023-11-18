@@ -52,10 +52,10 @@ def create_variable_plot(model: MapsModel):
     alpha = 1.0
     
     norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
-    if model.variable.startswith("max_total_precipitation"):
+    if model.variable.startswith("max_total_precipitation") or model.variable.startswith("animation_total_precipitation"):
         alpha = 0.7
     
-    if model.variable.startswith("max_total_precipitation"):
+    if model.variable.startswith("max_total_precipitation") or model.variable.startswith("animation_total_precipitation"):
         shaded_relief = createShadedRelief('../data/shading/sencenje_250.tif')
         extent_coordinates = get_extent_coordinates('../data/shading/sencenje_250.tif')
         ax.imshow(shaded_relief, extent=(extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'], extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
@@ -65,7 +65,7 @@ def create_variable_plot(model: MapsModel):
     if model.model_run_model == "ALADIN":
         stride = 2
 
-    if model.variable == 'max_total_precipitation_icond2':
+    if model.variable == 'max_total_precipitation_icond2' or model.variable == 'animation_total_precipitation_icond2':
         stride = 4
 
     # Iterate through the grid and add text for variable values
@@ -77,7 +77,7 @@ def create_variable_plot(model: MapsModel):
             # Extract variable value and convert to integer
             var_val = int(round(variable_clipped[i, j]))
             # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
-            if model.variable.startswith("max_total_precipitation"):
+            if model.variable.startswith("max_total_precipitation") or model.variable.startswith("animation_total_precipitation"):
                 if (max_value > 0):
                     if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
                         ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
@@ -149,8 +149,8 @@ def create_variable_plot(model: MapsModel):
     ax.tick_params(axis='x', colors='white')
     ax.tick_params(axis='y', colors='white')
 
-    # Save the figure with adjusted left padding
-    plt.savefig(model.output_filepath, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
+    # Save the figure with adjusted left padding, DPI = 300 SET LATER
+    plt.savefig(model.output_filepath, bbox_inches='tight')  # Adjust the pad_inches value as needed
     plt.close()
     
 

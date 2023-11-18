@@ -1,3 +1,4 @@
+from animation.animation import create_gif_from_png
 from merger.merge import merge_lat_lon_with_grid_data
 from parse_settings.read.read_colors import read_colors
 import psycopg2
@@ -8,6 +9,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 from generate_maps.create import create_maps
 from matplotlib.font_manager import FontProperties
+
+from split.splitter import split_data
 
 # Load environment variables from .env
 load_dotenv()
@@ -25,7 +28,6 @@ def extract_coordinates(coord_str):
     coord_str = coord_str.strip('()')
     lat, lon = map(float, coord_str.split(', '))
     return lat, lon
-
 
 
 def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, selected_model_run, date_choice,
@@ -46,19 +48,22 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
             print(f"No data found in table '{table_name}'.")
             return Exception("Wrong")
 
-        agg_name = agg_function + '_' + table_name
-
+        if sort_interval == "gif":
+            agg_name = 'animation' + '_' + table_name
+        else:
+            agg_name = agg_function + '_' + table_name
         df = pd.DataFrame(csv_data, columns=['Datetime', agg_name, 'Latitude', 'Longitude'])
 
         df, selected_date = filterSpecificDate(df, date_choice, end_date)
 
         df = convert_data(df, agg_name)
-
-        df = createAgregates(df, agg_function, table_name)
-
+        if sort_interval == "normal":
+            df_array = [createAgregates(df, agg_function, table_name)]
+        else:
+            df_array = split_data(df)
         conn.close()
 
-        return df, selected_date
+        return df_array, selected_date
 
     except Exception as e:
         print(f"Error: {e}")
@@ -248,28 +253,33 @@ if __name__ == "__main__":
                             print(f"{idx}. {date}")
 
                         date_choice = input("Enter the number of the date for aggregation: ")
+
+                        sort_interval = input("Enter type of generation: (normal, gif)")
+
                         # Let the user choose an aggregation function
                         agg_function = input("Choose an aggregation function (sum, max, min): ")
-
-                        # Perform aggregation if the choice is valid
-                        if agg_function in ["sum", "max", "min"]:
-                            print(f"Aggregated data using {agg_function}:")
-                            # Perform aggregation here using provider_id, model_id, and selected_record
-                            df, selected_date = write_data_to_csv_with_coordinates(selected_start_date,
-                                                                                   selected_end_date,
-                                                                                   selected_model_run, date_choice,
-                                                                                   selected_table,
-                                                                                   "./data/output_with_coordinates.csv",
-                                                                                   provider_id, model_id)
-                            color_configuration = read_colors("../assets/colors/colors.config")
-                            storage_directory = "./data"
-                            maps_output_directory = os.path.join(storage_directory, 'public/plots')
-                            font_path = '../assets/fonts/'
-                            custom_font = FontProperties(fname=font_path + 'font.ttf')
-                            create_maps(selected_model_run, df, maps_output_directory, color_configuration, custom_font,
-                                        selected_start_date, selected_end_date, selected_date)
-                        else:
+                        if agg_function not in ["sum", "max", "min"]:
                             print("Invalid aggregation function. Please choose from 'sum', 'max', or 'min'.")
+
+                        print(f"Aggregated data using {agg_function}:")
+
+                        # Perform aggregation here using provider_id, model_id, and selected_record
+                        df_array, selected_date = write_data_to_csv_with_coordinates(selected_start_date,
+                                                                               selected_end_date,
+                                                                               selected_model_run, date_choice,
+                                                                               selected_table,
+                                                                               "./data/output_with_coordinates.csv",
+                                                                               provider_id, model_id)
+                        color_configuration = read_colors("../assets/colors/colors.config")
+                        storage_directory = "./data"
+                        maps_output_directory = os.path.join(storage_directory, 'public/plots')
+                        font_path = '../assets/fonts/'
+                        custom_font = FontProperties(fname=font_path + 'font.ttf')
+                        try:
+                            create_maps(selected_model_run, df_array, maps_output_directory, color_configuration, custom_font,
+                                    selected_start_date, selected_end_date, selected_date)
+                        except Exception as e:
+                            print(f"{e}")
                     else:
                         print("Invalid record number. Please enter a valid number.")
                 except ValueError:
