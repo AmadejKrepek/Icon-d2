@@ -69,8 +69,9 @@ def process_data(filepath, bbox, index):
     
     # Retrieve the desired variable
     variable_data = None
-    parameter_name = None   
-    
+    parameter_name = None
+    inside_grib_index = 0
+
     for grb in grbs:
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
@@ -81,7 +82,11 @@ def process_data(filepath, bbox, index):
         if parameter_name == 'Total Precipitation' or parameter_name == 'maximum Wind 10m':
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
-                
+        elif parameter_name == 'Convective Snowfall water equivalent (s)':
+            time_range = timedelta(hours=index)
+            valid_date = base_datetime + time_range
+
+        inside_grib_index += 1
     grbs.close()
     
     if variable_data is None:
@@ -199,8 +204,8 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
         provider_id = get_provider_id(provider_name)
         model_id = get_model_id(model_name)
-        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name,
-                              start_date, end_date)
+        # insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name,
+        #                      start_date, end_date)
 
     # Save data for each parameter to separate CSV files
     #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
