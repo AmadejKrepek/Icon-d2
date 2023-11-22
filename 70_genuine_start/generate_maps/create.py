@@ -12,18 +12,22 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
     precipitation_colors = color_configuration["precipitation_colors"]
     temperature_colors = color_configuration["temperature_colors"]
     wind_max_2m_colors = color_configuration["wind_max_2m_colors"]
+    snow_depth_colors = color_configuration["snow_depth_colors"]
 
     cmap_temperature = mcolors.LinearSegmentedColormap.from_list('temperature_cmap', temperature_colors, N=500)
     cmap_wind_max_2m_colors = mcolors.LinearSegmentedColormap.from_list('wind_max_2m_cmap', wind_max_2m_colors, N=500)
     cmap_precipitation = mcolors.LinearSegmentedColormap.from_list('precipitation_cmap', precipitation_colors, N=500)
+    cmap_snow_depth = mcolors.LinearSegmentedColormap.from_list('snow_depth_cmap', snow_depth_colors, N=1000)
 
     temperature_ticks = list(range(-20, 42, 2))
     wind_max_2m_ticks = list(range(10, 210, 10))
     precipitation_ticks = [0.1, 0.5, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    snow_depth_ticks = [1,2,3,4,5,6,8,10,12,14,16,20, 25, 30, 40, 50, 75, 100, 125, 150, 200]
 
     temperature_contour_levels = list(range(-20, 42, 2))
     wind_max_2m_contour_levels = list(range(10, 210, 10))
     precipitation_contour_leves = precipitation_ticks
+    snow_depth_contour_levels = snow_depth_ticks
 
     variables_and_settings = [
         ("animation_2_metre_temperature_icond2", "animacija temperature zraka", "temperatura [°C]", cmap_temperature,
@@ -56,14 +60,16 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
          precipitation_ticks, precipitation_contour_leves),
         ("animation_convective_snowfall_water_equivalent_(s)_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("max_snow_depth_icond2", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
-         precipitation_ticks, precipitation_contour_leves),
-        ("animation_snow_depth_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
-         precipitation_ticks, precipitation_contour_leves),
+        ("max_snow_depth_icond2", "višina snežne odeje", "višina snežne odeje [cm]", cmap_snow_depth,
+         snow_depth_ticks, snow_depth_contour_levels),
+        ("animation_snow_depth_icond2", "višina snežne odeje", "višina snežne odeje [cm]", cmap_snow_depth,
+         snow_depth_ticks, snow_depth_contour_levels),
         ("animation_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
         ("max_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
+        ("animation_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_precipitation,
+        precipitation_ticks, precipitation_contour_leves),
     ]
     chosen_file_path = None
     chosen_variable = 'animation'
