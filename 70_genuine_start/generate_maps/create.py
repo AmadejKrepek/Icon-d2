@@ -46,7 +46,19 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
          precipitation_ticks, precipitation_contour_leves),
         ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("animation_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+        ("animation_total_precipitation_aladin", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("animation_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_convective_snowfall_water_equivalent_(s)_icond2", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("animation_convective_snowfall_water_equivalent_(s)_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_snow_depth_icond2", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("animation_snow_depth_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
         ("animation_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
@@ -59,6 +71,7 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
     for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:
         for df in df_array:
             df_result = df.reset_index()
+            print(variable)
             if variable not in df_result.columns:
                 print(f"Variable '{variable}' not found in the CSV file. Skipping...")
                 continue
