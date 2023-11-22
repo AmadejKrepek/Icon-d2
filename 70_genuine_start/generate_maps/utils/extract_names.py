@@ -42,8 +42,7 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     selected_start_minute = start_date.minute
 
     end_date = end_date.astimezone(local_timezone)
-
-    if variable == "max_total_precipitation_aladin" or variable == "max_total_precipitation_icond2":
+    if any(substring in variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         # Check if the time is 00:00 and adjust it to 00:00 of the next day
         if selected_date.day is not end_date.day:
             selected_date = selected_date + timedelta(days=1)  # Add one day to the selected_date
@@ -73,8 +72,7 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
     model_run_formatted_date = model_run_formatted_date + f" {model_run} UTC"
 
-    if (output_variable_name.startswith(
-            "max_total_precipitation_") or output_variable_name == "sum_total_precipitation"):
+    if any(substring in variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         selected_date_components = datetime.strptime(
             f"{selected_end_year}-{selected_end_month}-{selected_end_day} {selected_end_hour}:{selected_end_minute}",
             "%Y-%m-%d %H:%M")
@@ -155,8 +153,7 @@ def extract_animation_output_names(model_run, variable, output_directory, start_
     model_run_formatted_date = model_run_date_components.strftime("%d. %m. %Y")
     model_run_formatted_date = model_run_formatted_date + f" {model_run} UTC"
 
-    if (output_variable_name.startswith(
-            "animation_total_precipitation_") or output_variable_name == "sum_total_precipitation"):
+    if any(substring in variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         selected_date_components = datetime.strptime(
             f"{selected_end_year}-{selected_end_month}-{selected_end_day} {selected_end_hour}:{selected_end_minute}",
             "%Y-%m-%d %H:%M")
@@ -171,7 +168,7 @@ def extract_animation_output_names(model_run, variable, output_directory, start_
 
     os.makedirs(output_directory, exist_ok=True)  # Create the output directory if it doesn't exist
 
-    output_filename = f'{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{formatted_start_datetime}_{formatted_end_datetime}.png'
+    output_filename = f'{output_variable_name}_{selected_year}_{selected_month}_{selected_day}_{model_run}_{counter}.png'
     output_filepath = os.path.join(output_directory, output_filename)
 
     return output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider
