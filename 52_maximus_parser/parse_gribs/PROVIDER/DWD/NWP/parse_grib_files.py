@@ -78,8 +78,11 @@ def process_data(filepath, bbox, index):
         valid_date = grb.validDate
         parameter_name = grb.name
         base_datetime = valid_date
-        
-        if parameter_name == 'Total Precipitation' or parameter_name == 'maximum Wind 10m' or parameter_name == 'Snow depth' or parameter_name == 'Base reflectivity (cmax)' or parameter_name == 'Base reflectivity':
+
+        keywords = ['Total Precipitation', 'maximum Wind 10m', 'Snow depth', 'Base reflectivity (cmax)',
+                    'Base reflectivity']
+
+        if any(keyword in parameter_name for keyword in keywords):
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
         elif parameter_name == 'Convective Snowfall water equivalent (s)' or parameter_name == 'Large-Scale snowfall - water equivalent (Accumulation)':
