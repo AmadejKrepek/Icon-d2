@@ -108,7 +108,7 @@ def process_data(filepath, bbox, index):
     valid_date = pd.to_datetime(valid_date)
     df["ValidDate"] = valid_date
 
-    return None
+    return df, parameter_name
 
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
