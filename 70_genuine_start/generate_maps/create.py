@@ -22,7 +22,7 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
     temperature_ticks = list(range(-20, 42, 2))
     wind_max_2m_ticks = list(range(10, 210, 10))
     precipitation_ticks = [0.1, 0.5, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
-    snow_depth_ticks = [1,2,3,4,5,6,8,10,12,14,16,20, 25, 30, 40, 50, 75, 100, 125, 150, 200]
+    snow_depth_ticks = [1,2,5,10,15,20,30,40,50,70,100,150,200]
 
     temperature_contour_levels = list(range(-20, 42, 2))
     wind_max_2m_contour_levels = list(range(10, 210, 10))
@@ -50,13 +50,13 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
          precipitation_ticks, precipitation_contour_leves),
         ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("animation_total_precipitation_aladin", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+        ("animation_total_precipitation_aladin", "vsota snežnih padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("max_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+        ("max_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "vsota snežnih padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
         ("animation_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("max_convective_snowfall_water_equivalent_(s)_icond2", "skupna višina padavin v snegu", "padavine [mm]", cmap_precipitation,
+        ("max_convective_snowfall_water_equivalent_(s)_icond2", "vsota snežnih padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
         ("animation_convective_snowfall_water_equivalent_(s)_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
@@ -75,6 +75,7 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
     chosen_variable = 'animation'
     counter = None
     for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:
+        counter = 0
         for df in df_array:
             df_result = df.reset_index()
             print(variable)
@@ -83,12 +84,10 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
                 continue
             else:
                 if len(df_array) > 1:
-                    counter = 0
                     # Get the first date from the 'Datetime' column
                     selected_date = df_result['Datetime'].min()
                     output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_animation_output_names(
                         model_run, variable, output_directory, start_date, end_date, selected_date, counter)
-                    counter += 1
                 else:
                     output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_output_names(
                         model_run, variable, output_directory, start_date, end_date, selected_date)
@@ -99,4 +98,5 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
                                   output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model,
                                   provider, custom_font)
                 create_variable_plot(model)
+                counter += 1
     create_gif_from_png(chosen_file_path, f"{chosen_variable}.gif")
