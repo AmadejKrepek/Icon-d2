@@ -65,7 +65,7 @@ def create_variable_plot(model: MapsModel):
     if model.model_run_model == "ALADIN":
         stride = 2
 
-    if any(substring in model.variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
+    if any(substring in model.variable for substring in ["total_precipitation_icond2", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         stride = 4
 
     # Iterate through the grid and add text for variable values
