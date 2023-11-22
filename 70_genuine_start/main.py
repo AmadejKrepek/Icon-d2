@@ -48,7 +48,7 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
             print(f"No data found in table '{table_name}'.")
             return Exception("Wrong")
 
-        if sort_interval == "gif":
+        if sort_interval == "1":
             agg_name = 'animation' + '_' + table_name
         else:
             agg_name = agg_function + '_' + table_name
@@ -57,7 +57,7 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
         df, selected_date = filterSpecificDate(df, date_choice, end_date)
 
         df = convert_data(df, agg_name)
-        if sort_interval == "normal":
+        if sort_interval == "0":
             df_array = [createAgregates(df, agg_function, table_name)]
         else:
             df_array = split_data(df)
@@ -254,7 +254,18 @@ if __name__ == "__main__":
 
                         date_choice = input("Enter the number of the date for aggregation: ")
 
-                        sort_interval = input("Enter type of generation: (normal, gif)")
+                        sort_interval = input("Enter type of generation (0 for normal, 1 for gif): ")
+
+                        # Check if the input is either '0' or '1'
+                        if sort_interval == '0':
+                            print("Normal generation selected")
+                            # Rest of your code for normal generation goes here
+                        elif sort_interval == '1':
+                            print("GIF generation selected")
+                            # Rest of your code for GIF generation goes here
+                        else:
+                            print("Invalid input. Please enter '0' for normal or '1' for gif.")
+                            raise TypeError("Invalid input. Please enter '0' for normal or '1' for gif.")
 
                         # Let the user choose an aggregation function
                         agg_function = input("Choose an aggregation function (sum, max, min): ")
