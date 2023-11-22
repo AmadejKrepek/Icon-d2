@@ -79,35 +79,36 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         base_datetime = valid_date
         
-        if parameter_name == 'Total Precipitation' or parameter_name == 'maximum Wind 10m':
+        if parameter_name == 'Total Precipitation' or parameter_name == 'maximum Wind 10m' or parameter_name == 'Snow depth' or parameter_name == 'Base reflectivity (cmax)' or parameter_name == 'Base reflectivity':
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
-        elif parameter_name == 'Convective Snowfall water equivalent (s)':
+        elif parameter_name == 'Convective Snowfall water equivalent (s)' or parameter_name == 'Large-Scale snowfall - water equivalent (Accumulation)':
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
 
         inside_grib_index += 1
+
     grbs.close()
     
     if variable_data is None:
         return None
-        
+
     # Create a DataFrame with the extracted data
     df = pd.DataFrame()
     df["Latitude"] = latitudes.ravel()
     df["Longitude"] = longitudes.ravel()
     df[parameter_name] = variable_data.ravel()
-    
+
     # Perform the bounding box filter
     df = crop_dataframe_to_bbox(df, bbox)
-    
+
     df = delete_coordinates(df)
-    
+
     # Convert valid date to datetime and add forecast time to it
     valid_date = pd.to_datetime(valid_date)
     df["ValidDate"] = valid_date
-    
-    return df, parameter_name
+
+    return None
 
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
@@ -204,8 +205,8 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
         provider_id = get_provider_id(provider_name)
         model_id = get_model_id(model_name)
-        # insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name,
-        #                      start_date, end_date)
+        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name,
+                              start_date, end_date)
 
     # Save data for each parameter to separate CSV files
     #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
