@@ -54,7 +54,7 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
          precipitation_ticks, precipitation_contour_leves),
         ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("animation_total_precipitation_aladin", "vsota snežnih padavin", "padavine [mm]", cmap_precipitation,
+        ("animation_total_precipitation_aladin", "animacija višine padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
         ("max_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "vsota snežnih padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
