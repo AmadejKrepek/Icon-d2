@@ -70,8 +70,12 @@ def process_data(filepath, bbox, index):
     # Retrieve the desired variable
     variable_data = None
     parameter_name = None
-    inside_grib_index = 0
 
+    inside_index = 0
+
+    df_array = []
+
+    latest_time_range_hours = None
     for grb in grbs:
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
@@ -79,23 +83,38 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         base_datetime = valid_date
 
-        keywords = ['Total Precipitation', 'maximum Wind 10m', 'Snow depth', 'Base reflectivity (cmax)',
-                    'Base reflectivity']
+        keywords = ['Total Precipitation', 'maximum Wind 10m', 'Snow depth'] #'Base reflectivity' #'Base reflectivity (cmax)'
 
         if any(keyword in parameter_name for keyword in keywords):
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
         elif parameter_name == 'Convective Snowfall water equivalent (s)' or parameter_name == 'Large-Scale snowfall - water equivalent (Accumulation)':
-            time_range = timedelta(hours=index)
-            valid_date = base_datetime + time_range
+            if len(df_array) >= 1:
+                latest_df = df_array[-1]
+                latest_valid_date = latest_df['ValidDate'].iloc[-1]  # Assuming 'ValidDate' is the column name
+                latest_valid_date_timestamp = pd.Timestamp(latest_valid_date)
+                latest_time_range_minutes = timedelta(minutes=15)
+                valid_date = latest_valid_date_timestamp + latest_time_range_minutes
+            else:
+                latest_time_range_hours = timedelta(hours=index)
+                valid_date = base_datetime + latest_time_range_hours
+            inside_index += 1
 
-        inside_grib_index += 1
-
+        df_unique = create_multiple_dataframe_15min(latitudes, longitudes, parameter_name, variable_data, bbox, valid_date)
+        df_array.append(df_unique)
     grbs.close()
     
     if variable_data is None:
         return None
 
+    if len(df_array) == 1:
+        return df_array, parameter_name
+    else:
+        #merged_df = pd.concat(df_array, axis=0, ignore_index=True)
+        #merged_df.sort_values(by='ValidDate', inplace=True)
+        return df_array, parameter_name
+
+def create_multiple_dataframe_15min(latitudes, longitudes, parameter_name, variable_data, bbox, valid_date):
     # Create a DataFrame with the extracted data
     df = pd.DataFrame()
     df["Latitude"] = latitudes.ravel()
@@ -111,7 +130,7 @@ def process_data(filepath, bbox, index):
     valid_date = pd.to_datetime(valid_date)
     df["ValidDate"] = valid_date
 
-    return df, parameter_name
+    return df
 
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
@@ -153,46 +172,47 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         temp_decompressed_path = f"{original_filename}_decompressed.grib2"
         with open(temp_decompressed_path, 'wb') as temp_file:
             temp_file.write(data)
-        
-        data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
+
+        data_array, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
         index = index + 1
 
         start_date = None
         end_date = None
 
-        if data is not None:
-            if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
-                data[parameter_name] = kelvin_to_celsius(data[parameter_name])
+        if len(data) > 0:
+            for data in data_array:
+                if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
+                    data[parameter_name] = kelvin_to_celsius(data[parameter_name])
 
-            data[parameter_name] = convertToOneDecimalPlace(data, parameter_name)
-            
-            # Split the filename using "/" as the separator
-            parts = file.split("/")
+                data[parameter_name] = convertToOneDecimalPlace(data, parameter_name)
 
-            # Extract provider_name and model_name from the appropriate positions in the split parts
-            provider_name = parts[3]
-            model_name = parts[4]
+                # Split the filename using "/" as the separator
+                parts = file.split("/")
 
-            date_str = original_filename.split("_")[4]
-            year = date_str[:4]
-            month = date_str[4:6]
-            day = date_str[6:8]
-            model_run = date_str[8:]
-            last_model_run = model_run
-                        
-            if parameter_name not in parameter_data:
-                parameter_data[parameter_name] = []
+                # Extract provider_name and model_name from the appropriate positions in the split parts
+                provider_name = parts[3]
+                model_name = parts[4]
 
-            if start_date is None:
-                # Create a UTC timezone object
-                utc_timezone = timezone.utc
+                date_str = original_filename.split("_")[4]
+                year = date_str[:4]
+                month = date_str[4:6]
+                day = date_str[6:8]
+                model_run = date_str[8:]
+                last_model_run = model_run
 
-                # Create a datetime object in UTC time zone
-                start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
-                end_date = start_date + timedelta(days=2)
-            
-            data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
-            parameter_data[parameter_name].append((data, data_date))
+                if parameter_name not in parameter_data:
+                    parameter_data[parameter_name] = []
+
+                if start_date is None:
+                    # Create a UTC timezone object
+                    utc_timezone = timezone.utc
+
+                    # Create a datetime object in UTC time zone
+                    start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
+                    end_date = start_date + timedelta(days=2)
+
+                data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
+                parameter_data[parameter_name].append((data, data_date))
         
         os.remove(temp_decompressed_path)
         os.remove(file)
