@@ -13,21 +13,25 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
     temperature_colors = color_configuration["temperature_colors"]
     wind_max_2m_colors = color_configuration["wind_max_2m_colors"]
     snow_depth_colors = color_configuration["snow_depth_colors"]
+    reflectivity_max_colors = color_configuration["base_reflectivity_max_colors"]
 
     cmap_temperature = mcolors.LinearSegmentedColormap.from_list('temperature_cmap', temperature_colors, N=500)
     cmap_wind_max_2m_colors = mcolors.LinearSegmentedColormap.from_list('wind_max_2m_cmap', wind_max_2m_colors, N=500)
     cmap_precipitation = mcolors.LinearSegmentedColormap.from_list('precipitation_cmap', precipitation_colors, N=500)
     cmap_snow_depth = mcolors.LinearSegmentedColormap.from_list('snow_depth_cmap', snow_depth_colors, N=1000)
+    cmap_reflectivity_max = mcolors.LinearSegmentedColormap.from_list('reflectivity_max_cmap', reflectivity_max_colors, N=1000)
 
     temperature_ticks = list(range(-20, 42, 2))
     wind_max_2m_ticks = list(range(10, 210, 10))
     precipitation_ticks = [0.1, 0.5, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
     snow_depth_ticks = [1,2,5,10,15,20,30,40,50,70,100,150,200]
+    base_reflectivity_max_ticks = [15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57]
 
     temperature_contour_levels = list(range(-20, 42, 2))
     wind_max_2m_contour_levels = list(range(10, 210, 10))
     precipitation_contour_leves = precipitation_ticks
     snow_depth_contour_levels = snow_depth_ticks
+    base_reflectivity_max_contour_levels = base_reflectivity_max_ticks
 
     variables_and_settings = [
         ("animation_2_metre_temperature_icond2", "animacija temperature zraka", "temperatura [°C]", cmap_temperature,
@@ -66,10 +70,14 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
          snow_depth_ticks, snow_depth_contour_levels),
         ("animation_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("max_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_precipitation,
-         precipitation_ticks, precipitation_contour_leves),
-        ("animation_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_precipitation,
-        precipitation_ticks, precipitation_contour_leves),
+        ("max_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_reflectivity_max,
+         base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
+        ("animation_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_reflectivity_max,
+        base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
+        ("animation_convective_available_potential_energy,_mean_layer_icond2", "CAPE", "CAPE [J/kg]", cmap_reflectivity_max,
+        base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
+        ("max_convective_available_potential_energy,_mean_layer_icond2", "CAPE", "CAPE[J/kg]", cmap_reflectivity_max,
+        base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
     ]
     chosen_file_path = None
     chosen_variable = 'animation'
