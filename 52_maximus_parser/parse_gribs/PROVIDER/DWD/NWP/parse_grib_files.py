@@ -75,7 +75,6 @@ def process_data(filepath, bbox, index):
 
     df_array = []
 
-    latest_time_range_hours = None
     for grb in grbs:
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
@@ -83,12 +82,17 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name
         base_datetime = valid_date
 
-        keywords = ['Total Precipitation', 'maximum Wind 10m', 'Snow depth'] #'Base reflectivity' #'Base reflectivity (cmax)'
+        keywords = ['Total Precipitation', 'maximum Wind 10m', ] #'Base reflectivity' #'Base reflectivity (cmax)'
+
+        accepted_parameters = [
+            'Convective Snowfall water equivalent (s)',
+            'Large-Scale snowfall - water equivalent (Accumulation)',
+        ]
 
         if any(keyword in parameter_name for keyword in keywords):
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
-        elif parameter_name == 'Convective Snowfall water equivalent (s)' or parameter_name == 'Large-Scale snowfall - water equivalent (Accumulation)':
+        elif parameter_name in accepted_parameters:
             if len(df_array) >= 1:
                 latest_df = df_array[-1]
                 latest_valid_date = latest_df['ValidDate'].iloc[-1]  # Assuming 'ValidDate' is the column name
