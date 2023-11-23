@@ -68,21 +68,22 @@ def create_variable_plot(model: MapsModel):
     if any(substring in model.variable for substring in ["total_precipitation_icond2", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         stride = 4
 
-    # Iterate through the grid and add text for variable values
-    for i in range(0, len(lat_values), stride):
-        for j in range(0, len(lon_values), stride):
-            # Skip values outside of the bounding box
-            if not bbox_polygon.contains(Point(lon_values[j], lat_values[i])):
-                continue
-            # Extract variable value and convert to integer
-            var_val = int(round(variable_clipped[i, j]))
-            # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
-            if any(substring in model.variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
-                if (max_value > 0):
-                    if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
-                        ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
-            else:
-                ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+    if not any(substring in model.variable for substring in ["base_reflectivity"]):
+        # Iterate through the grid and add text for variable values
+        for i in range(0, len(lat_values), stride):
+            for j in range(0, len(lon_values), stride):
+                # Skip values outside of the bounding box
+                if not bbox_polygon.contains(Point(lon_values[j], lat_values[i])):
+                    continue
+                # Extract variable value and convert to integer
+                var_val = int(round(variable_clipped[i, j]))
+                # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
+                if any(substring in model.variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
+                    if (max_value > 0):
+                        if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
+                            ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+                else:
+                    ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
 
     # Add borders between countries
     region_clipped.boundary.plot(ax=ax, linewidth=2, color='#333333')
