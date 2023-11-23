@@ -28,6 +28,8 @@ def merge_lat_lon_with_grid_data(conn, table_name, selected_start_date, selected
     init_interval = None
     latitudes, longitudes = get_latitudes_and_longitudes(provider_id, model_id, conn)
 
+    interval = None
+
     if rows:
         for row in rows:
             start_date, end_date, interval, model_run, data = row
@@ -72,7 +74,7 @@ def merge_lat_lon_with_grid_data(conn, table_name, selected_start_date, selected
                     coordinate_index += 1
         # Close the cursor and the connection
         cursor.close()
-        return csv_data
+        return csv_data, interval
     else:
         # Close the cursor and the connection
         cursor.close()

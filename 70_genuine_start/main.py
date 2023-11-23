@@ -42,11 +42,15 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
             password=DB_PASSWORD
         )
 
-        csv_data = merge_lat_lon_with_grid_data(conn, table_name, selected_start_date, selected_end_date, selected_model_run, provider_id, model_id)
+        csv_data, interval = merge_lat_lon_with_grid_data(conn, table_name, selected_start_date, selected_end_date, selected_model_run, provider_id, model_id)
 
         if csv_data is None:
             print(f"No data found in table '{table_name}'.")
-            return Exception("Wrong")
+            return ValueError("Wrong")
+
+        if interval is None:
+            print(f"Interval is not correct.")
+            return ValueError("Interval is not correct.")
 
         if sort_interval == "1":
             agg_name = 'animation' + '_' + table_name
@@ -60,7 +64,7 @@ def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, s
         if sort_interval == "0":
             df_array = [createAgregates(df, agg_function, table_name)]
         else:
-            df_array = split_data(df)
+            df_array = split_data(df, interval)
         conn.close()
 
         return df_array, selected_date
