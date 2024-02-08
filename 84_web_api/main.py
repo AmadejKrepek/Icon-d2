@@ -19,9 +19,12 @@ def get_weather():
     parameter = request.args.get('parameter')
     day = request.args.get('day')
     agg = request.args.get('agg')
+    start_date = request.args.get('start_date')
     # Check if both parameters are provided
-    if parameter and day:
-        result, parameter = select_query_parameter_model(parameter)
+    if parameter and day and start_date:
+        result, parameter = select_query_parameter_model(parameter, start_date)
+        if not result:
+            return jsonify({"error": "Sorry no data available"}), 400
         df_array, selected_date = fetch_data(result, parameter, day, agg)
         color_configuration = read_colors("../assets/colors/colors.config")
         font_path = '../assets/fonts/'

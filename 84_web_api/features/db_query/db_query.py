@@ -9,19 +9,23 @@ from features.database.db_connector import create_db_connection
 
 # Custom JSON encoder to handle timedelta serialization
 
-def select_query_parameter_model(parameter):
+def select_query_parameter_model(parameter, start_date):
     # Connect to the database
     conn = create_db_connection()
 
     # Use a cursor to execute a query
     with conn.cursor() as cursor:
-        # Modify the query based on your database schema and structure
-        query = f'SELECT data, start_date, end_date, interval, model_run FROM "{parameter}" LIMIT 1'
-        cursor.execute(query)
+        # Modify the query to include a WHERE clause for the specified start_date
+        query = (f'SELECT data, start_date, end_date, interval, model_run FROM "{parameter}" WHERE start_date = %s '
+                 f'LIMIT 1')
+        cursor.execute(query, (start_date,))
         result = cursor.fetchone()
 
     # Close the database connection
     conn.close()
+
+    if not result:
+        return None
 
     data = {
         "data": result[0],
