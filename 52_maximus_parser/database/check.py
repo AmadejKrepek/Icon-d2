@@ -37,8 +37,8 @@ def check_model_run_exists(table_name, model_run, start_date):
 
         if existing_record:
             existing_model_run, existing_start_date = existing_record
-            formatted_timestamp = existing_start_date.strftime("%Y-%m-%d %H:%M:%S")
-            formatted_timestamp = Timestamp(formatted_timestamp)
+            #formatted_timestamp = existing_start_date.strftime("%Y-%m-%d %H:%M:%S")
+            # formatted_timestamp = Timestamp(formatted_timestamp)
 
             print(f"Existing start date: {start_date}")
             time_difference = existing_start_date - start_date
@@ -58,4 +58,4 @@ def check_model_run_exists(table_name, model_run, start_date):
     except Exception as e:
         print(f"Error: {e}")
         # Handle the error here or re-raise it if needed
-        raise
+        raise ValueError(f"{e}")

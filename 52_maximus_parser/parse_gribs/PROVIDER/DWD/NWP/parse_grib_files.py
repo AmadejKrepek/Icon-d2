@@ -26,16 +26,20 @@ LAT_MAX = 47.1212 + DEVIATION_LAT_MAX
 LON_MIN = 12.9955 - DEVIATION_LON_MIN
 LON_MAX = 16.7455 + DEVIATION_LON_MAX
 
+
 def kelvin_to_celsius(kelvin):
     return kelvin - 273.15
 
+
 def ms_to_kmh(ms):
     return ms * 3.6
+
 
 def replace_zeros_with_null(value):
     if value == 0.0:
         return None
     return value
+
 
 def crop_dataframe_to_bbox(df, bbox):
     """
@@ -63,51 +67,87 @@ def crop_dataframe_to_bbox(df, bbox):
     df = df.loc[lat_filter & lon_filter]
     return df
 
+
 def process_data(filepath, bbox, index):
     # Load the files with GRIB2 data using pygrib
     grbs = pygrib.open(filepath)
-    
+
     # Retrieve the desired variable
     variable_data = None
-    parameter_name = None   
-    
+    parameter_name = None
+
+    inside_index = 0
+
+    df_array = []
+
     for grb in grbs:
         variable_data = grb.values
-        latitudes, longitudes = grb.latlons()        
+        latitudes, longitudes = grb.latlons()
         valid_date = grb.validDate
         parameter_name = grb.name
         base_datetime = valid_date
-        
-        if parameter_name == 'Total Precipitation' or parameter_name == 'maximum Wind 10m':
+
+        keywords = ['maximum Wind 10m']  # 'Base reflectivity' #'Base reflectivity (cmax)'
+
+        accepted_parameters = [
+            'Convective Snowfall water equivalent (s)',
+            'Large-Scale snowfall - water equivalent (Accumulation)',
+            'Total Precipitation'
+        ]
+
+        if any(keyword in parameter_name for keyword in keywords):
             time_range = timedelta(hours=index)
             valid_date = base_datetime + time_range
-                
+        elif parameter_name in accepted_parameters:
+            if len(df_array) >= 1:
+                latest_df = df_array[-1]
+                latest_valid_date = latest_df['ValidDate'].iloc[-1]  # Assuming 'ValidDate' is the column name
+                latest_valid_date_timestamp = pd.Timestamp(latest_valid_date)
+                latest_time_range_minutes = timedelta(minutes=15)
+                valid_date = latest_valid_date_timestamp + latest_time_range_minutes
+            else:
+                latest_time_range_hours = timedelta(hours=index)
+                valid_date = base_datetime + latest_time_range_hours
+            inside_index += 1
+
+        df_unique = create_multiple_dataframe_15min(latitudes, longitudes, parameter_name, variable_data, bbox,
+                                                    valid_date)
+        df_array.append(df_unique)
     grbs.close()
-    
+
     if variable_data is None:
         return None
-        
+
+    if len(df_array) == 1:
+        return df_array, parameter_name
+    else:
+        return df_array, parameter_name
+
+
+def create_multiple_dataframe_15min(latitudes, longitudes, parameter_name, variable_data, bbox, valid_date):
     # Create a DataFrame with the extracted data
     df = pd.DataFrame()
     df["Latitude"] = latitudes.ravel()
     df["Longitude"] = longitudes.ravel()
     df[parameter_name] = variable_data.ravel()
-    
+
     # Perform the bounding box filter
     df = crop_dataframe_to_bbox(df, bbox)
-    
+
     df = delete_coordinates(df)
-    
+
     # Convert valid date to datetime and add forecast time to it
     valid_date = pd.to_datetime(valid_date)
     df["ValidDate"] = valid_date
-    
-    return df, parameter_name
+
+    return df
+
 
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
     os.makedirs(model_run_dir, exist_ok=True)
     return model_run_dir
+
 
 def save_parameter_data(parameter_data, output_directory, year, month, day, model_run):
     for parameter_name, data_list in parameter_data.items():
@@ -120,23 +160,24 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         combined_df.to_csv(output_path, index=False)
         return output_path
 
-def parse_gribs(source_data_dir, output_directory, output_directory_gribs):    
+
+def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     os.makedirs(output_directory, exist_ok=True)
     deleted_directory = source_data_dir
-    
+
     if not os.path.isdir(source_data_dir):
         print(f"Source data directory '{source_data_dir}' does not exist. Please provide the correct path.")
         sys.exit(1)
-    
+
     filenames = glob.glob(os.path.join(source_data_dir, "*.grib2.bz2"))
     filenames = sorted(filenames)
 
     parameter_data = {}  # Dictionary to store data for each parameter
-    
+
     index = 0
 
     last_model_run = None
-    
+
     for file in filenames:
         with bz2.BZ2File(file, 'rb') as compressed_file:
             data = compressed_file.read()
@@ -144,50 +185,51 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
         temp_decompressed_path = f"{original_filename}_decompressed.grib2"
         with open(temp_decompressed_path, 'wb') as temp_file:
             temp_file.write(data)
-        
-        data, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
+
+        data_array, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
         index = index + 1
 
         start_date = None
         end_date = None
 
-        if data is not None:
-            if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
-                data[parameter_name] = kelvin_to_celsius(data[parameter_name])
+        if len(data) > 0:
+            for data in data_array:
+                if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
+                    data[parameter_name] = kelvin_to_celsius(data[parameter_name])
 
-            data[parameter_name] = convertToOneDecimalPlace(data, parameter_name)
-            
-            # Split the filename using "/" as the separator
-            parts = file.split("/")
+                data[parameter_name] = convertToOneDecimalPlace(data, parameter_name)
 
-            # Extract provider_name and model_name from the appropriate positions in the split parts
-            provider_name = parts[3]
-            model_name = parts[4]
+                # Split the filename using "/" as the separator
+                parts = file.split("/")
 
-            date_str = original_filename.split("_")[4]
-            year = date_str[:4]
-            month = date_str[4:6]
-            day = date_str[6:8]
-            model_run = date_str[8:]
-            last_model_run = model_run
-                        
-            if parameter_name not in parameter_data:
-                parameter_data[parameter_name] = []
+                # Extract provider_name and model_name from the appropriate positions in the split parts
+                provider_name = parts[3]
+                model_name = parts[4]
 
-            if start_date is None:
-                # Create a UTC timezone object
-                utc_timezone = timezone.utc
+                date_str = original_filename.split("_")[4]
+                year = date_str[:4]
+                month = date_str[4:6]
+                day = date_str[6:8]
+                model_run = date_str[8:]
+                last_model_run = model_run
 
-                # Create a datetime object in UTC time zone
-                start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
-                end_date = start_date + timedelta(days=2)
-            
-            data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
-            parameter_data[parameter_name].append((data, data_date))
-        
+                if parameter_name not in parameter_data:
+                    parameter_data[parameter_name] = []
+
+                if start_date is None:
+                    # Create a UTC timezone object
+                    utc_timezone = timezone.utc
+
+                    # Create a datetime object in UTC time zone
+                    start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
+                    end_date = start_date + timedelta(days=2)
+
+                data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
+                parameter_data[parameter_name].append((data, data_date))
+
         os.remove(temp_decompressed_path)
         os.remove(file)
-        
+
     removeDirectories(deleted_directory)
 
     start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
@@ -195,13 +237,14 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
     create_parameter_table(parameter_table_name, parameter_name)
-    
+
     if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
         provider_id = get_provider_id(provider_name)
         model_id = get_model_id(model_name)
-        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run, parameter_table_name,
+        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run,
+                              parameter_table_name,
                               start_date, end_date)
 
     # Save data for each parameter to separate CSV files
-    #return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+    # return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
     return None

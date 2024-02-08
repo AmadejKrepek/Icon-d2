@@ -31,6 +31,15 @@ def kelvin_to_celsius(kelvin):
 def ms_to_kmh(ms):
     return ms * 3.6
 
+def pa_to_hpa(pa):
+    return pa * 0.01
+
+def whole_to_percent(value):
+    if 0 <= value <= 1:
+        return value * 100
+    else:
+        raise ValueError("Input value must be in the range [0, 1]")
+
 def crop_dataframe_to_bbox(df, bbox):
     """
     Perform a geospatial filter on the DataFrame
@@ -81,10 +90,14 @@ def process_data(filepath, bbox, index):
     parameter_data = {}
         
     for grb in grbs:
-        parameter_name = grb.name
-        
-        if parameter_name != "Total Precipitation":
-            continue
+        # 4. Vertical Level
+        vertical_level = grb.level
+        # 2. Units
+        units = grb.units
+
+        # 3. Type of Level
+        type_of_level = grb.typeOfLevel
+        parameter_name = grb.name + "_" + str(vertical_level) + "_" + type_of_level
 
         variable_data = grb.values
         latitudes, longitudes = grb.latlons()        
@@ -138,19 +151,27 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         # Get a list of all extracted GRB files
         grb_files = [f for f in os.listdir(temp_directory) if f.endswith(".grb")]
         sorted_grb_files = sorted(grb_files)
+        sorted_file_list = sorted(sorted_grb_files, key=lambda x: int(x.split('_')[-1].split('.')[0]))
+        timestamp_to_match = sorted_file_list[0].split('_')[1]  # Extract the timestamp value from the first item in the list
+
+        filtered_files = [file for file in sorted_file_list if file.split('_')[1] == timestamp_to_match]
         index = 0
         
-        for grb_file in sorted_grb_files:
+        for grb_file in filtered_files:
             temp_decompressed_path = os.path.join(temp_directory, grb_file)
             
             processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
             
             for parameter_name, data in processed_data.items():
                 if data is not None:
-                    if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
+                    if "temperature" in parameter_name.lower():
                         data[parameter_name] = kelvin_to_celsius(data[parameter_name])
-                    elif parameter_name == "maximum Wind 10m" or parameter_name == "10 metre V wind component":
+                    elif "wind" in parameter_name.lower():
                         data[parameter_name] = ms_to_kmh(data[parameter_name])
+                    elif "pressure" in parameter_name.lower():
+                        data[parameter_name] = pa_to_hpa(data[parameter_name])
+                    #elif "humidity" in parameter_name.lower():
+                        #data[parameter_name] = whole_to_percent(data[parameter_name])
                     
                     # Split the filename using "/" as the separator
                     parts = file.split("/")
@@ -179,7 +200,7 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
 
                     data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d %H:%M:%S")
                     parameter_data[parameter_name].append((data, data_date))
-            
+
             index = index + 1
             
             os.remove(temp_decompressed_path)
@@ -187,18 +208,23 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         
         removeDirectories(delete_directory)
 
-    #start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
-    last_model_run = remove_leading_zeros(last_model_run)
-    parameter_table_name = parameter_name.replace(" ", "_").lower()
-    parameter_table_name = parameter_table_name + "_" + model_name.lower()
-    create_parameter_table(parameter_table_name, parameter_name)
+        for parameter_name, parameter_entries in parameter_data.items():
+            # start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
+            last_model_run = remove_leading_zeros(last_model_run)
+            parameter_table_name = parameter_name.replace(" ", "_").lower()
+            parameter_table_name = parameter_table_name + "_" + model_name.lower()
+            create_parameter_table(parameter_table_name, parameter_name)
 
-    if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
-        provider_id = get_provider_id(provider_name)
-        model_id = get_model_id(model_name)
-        insert_parameter_data(provider_id, model_id, parameter_name, 
-                              parameter_data[parameter_name], last_model_run,
-                              parameter_table_name, start_date, end_date)
-    # Save data for each parameter to separate CSV files
-    # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+            if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
+                provider_id = get_provider_id(provider_name)
+                model_id = get_model_id(model_name)
+                insert_parameter_data(provider_id, model_id, parameter_name,
+                                      parameter_data[parameter_name], last_model_run,
+                                      parameter_table_name, start_date, end_date)
+            # Save data for each parameter to separate CSV files
+            # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
+
+        # start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
+        # Save data for each parameter to separate CSV files
+        # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
     return None

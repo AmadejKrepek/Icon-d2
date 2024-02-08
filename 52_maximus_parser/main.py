@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import traceback
+from datetime import datetime
 
 from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileName as getDWDGribFileNames
 from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNames as getARSOGribFileNames
@@ -17,10 +18,18 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
+# Get the current time
+current_time = datetime.now()
+
+# Extract the current hour and minute
+current_hour = current_time.hour
+current_minute = current_time.minute
+
+
 provider_models = {
     "DWD": {
         "IconD2": {
-            "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 44), (15, 44), (18, 44), (21, 44)],
+            "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44), (18, 44), (21, 44)],
             "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850", "dbz_cmax"],  # Parameters for IconD2
         },
     },
@@ -37,7 +46,6 @@ def download_and_parse_one_param(output_directory_gribs, output_directory, getGr
         if model_directory == "IconD2":
             filenames = getGribFileNames([param])
         else:
-            print('you call me again?')
             filenames = getGribFileNames()  # Use without parameter selection for Aladin
 
         print(model_directory)

@@ -42,7 +42,7 @@ def get_interval_from_latest_df(data_list):
     latest_df = latest_df.sort_values(by='ValidDate')
 
     # Extract start_date from the first row of ValidDate column in the second-to-last DataFrame
-    start_date = second_to_last_df['ValidDate'].iloc[0]
+    start_date = second_to_last_df['ValidDate'].iloc[-1]
 
     # Extract end_date from the first row of ValidDate column in the last DataFrame
     end_date = latest_df['ValidDate'].iloc[0]
@@ -86,7 +86,7 @@ def insert_parameter_data(provider_id, model_id, parameter_name, data_list, mode
             combined_data_list.append(parameter_values)
 
         interval = get_interval_from_latest_df(data_list)
-        if parameter_name != "2 metre temperature":
+        if "temperature" not in parameter_name.lower():
             combined_data_list = replaceZeroValuesWithNull(combined_data_list)
 
         insert_data_sql = sql.SQL("""

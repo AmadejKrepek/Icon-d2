@@ -1,43 +1,177 @@
+from datetime import timedelta
+
+from animation.animation import create_gif_from_png
 from .models.MapsModel import MapsModel
 from .basic import create_variable_plot
-from .utils.extract_names import extract_output_names
-import pandas as pd
+from .utils.extract_names import extract_output_names, extract_animation_output_names
 import matplotlib.colors as mcolors
 
-def create_maps(model_run, df, output_directory, color_configuration, custom_font, start_date, end_date, selected_date):
+
+def create_maps(model_run, df_array, output_directory, color_configuration, custom_font, start_date, end_date,
+                selected_date):
     precipitation_colors = color_configuration["precipitation_colors"]
     temperature_colors = color_configuration["temperature_colors"]
     wind_max_2m_colors = color_configuration["wind_max_2m_colors"]
-        
+    snow_depth_colors = color_configuration["snow_depth_colors"]
+    reflectivity_max_colors = color_configuration["base_reflectivity_max_colors"]
+
     cmap_temperature = mcolors.LinearSegmentedColormap.from_list('temperature_cmap', temperature_colors, N=500)
     cmap_wind_max_2m_colors = mcolors.LinearSegmentedColormap.from_list('wind_max_2m_cmap', wind_max_2m_colors, N=500)
     cmap_precipitation = mcolors.LinearSegmentedColormap.from_list('precipitation_cmap', precipitation_colors, N=500)
+    cmap_snow_depth = mcolors.LinearSegmentedColormap.from_list('snow_depth_cmap', snow_depth_colors, N=1000)
+    cmap_reflectivity_max = mcolors.LinearSegmentedColormap.from_list('reflectivity_max_cmap', reflectivity_max_colors,
+                                                                      N=1000)
 
     temperature_ticks = list(range(-20, 42, 2))
     wind_max_2m_ticks = list(range(10, 210, 10))
-    precipitation_ticks = [0.1,0.5,1,2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    precipitation_ticks = [0.1, 0.5, 1, 2, 5, 10, 15, 20, 30, 40, 50, 60, 80, 100, 120, 140, 160, 180, 200, 250, 300]
+    snow_depth_ticks = [1, 2, 5, 10, 15, 20, 30, 40, 50, 70, 100, 150, 200]
+    base_reflectivity_max_ticks = [15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57]
 
     temperature_contour_levels = list(range(-20, 42, 2))
     wind_max_2m_contour_levels = list(range(10, 210, 10))
     precipitation_contour_leves = precipitation_ticks
+    snow_depth_contour_levels = snow_depth_ticks
+    base_reflectivity_max_contour_levels = base_reflectivity_max_ticks
 
     variables_and_settings = [
-        ("max_2_metre_temperature_icond2", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
-        ("max_2_metre_temperature_aladin", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
-        ("min_2_metre_temperature_icond2", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
-        ("min 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
-        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]", cmap_temperature, temperature_ticks, temperature_contour_levels),
-        ("max_maximum_wind_10m_icond2", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_ticks, wind_max_2m_contour_levels),
-        ("max_10_metre_v_wind_component_icond2", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors, wind_max_2m_ticks, wind_max_2m_contour_levels),
-        ("max_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precipitation_ticks, precipitation_contour_leves),
-        ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]",  cmap_precipitation, precipitation_ticks, precipitation_contour_leves),
+        ("max_2_metre_temperature_2_heightaboveground_aladin", "najvišja temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("min_2_metre_temperature_2_heightaboveground_aladin", "najnižja temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("animation_2_metre_temperature_2_heightaboveground_aladin", "temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_temperature_850_isobaricinhpa_aladin", "najvišja temperatura zraka na 850 hPa", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_temperature_925_isobaricinhpa_aladin", "najvišja temperatura zraka na 925 hPa", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_temperature_700_isobaricinhpa_aladin", "najvišja temperatura zraka na 700 hPa", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_temperature_500_isobaricinhpa_aladin", "najvišja temperatura zraka na 500 hPa", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("min_temperature_500_isobaricinhpa_aladin", "najnižja temperatura zraka na 500 hPa", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("animation_2_metre_temperature_icond2", "animacija temperature zraka", "temperatura [°C]", cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_2_metre_temperature_icond2", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_2_metre_temperature_aladin", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("min_2_metre_temperature_icond2", "najnižja temperatura zraka", "temperatura [°C]", cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("min 2 metre dewpoint temperature", "najvišja temperatura rosišča", "temperatura rosišča [°C]",
+         cmap_temperature, temperature_ticks, temperature_contour_levels),
+        ("min 2 metre dewpoint temperature", "najnižja temperatura rosišča", "temperatura rosišča [°C]",
+         cmap_temperature, temperature_ticks, temperature_contour_levels),
+        ("max_maximum_wind_10m_icond2", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("animation_maximum_wind_10m_icond2", "animacija sunkov vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_10_metre_v_wind_component_icond2", "najvišji sunek vetra", "sunki vetra [km/h]", cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_10_metre_v_wind_component_10_heightaboveground_aladin", "najvišja hitrost vetra", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_10_metre_u_wind_component_10_heightaboveground_aladin", "najvišja hitrost vetra", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_v_component_of_wind_850_isobaricinhpa_aladin", "najvišja hitrost vetra na 850 hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_u_component_of_wind_850_isobaricinhpa_aladin", "najvišja hitrost vetra na 850hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_v_component_of_wind_925_isobaricinhpa_aladin", "najvišja hitrost vetra na 925hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_u_component_of_wind_925_isobaricinhpa_aladin", "najvišja hitrost vetra na 925hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_v_component_of_wind_700_isobaricinhpa_aladin", "najvišja hitrost vetra na 700hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_u_component_of_wind_700_isobaricinhpa_aladin", "najvišja hitrost vetra na 700hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_v_component_of_wind_500_isobaricinhpa_aladin", "najvišja hitrost vetra na 500hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_u_component_of_wind_500_isobaricinhpa_aladin", "najvišja hitrost vetra na 500hPa", "veter [km/h]",
+         cmap_wind_max_2m_colors,
+         wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+         ("max_total_precipitation_0_surface_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("animation_total_precipitation_aladin", "animacija višine padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "vsota snežnih padavin", "padavine [mm]",
+         cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("animation_large-scale_snowfall_-_water_equivalent_(accumulation)_icond2", "skupna višina padavin",
+         "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_convective_snowfall_water_equivalent_(s)_icond2", "vsota snežnih padavin", "padavine [mm]",
+         cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("animation_convective_snowfall_water_equivalent_(s)_icond2", "skupna višina padavin", "padavine [mm]",
+         cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_snow_depth_icond2", "višina snežne odeje", "višina snežne odeje [cm]", cmap_snow_depth,
+         snow_depth_ticks, snow_depth_contour_levels),
+        ("sum_snow_depth_icond2", "višina snežne odeje", "višina snežne odeje [cm]", cmap_snow_depth,
+         snow_depth_ticks, snow_depth_contour_levels),
+        ("animation_snow_depth_icond2", "višina snežne odeje", "višina snežne odeje [cm]", cmap_snow_depth,
+         snow_depth_ticks, snow_depth_contour_levels),
+        ("animation_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
+        ("max_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]", cmap_reflectivity_max,
+         base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
+        ("animation_base_reflectivity_(cmax)_icond2", "maksimalna radarska odbojnost", "odboji [dBz]",
+         cmap_reflectivity_max,
+         base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
+        ("animation_convective_available_potential_energy,_mean_layer_icond2", "CAPE", "CAPE [J/kg]",
+         cmap_reflectivity_max,
+         base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
+        ("max_convective_available_potential_energy,_mean_layer_icond2", "CAPE", "CAPE[J/kg]", cmap_reflectivity_max,
+         base_reflectivity_max_ticks, base_reflectivity_max_contour_levels),
     ]
-
-    for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:        
-        df_result = df.reset_index()
-        if variable not in df_result.columns:
-            print(f"Variable '{variable}' not found in the CSV file. Skipping...")
-        else: 
-            output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_output_names(model_run, variable, output_directory, start_date, end_date, selected_date)
-            model = MapsModel(df_result, variable, title, x_title, colormap, legend_ticks, contour_levels, output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider, custom_font)
-            create_variable_plot(model)
+    chosen_file_path = None
+    chosen_variable = 'animation'
+    counter = None
+    for variable, title, x_title, colormap, legend_ticks, contour_levels in variables_and_settings:
+        counter = 0
+        for df in df_array:
+            df_result = df.reset_index()
+            print(variable)
+            if variable not in df_result.columns:
+                print(f"Variable '{variable}' not found in the CSV file. Skipping...")
+                continue
+            else:
+                if len(df_array) > 1:
+                    # Get the first date from the 'Datetime' column
+                    selected_date = df_result['Datetime'].min()
+                    output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_animation_output_names(
+                        model_run, variable, output_directory, start_date, end_date, selected_date, counter)
+                else:
+                    output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_output_names(
+                        model_run, variable, output_directory, start_date, end_date, selected_date)
+                if counter is not None:
+                    chosen_file_path = f"{output_filepath}_{counter}"
+                chosen_variable = variable
+                model = MapsModel(df_result, variable, title, x_title, colormap, legend_ticks, contour_levels,
+                                  output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model,
+                                  provider, custom_font)
+                create_variable_plot(model)
+                counter += 1
+    create_gif_from_png(chosen_file_path, f"{chosen_variable}.gif")
