@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from split.split_df import split_dataframe_by_specific_hours_and_minutes, split_dataframe_by_hour
+from features.split.split_df import split_dataframe_by_hour, split_dataframe_by_specific_hours_and_minutes
 
 
 def split_data(df, interval):

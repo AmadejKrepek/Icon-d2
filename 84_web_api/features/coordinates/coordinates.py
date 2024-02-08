@@ -1,6 +1,9 @@
 import pandas as pd
 
+from features.data_management.data_management import convert_data, createAgregates
+from features.filter.filter import filterSpecificDate
 from features.merger.merge import merge_lat_lon_with_grid_data
+from features.split.splitter import split_data
 
 
 def extract_coordinates(coord_str):
@@ -11,7 +14,7 @@ def extract_coordinates(coord_str):
 
 
 def write_data_to_csv_with_coordinates(selected_start_date, selected_end_date, selected_model_run, date_choice,
-                                       table_name, output_file, provider_id, model_id, conn, sort_interval, agg_function):
+                                       table_name, output_file, provider_id, model_id, conn, sort_interval, agg_function, end_date):
     try:
 
         csv_data, interval = merge_lat_lon_with_grid_data(conn, table_name, selected_start_date, selected_end_date, selected_model_run, provider_id, model_id)
