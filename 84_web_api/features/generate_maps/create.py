@@ -1,13 +1,12 @@
 from datetime import timedelta
 
-from animation.animation import create_gif_from_png
 from .models.MapsModel import MapsModel
 from .basic import create_variable_plot
 from .utils.extract_names import extract_output_names, extract_animation_output_names
 import matplotlib.colors as mcolors
 
 
-def create_maps(model_run, df_array, output_directory, color_configuration, custom_font, start_date, end_date,
+def create_maps(model_run, df_array, color_configuration, custom_font, start_date, end_date,
                 selected_date):
     precipitation_colors = color_configuration["precipitation_colors"]
     temperature_colors = color_configuration["temperature_colors"]
@@ -161,17 +160,17 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
                 if len(df_array) > 1:
                     # Get the first date from the 'Datetime' column
                     selected_date = df_result['Datetime'].min()
-                    output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_animation_output_names(
-                        model_run, variable, output_directory, start_date, end_date, selected_date, counter)
+                    model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_animation_output_names(
+                        model_run, variable, start_date, end_date, selected_date, counter)
                 else:
-                    output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_output_names(
-                        model_run, variable, output_directory, start_date, end_date, selected_date)
-                if counter is not None:
-                    chosen_file_path = f"{output_filepath}_{counter}"
+                    model_run_formatted_date, selected_formatted_date, model_run_model, provider = extract_output_names(
+                        model_run, variable, start_date, end_date, selected_date)
+                #if counter is not None:
+                    #chosen_file_path = f"{output_filepath}_{counter}"
                 chosen_variable = variable
                 model = MapsModel(df_result, variable, title, x_title, colormap, legend_ticks, contour_levels,
-                                  output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model,
+                                  model_run_formatted_date, selected_formatted_date, model_run_model,
                                   provider, custom_font)
-                create_variable_plot(model)
+                return create_variable_plot(model)
                 counter += 1
-    create_gif_from_png(chosen_file_path, f"{chosen_variable}.gif")
+    #create_gif_from_png(chosen_file_path, f"{chosen_variable}.gif")
