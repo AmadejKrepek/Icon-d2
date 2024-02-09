@@ -21,7 +21,7 @@ def fetch_data(data, parameter, day, agg):
         date_choice = int(day)
         predefinedDates = getPredefinedDates(data['start_date'], data['end_date'])
         df, selected_date = filterSpecificDate(df, date_choice, predefinedDates)
-        df = convert_data(df, table_name)
+        df = convert_data(df, table_name, parameter)
         if agg == "max" or agg == "min":
             aggregatedParameter = agg + "_" + parameter
             df.rename(columns={table_name: aggregatedParameter}, inplace=True)
