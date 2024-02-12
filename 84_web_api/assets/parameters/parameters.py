@@ -1,3 +1,3 @@
 parameters = [
-    "2_metre_temperature_icond2",
+    "total_precipitation_0_surface_aladin",
 ]

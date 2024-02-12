@@ -28,20 +28,22 @@ def run_background_task(parameter, day, agg, start_date, cache):
     #while True:
         # Replace 'model_schedule' with the appropriate schedule ('aladin_schedule' or 'icond2_schedule')
         #next_hour, next_minute = get_next_schedule_time(aladin_schedule if "aladin" in parameter else icond2_schedule)
-        ##current_time = datetime.now()
+        #current_time = datetime.now()
         #scheduled_time = current_time.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
 
-        #if current_time < scheduled_time:
-            # Sleep until the next scheduled time
-            #sleep_duration = (scheduled_time - current_time).seconds
-            #time.sleep(sleep_duration)
+       # if current_time < scheduled_time:
+            #Sleep until the next scheduled time
+        #    sleep_duration = (scheduled_time - current_time).seconds
+        #    time.sleep(sleep_duration)
 
         # Run the background task at the scheduled time
-        background_task(parameter, day, agg, start_date, cache)
+    background_task(parameter, day, agg, start_date, cache)
+        #print('backgrond task')
 
 
 def background_task(parameter, day, agg, start_date, cache):
     # Your background task logic here
     print(f"Running background task for {parameter} parameters, day {day}, agg {agg}, start_date {start_date}...")
     img_io = process_last_images(parameter, day, start_date, agg)
-    store_last_records(parameter, day, agg, start_date, img_io, cache)
+    if img_io:
+        store_last_records(parameter, day, agg, start_date, img_io, cache)

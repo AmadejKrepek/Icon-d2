@@ -30,6 +30,7 @@ def store_last_records(parameter, day, agg, start_date, img_io, cache):
         current_records.append({'timestamp': datetime.now(), 'data': img_io, 'start_date': start_date,
                                 'day': day, 'parameter': parameter, 'agg': agg})
 
+        current_records = sorted(current_records, key=lambda x: x['start_date'])
         # Save the updated list in the cache
         cache.set(cache_key, current_records, timeout=None)  # No need to set a timeout
 
