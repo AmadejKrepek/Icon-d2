@@ -1,7 +1,5 @@
-import asyncio
 import datetime
 import multiprocessing
-import threading
 
 import matplotlib
 
