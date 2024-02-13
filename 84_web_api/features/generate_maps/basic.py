@@ -14,6 +14,7 @@ from .models.MapsModel import MapsModel
 
 matplotlib.use('Agg')
 
+
 def create_variable_plot(model: MapsModel):
     variable_values = model.df.pivot(index="Latitude", columns="Longitude", values=model.variable).values
 
@@ -41,35 +42,41 @@ def create_variable_plot(model: MapsModel):
     region_clipped = gpd.clip(region, bbox_polygon)
 
     # Plot the bounding areas with detailed
-    fig, ax = plt.subplots(figsize=(15, 15))    
+    fig, ax = plt.subplots(figsize=(15, 15))
 
     # Adjust the position of the axes to control left padding
     gpd.GeoSeries(bbox_polygon).boundary.plot(ax=ax, color='#333333', linestyle='--')
     fig.set_facecolor('#333333')
-        
+
     variable_clipped = np.clip(variable_values, -20, None)
-        
+
     # Identify the maximum variable value and its coordinates
     max_value = variable_clipped.max()
     max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
-    
+
     alpha = 1.0
-    
+
     norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
-    if any(substring in model.variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
+    if any(substring in model.variable for substring in
+           ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         alpha = 0.7
-    
-    if any(substring in model.variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
+
+    if any(substring in model.variable for substring in
+           ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         shaded_relief = createShadedRelief('../data/shading/sencenje_250.tif')
         extent_coordinates = get_extent_coordinates('../data/shading/sencenje_250.tif')
-        ax.imshow(shaded_relief, extent=(extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'], extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap, alpha=alpha)
+        ax.imshow(shaded_relief, extent=(
+        extent_coordinates['min_longitude'], extent_coordinates['max_longitude'], extent_coordinates['min_latitude'],
+        extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
+    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap,
+                alpha=alpha)
 
     stride = 4
     if model.model_run_model == "ALADIN":
         stride = 2
 
-    if any(substring in model.variable for substring in ["total_precipitation_icond2", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
+    if any(substring in model.variable for substring in
+           ["total_precipitation_icond2", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
         stride = 4
 
     if not any(substring in model.variable for substring in ["base_reflectivity"]):
@@ -82,12 +89,15 @@ def create_variable_plot(model: MapsModel):
                 # Extract variable value and convert to integer
                 var_val = int(round(variable_clipped[i, j]))
                 # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
-                if any(substring in model.variable for substring in ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
+                if any(substring in model.variable for substring in
+                       ["total_precipitation", "base_reflectivity", "snow_depth", "convective", "large-scale"]):
                     if (max_value > 0):
                         if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
-                            ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+                            ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center',
+                                    color='black')
                 else:
-                    ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+                    ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center',
+                            color='black')
 
     # Add borders between countries
     region_clipped.boundary.plot(ax=ax, linewidth=2, color='#333333')
@@ -101,19 +111,19 @@ def create_variable_plot(model: MapsModel):
 
     logo_resized = createLogo('../assets/logo/logo_512_39.webp')
     fig.figimage(logo_resized, xo=15, yo=1037, zorder=20)
-        
-    title_font = {'family' : model.custom_font.get_name(), 'size':'15', 'color':'white', 'weight':'bold'}
-    subtitle_font = {'family' : model.custom_font.get_name(), 'size':'11', 'color':'white'}
-    
+
+    title_font = {'size': '15', 'color': 'white', 'weight': 'bold'}
+    subtitle_font = {'size': '11', 'color': 'white'}
+
     header_padding = 0.01
     padding = 0.02
-    
+
     # Invisible text to adjust the padding
     fig.text(0.5, 0.795 + padding, 'Upper', ha='center', **title_font, alpha=0)
     fig.text(0.904, 0.12 + padding, 'Left', ha="right", **subtitle_font, alpha=0)
     fig.text(0.127, 0.12, "Napovedni model: ICON-D2 15z", ha="left", **subtitle_font, alpha=0)
     fig.text(0.899, 0.12, "Vir podatkov: Open-Meteo", ha="right", **subtitle_font, alpha=0)
-    
+
     # Set title and source information
     fig.text(0.5, 0.795 + header_padding, f'{model.selected_formatted_date}', ha='center', **title_font)
     fig.text(0.897, 0.125, f"vir podatkov: {model.provider}", ha="right", **subtitle_font)
@@ -124,21 +134,22 @@ def create_variable_plot(model: MapsModel):
 
     # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
     cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
-    
+
     colormap_modified = plt.cm.get_cmap(model.colormap, len(model.legend_ticks))
-            
-    cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal', 
-                            ticks=model.legend_ticks, label=model.x_title, extend='both')
- 
+
+    cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal',
+                        ticks=model.legend_ticks, label=model.x_title, extend='both')
+
     # Adjust the width of the colorbar
-    cbar.ax.set_position([cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075, cax.get_position().height])
-    
+    cbar.ax.set_position([cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075,
+                          cax.get_position().height])
+
     # Set the colorbar tick label color
     cbar.ax.xaxis.set_tick_params(color='white')
 
     # Set the colorbar label color
-    cbar.set_label(model.x_title, color='white', labelpad=11, fontproperties=model.custom_font)
-    
+    cbar.set_label(model.x_title, color='white', labelpad=11)
+
     # Set edgecolor of colorbar to 'none' to remove the border
     cbar.outline.set_edgecolor('none')
 
@@ -161,12 +172,12 @@ def create_variable_plot(model: MapsModel):
 
     img_io.seek(0)
     return img_io
-    
+
 
 def createShadedRelief(shading_path: str):
     # Open the shading GeoTIFF file
     shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
-    
+
     # Read the shading data into a NumPy array
     shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
 
@@ -175,8 +186,9 @@ def createShadedRelief(shading_path: str):
 
     # Calculate the shaded relief
     shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='soft')
-    
+
     return shaded_relief
+
 
 def get_extent_coordinates(geotiff_path: str):
     # Open the GeoTIFF file
@@ -215,6 +227,7 @@ def get_extent_coordinates(geotiff_path: str):
         "max_longitude": max_lon,
     }
 
+
 def createLogo(path):
     # Load and resize the logo (replace 'logo.png' with your actual logo path)
     logo = mpimg.imread(path)
@@ -232,5 +245,5 @@ def createLogo(path):
 
     # Resize the logo
     logo_resized = zoom(logo, (scaling_factor, scaling_factor, 1))
-    
+
     return logo_resized
