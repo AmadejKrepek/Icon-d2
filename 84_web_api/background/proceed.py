@@ -1,49 +1,76 @@
-import matplotlib
-import schedule
+import logging
 import time
-import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from background.task import store_last_records
+from background.task import store_last_records, get_last_records
 from utils.processor import process_last_images
 
-# Define the schedules for different parameters
-aladin_schedule = [(0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44), (18, 44), (21, 44)]
-icond2_schedule = [(5, 30), (9, 10), (11, 30), (17, 30), (23, 30)]
+logger = logging.getLogger(__name__)
 
 
 def get_next_schedule_time(schedule):
     current_time = datetime.now()
-    current_hour, current_minute = current_time.hour, current_time.minute
+    next_scheduled_time = None
+    min_time_difference = float('inf')
 
-    next_entries = [(hour, minute) for hour, minute in schedule if (hour, minute) > (current_hour, current_minute)]
-    if next_entries:
-        return min(next_entries)
+    for schedule_time in schedule:
+        hour, minute = schedule_time
+        scheduled_time = current_time.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        time_difference = (scheduled_time - current_time).total_seconds()
 
-    # If no future entries today, get the first entry for the next day
-    return min([(hour, minute) for hour, minute in schedule])
+        if time_difference < min_time_difference:
+            min_time_difference = time_difference
+            next_scheduled_time = scheduled_time
 
-
-def run_background_task(parameter, day, agg, start_date, cache):
-    #while True:
-        # Replace 'model_schedule' with the appropriate schedule ('aladin_schedule' or 'icond2_schedule')
-        #next_hour, next_minute = get_next_schedule_time(aladin_schedule if "aladin" in parameter else icond2_schedule)
-        #current_time = datetime.now()
-        #scheduled_time = current_time.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
-
-       # if current_time < scheduled_time:
-            #Sleep until the next scheduled time
-        #    sleep_duration = (scheduled_time - current_time).seconds
-        #    time.sleep(sleep_duration)
-
-        # Run the background task at the scheduled time
-    background_task(parameter, day, agg, start_date, cache)
-        #print('backgrond task')
+    return next_scheduled_time.hour, next_scheduled_time.minute if next_scheduled_time else (0, 0)
 
 
-def background_task(parameter, day, agg, start_date, cache):
+async def cache_data(future_days, interval_hours, past_days, cache, parameters):
+    for parameter in [param for param in parameters]:
+        for agg in ["max", "min"]:  # Aggregation values
+            if agg == "min" and "temperature" not in parameter.lower():
+                continue  # Skip "min" aggregation for parameters that do not contain "temperature"
+            current_datetime = datetime.now()
+            for past_day in range(0, past_days):  # Iterate over the past 4 days in reverse order
+                for interval in interval_hours:
+                    for day in range(1, future_days):  # Days from 1 to 4
+                        interval_start_date = current_datetime.replace(hour=interval, minute=0,
+                                                                       second=0, microsecond=0)
+                        start_date = (interval_start_date - timedelta(days=past_day))
+
+                        formatted_start_date = start_date.strftime("%Y-%m-%d %H:%M:%S")
+
+                        cached_data = await get_last_records(parameter, formatted_start_date, day, agg, cache)
+                        if not cached_data:
+                            await run_background_task(parameter, day, agg, formatted_start_date, cache)
+
+
+async def run_tasks_for_model(model_schedule, future_days, interval_hours, past_days, cache, parameters):
+    while True:
+        next_hour, next_minute = get_next_schedule_time(model_schedule)
+        current_time = datetime.now()
+        scheduled_time = current_time.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
+
+        if current_time >= scheduled_time:
+            # Submit the cache_data function for execution in a separate thread
+            await cache_data(future_days, interval_hours, past_days, cache, parameters)
+
+            # Calculate the next scheduled time
+            next_hour, next_minute = get_next_schedule_time(model_schedule)
+
+        # Sleep for a short interval before checking again
+        time.sleep(100000)  # Sleep for 1 minute, adjust as needed
+
+
+async def run_background_task(parameter, day, agg, start_date, cache):
+    await background_task(parameter, day, agg, start_date, cache)
+
+
+async def background_task(parameter, day, agg, start_date, cache):
     # Your background task logic here
+    # Create a logger for the Quart app
+    logger.info(f"Running background task for {parameter} parameters, day {day}, agg {agg}, start_date {start_date}...")
     print(f"Running background task for {parameter} parameters, day {day}, agg {agg}, start_date {start_date}...")
     img_io = process_last_images(parameter, day, start_date, agg)
     if img_io:
-        store_last_records(parameter, day, agg, start_date, img_io, cache)
+        await store_last_records(parameter, day, agg, start_date, img_io, cache)
