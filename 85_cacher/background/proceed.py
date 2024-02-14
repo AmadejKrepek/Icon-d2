@@ -49,21 +49,9 @@ def cache_data(future_days, interval_hours, past_days, cache, parameters):
 
 
 def run_tasks_for_model(model_schedule, future_days, interval_hours, past_days, cache, parameters):
-    while True:
-        next_hour, next_minute = get_next_schedule_time(model_schedule)
-        current_time = datetime.now()
-        scheduled_time = current_time.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
-
-        if current_time >= scheduled_time:
-            # Create a separate process for cache_data
-            cache_process = Process(target=cache_data, args=(future_days, interval_hours, past_days, cache, parameters))
-            cache_process.start()
-
-            # Calculate the next scheduled time
-            next_hour, next_minute = get_next_schedule_time(model_schedule)
-
-        # Sleep for a short interval before checking again
-        time.sleep(600000000)  # Sleep for 1 minute, adjust as needed
+    # Create a separate process for cache_data
+    cache_process = Process(target=cache_data, args=(future_days, interval_hours, past_days, cache, parameters))
+    cache_process.start()
 
 
 def run_background_task(parameter, day, agg, start_date, cache):
