@@ -1,4 +1,6 @@
 from datetime import timedelta, timezone, datetime
+
+from database.db_connector import create_db_connection_async
 from parse_gribs.utils.remove_directories import removeDirectories
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
@@ -26,6 +28,19 @@ LAT_MAX = 47.1212 + DEVIATION_LAT_MAX
 LON_MIN = 12.9955 - DEVIATION_LON_MIN
 LON_MAX = 16.7455 + DEVIATION_LON_MAX
 
+db_pool = None
+
+
+async def create_db_pool():
+    global db_pool
+    # Your code to create the database connection pool
+    db_pool = await create_db_connection_async()
+
+
+async def close_db_pool():
+    global db_pool
+    if db_pool:
+        await db_pool.close()
 
 def kelvin_to_celsius(kelvin):
     return kelvin - 273.15
@@ -161,7 +176,7 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         return output_path
 
 
-def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
+async def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     os.makedirs(output_directory, exist_ok=True)
     deleted_directory = source_data_dir
 
@@ -236,12 +251,12 @@ def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
-    create_parameter_table(parameter_table_name, parameter_name)
+    await create_parameter_table(db_pool, parameter_table_name)
 
-    if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
-        provider_id = get_provider_id(provider_name)
-        model_id = get_model_id(model_name)
-        insert_parameter_data(provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run,
+    if not await check_model_run_exists(db_pool, parameter_table_name, last_model_run, start_date):
+        provider_id = await get_provider_id(db_pool, provider_name)
+        model_id = await get_model_id(db_pool, model_name)
+        await insert_parameter_data(db_pool, provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run,
                               parameter_table_name,
                               start_date, end_date)
 
