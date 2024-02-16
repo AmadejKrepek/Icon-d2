@@ -1,7 +1,6 @@
 from datetime import timedelta
 import os
 import psycopg2
-from pandas import Timestamp
 
 def check_model_run_exists(table_name, model_run, start_date):
     try:

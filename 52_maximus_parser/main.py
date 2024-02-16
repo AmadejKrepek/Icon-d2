@@ -11,6 +11,8 @@ from download_grib_files.PROVIDER.ARSO.NWP import download_ALADIN as downloadALA
 from parse_gribs.PROVIDER.DWD.NWP.parse_grib_files import parse_gribs as parse_gribs_DWD
 from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_gribs_ARSO
 
+from multiprocessing import Pool
+
 logging.basicConfig(
     filename='scheduler.log',
     level=logging.INFO,
@@ -25,12 +27,12 @@ current_time = datetime.now()
 current_hour = current_time.hour
 current_minute = current_time.minute
 
-
 provider_models = {
     "DWD": {
         "IconD2": {
             "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44), (18, 44), (21, 44)],
-            "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850", "dbz_cmax"],  # Parameters for IconD2
+            "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850",
+                       "dbz_cmax"],  # Parameters for IconD2
         },
     },
     "ARSO": {
@@ -41,7 +43,9 @@ provider_models = {
     },
 }
 
-def download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNames, download_function, parse_gribs, provider_directory, model_directory, param):
+
+def download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNames, download_function,
+                                 parse_gribs, provider_directory, model_directory, param):
     try:
         if model_directory == "IconD2":
             filenames = getGribFileNames([param])
@@ -56,17 +60,23 @@ def download_and_parse_one_param(output_directory_gribs, output_directory, getGr
 
             resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
 
-        resulted_csv_file = parse_gribs(resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory), output_directory_gribs)
-        print(f"Downloaded and parsed {resulted_csv_file}")
-        return resulted_csv_file
+            args_list = [
+                (resulted_gribs_directory, os.path.join(output_directory, provider_directory, model_directory),
+                 output_directory_gribs)
+            ]
+            with Pool() as p:
+                p.starmap(parse_gribs, args_list)
+        print(f"Downloaded and parsed")
     except Exception as e:
         print("Error during download and parse:", e)
-        
+
         return None
+
 
 storage_directory = "./data"
 output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files")
 output_directory = os.path.join(storage_directory, "output")
+
 
 def run_job():
     current_hour = int(time.strftime("%H"))
@@ -87,11 +97,14 @@ def run_job():
 
                         for param in model_params:
                             print(f"Which param???? {param}")
-                            download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNamesFunc, download_function, parse_gribs_function, provider_directory, model_directory, param)
+                            download_and_parse_one_param(output_directory_gribs, output_directory, getGribFileNamesFunc,
+                                                         download_function, parse_gribs_function, provider_directory,
+                                                         model_directory, param)
             except Exception as e:
                 error_message = f"Error downloading and parsing data: {str(e)}"
                 traceback_str = traceback.format_exc()  # Get the traceback as a string
                 logging.error(f"{error_message}\n{traceback_str}")
+
 
 run_job()
 

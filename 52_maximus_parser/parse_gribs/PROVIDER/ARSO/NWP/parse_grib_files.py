@@ -25,20 +25,25 @@ LAT_MAX = 47.1512 + DEVIATION_LAT_MAX
 LON_MIN = 12.9955 - DEVIATION_LON_MIN
 LON_MAX = 16.7955 + DEVIATION_LON_MAX
 
+
 def kelvin_to_celsius(kelvin):
     return kelvin - 273.15
+
 
 def ms_to_kmh(ms):
     return ms * 3.6
 
+
 def pa_to_hpa(pa):
     return pa * 0.01
+
 
 def whole_to_percent(value):
     if 0 <= value <= 1:
         return value * 100
     else:
         raise ValueError("Input value must be in the range [0, 1]")
+
 
 def crop_dataframe_to_bbox(df, bbox):
     """
@@ -66,10 +71,12 @@ def crop_dataframe_to_bbox(df, bbox):
     df = df.loc[lat_filter & lon_filter]
     return df
 
+
 def create_output_folders(year, month, day, model_run, parameter_name, output_directory):
     model_run_dir = os.path.join(output_directory, parameter_name.replace(" ", "_"), year, month, day, model_run + "z")
     os.makedirs(model_run_dir, exist_ok=True)
     return model_run_dir
+
 
 def save_parameter_data(parameter_data, output_directory, year, month, day, model_run):
     for parameter_name, data_list in parameter_data.items():
@@ -82,13 +89,14 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         combined_df.to_csv(output_path, index=False)
     return output_path
 
+
 def process_data(filepath, bbox, index):
     # Load the files with GRIB2 data using pygrib
     grbs = pygrib.open(filepath)
-    
+
     # Initialize a dictionary to store parameter data
     parameter_data = {}
-        
+
     for grb in grbs:
         # 4. Vertical Level
         vertical_level = grb.level
@@ -100,17 +108,17 @@ def process_data(filepath, bbox, index):
         parameter_name = grb.name + "_" + str(vertical_level) + "_" + type_of_level
 
         variable_data = grb.values
-        latitudes, longitudes = grb.latlons()        
+        latitudes, longitudes = grb.latlons()
         valid_date = grb.validDate
-        
+
         valid_date = valid_date + timedelta(hours=index)
-                
+
         # Create a DataFrame for the parameter
         df = pd.DataFrame()
         df["Latitude"] = latitudes.ravel()
         df["Longitude"] = longitudes.ravel()
         df[parameter_name] = variable_data.ravel()
-        
+
         df[parameter_name] = convertToOneDecimalPlace(df, parameter_name)
 
         # Perform the bounding box filter
@@ -120,22 +128,23 @@ def process_data(filepath, bbox, index):
         # Convert valid date to datetime and add forecast time to it
         valid_date = pd.to_datetime(valid_date)
         df["ValidDate"] = valid_date
-        
+
         # Store the DataFrame in the dictionary with parameter name as key
         parameter_data[parameter_name] = df
-                
+
     grbs.close()
-    
+
     return parameter_data
 
-def parse_gribs(source_data_dir, output_directory, temp_directory):    
+
+def parse_gribs(source_data_dir, output_directory, temp_directory):
     os.makedirs(output_directory, exist_ok=True)
     delete_directory = source_data_dir
 
     if not os.path.isdir(source_data_dir):
         print(f"Source data directory '{source_data_dir}' does not exist. Please provide the correct path.")
         sys.exit(1)
-    
+
     filenames = glob.glob(os.path.join(source_data_dir, "*.zip"))
     filenames = sorted(filenames)
 
@@ -147,21 +156,22 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         print("Processing", file)
         with zipfile.ZipFile(file, 'r') as zip_ref:
             zip_ref.extractall(temp_directory)
-            
+
         # Get a list of all extracted GRB files
         grb_files = [f for f in os.listdir(temp_directory) if f.endswith(".grb")]
         sorted_grb_files = sorted(grb_files)
         sorted_file_list = sorted(sorted_grb_files, key=lambda x: int(x.split('_')[-1].split('.')[0]))
-        timestamp_to_match = sorted_file_list[0].split('_')[1]  # Extract the timestamp value from the first item in the list
+        timestamp_to_match = sorted_file_list[0].split('_')[
+            1]  # Extract the timestamp value from the first item in the list
 
         filtered_files = [file for file in sorted_file_list if file.split('_')[1] == timestamp_to_match]
         index = 0
-        
+
         for grb_file in filtered_files:
             temp_decompressed_path = os.path.join(temp_directory, grb_file)
-            
+
             processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
-            
+
             for parameter_name, data in processed_data.items():
                 if data is not None:
                     if "temperature" in parameter_name.lower():
@@ -170,9 +180,9 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                         data[parameter_name] = ms_to_kmh(data[parameter_name])
                     elif "pressure" in parameter_name.lower():
                         data[parameter_name] = pa_to_hpa(data[parameter_name])
-                    #elif "humidity" in parameter_name.lower():
-                        #data[parameter_name] = whole_to_percent(data[parameter_name])
-                    
+                    # elif "humidity" in parameter_name.lower():
+                    # data[parameter_name] = whole_to_percent(data[parameter_name])
+
                     # Split the filename using "/" as the separator
                     parts = file.split("/")
 
@@ -186,7 +196,7 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                     day = date_str[10:12]
                     model_run = date_str[12:14]
                     last_model_run = model_run
-                                
+
                     if parameter_name not in parameter_data:
                         parameter_data[parameter_name] = []
 
@@ -195,17 +205,18 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                         utc_timezone = timezone.utc
 
                         # Create a datetime object in UTC time zone
-                        start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0, tzinfo=utc_timezone)
+                        start_date = datetime(int(year), int(month), int(day), int(model_run), 0, 0,
+                                              tzinfo=utc_timezone)
                         end_date = start_date + timedelta(days=3)
 
                     data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d %H:%M:%S")
                     parameter_data[parameter_name].append((data, data_date))
 
             index = index + 1
-            
+
             os.remove(temp_decompressed_path)
         os.remove(file)
-        
+
         removeDirectories(delete_directory)
 
         for parameter_name, parameter_entries in parameter_data.items():
@@ -227,4 +238,4 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         # start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
         # Save data for each parameter to separate CSV files
         # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
-    return None
+    #return None
