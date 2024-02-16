@@ -1,3 +1,4 @@
+import concurrent
 from datetime import timedelta, timezone, datetime
 
 from database.db_connector import create_db_connection_async
@@ -41,6 +42,7 @@ async def close_db_pool():
     global db_pool
     if db_pool:
         await db_pool.close()
+
 
 def kelvin_to_celsius(kelvin):
     return kelvin - 273.15
@@ -176,6 +178,11 @@ def save_parameter_data(parameter_data, output_directory, year, month, day, mode
         return output_path
 
 
+def process_file(file_index_pair):
+    index, temp_decompressed_path = file_index_pair
+    return process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
+
+
 async def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
     os.makedirs(output_directory, exist_ok=True)
     deleted_directory = source_data_dir
@@ -201,14 +208,19 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
         with open(temp_decompressed_path, 'wb') as temp_file:
             temp_file.write(data)
 
-        data_array, parameter_name = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
-        index = index + 1
+        # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
+        file_index_pairs = [(index, temp_decompressed_path) for index, grb_file in
+                            enumerate(filenames)]
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            # Process files in parallel
+            processed_data_list = list(executor.map(process_file, file_index_pairs))
 
         start_date = None
         end_date = None
 
         if len(data) > 0:
-            for data in data_array:
+            for data in processed_data_list:
                 if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                     data[parameter_name] = kelvin_to_celsius(data[parameter_name])
 
@@ -256,9 +268,10 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
     if not await check_model_run_exists(db_pool, parameter_table_name, last_model_run, start_date):
         provider_id = await get_provider_id(db_pool, provider_name)
         model_id = await get_model_id(db_pool, model_name)
-        await insert_parameter_data(db_pool, provider_id, model_id, parameter_name, parameter_data[parameter_name], last_model_run,
-                              parameter_table_name,
-                              start_date, end_date)
+        await insert_parameter_data(db_pool, provider_id, model_id, parameter_name, parameter_data[parameter_name],
+                                    last_model_run,
+                                    parameter_table_name,
+                                    start_date, end_date)
 
     # Save data for each parameter to separate CSV files
     # return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
