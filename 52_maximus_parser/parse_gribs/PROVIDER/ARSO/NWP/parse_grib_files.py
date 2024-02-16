@@ -1,4 +1,7 @@
+import concurrent
 from datetime import timedelta, datetime, timezone
+
+from database.db_connector import create_db_connection_async
 from parse_gribs.utils.remove_directories import removeDirectories
 from parse_gribs.utils.remove_coordinates import delete_coordinates
 from parse_gribs.utils.convert_to_one_decimal_place import convertToOneDecimalPlace
@@ -24,6 +27,21 @@ LAT_MIN = 45.1512 - DEVIATION_LAT_MIN
 LAT_MAX = 47.1512 + DEVIATION_LAT_MAX
 LON_MIN = 12.9955 - DEVIATION_LON_MIN
 LON_MAX = 16.7955 + DEVIATION_LON_MAX
+
+db_pool = None
+
+
+async def create_db_pool():
+    global db_pool
+    # Your code to create the database connection pool
+    db_pool = await create_db_connection_async()
+
+
+async def close_db_pool():
+    global db_pool
+    if db_pool:
+        db_pool.close()
+        await db_pool.wait_closed()
 
 
 def kelvin_to_celsius(kelvin):
@@ -137,7 +155,12 @@ def process_data(filepath, bbox, index):
     return parameter_data
 
 
-def parse_gribs(source_data_dir, output_directory, temp_directory):
+def process_file(file_index_pair):
+    index, temp_decompressed_path = file_index_pair
+    return process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
+
+
+async def parse_gribs(source_data_dir, output_directory, temp_directory):
     os.makedirs(output_directory, exist_ok=True)
     delete_directory = source_data_dir
 
@@ -167,11 +190,16 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
         filtered_files = [file for file in sorted_file_list if file.split('_')[1] == timestamp_to_match]
         index = 0
 
-        for grb_file in filtered_files:
-            temp_decompressed_path = os.path.join(temp_directory, grb_file)
+        # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
+        file_index_pairs = [(index, os.path.join(temp_directory, grb_file)) for index, grb_file in
+                            enumerate(filtered_files)]
 
-            processed_data = process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
+        # Create a ProcessPoolExecutor
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            # Process files in parallel
+            processed_data_list = list(executor.map(process_file, file_index_pairs))
 
+        for processed_data in processed_data_list:
             for parameter_name, data in processed_data.items():
                 if data is not None:
                     if "temperature" in parameter_name.lower():
@@ -189,8 +217,8 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
                     # Extract provider_name and model_name from the appropriate positions in the split parts
                     provider_name = parts[3]
                     model_name = parts[4]
-
-                    date_str = os.path.splitext(grb_file)[0]  # Extract date and time from the GRB file name
+                    first_file = filtered_files[0]
+                    date_str = os.path.splitext(first_file)[0]
                     year = date_str[4:8]
                     month = date_str[8:10]
                     day = date_str[10:12]
@@ -214,28 +242,32 @@ def parse_gribs(source_data_dir, output_directory, temp_directory):
 
             index = index + 1
 
-            os.remove(temp_decompressed_path)
         os.remove(file)
 
         removeDirectories(delete_directory)
+
+        await create_db_pool()
 
         for parameter_name, parameter_entries in parameter_data.items():
             # start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
             last_model_run = remove_leading_zeros(last_model_run)
             parameter_table_name = parameter_name.replace(" ", "_").lower()
             parameter_table_name = parameter_table_name + "_" + model_name.lower()
-            create_parameter_table(parameter_table_name, parameter_name)
+            await create_parameter_table(db_pool, parameter_table_name)
 
-            if not check_model_run_exists(parameter_table_name, last_model_run, start_date):
-                provider_id = get_provider_id(provider_name)
-                model_id = get_model_id(model_name)
-                insert_parameter_data(provider_id, model_id, parameter_name,
-                                      parameter_data[parameter_name], last_model_run,
-                                      parameter_table_name, start_date, end_date)
+            if not await check_model_run_exists(db_pool, parameter_table_name, last_model_run, start_date):
+                provider_id = await get_provider_id(db_pool, provider_name)
+                model_id = await get_model_id(db_pool, model_name)
+                await insert_parameter_data(db_pool, provider_id, model_id, parameter_name,
+                                            parameter_data[parameter_name], last_model_run,
+                                            parameter_table_name, start_date, end_date)
+
             # Save data for each parameter to separate CSV files
             # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
 
         # start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
         # Save data for each parameter to separate CSV files
         # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
-    #return None
+    await close_db_pool()
+
+    # return None
