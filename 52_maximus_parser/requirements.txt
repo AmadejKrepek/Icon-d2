@@ -5,5 +5,8 @@ numpy==1.25.2
 shapely==2.0.1
 scipy==1.9.3
 zipfile==3.10.0
+python-dotenv==1.0.0
 
 beautifulsoup4==4.11.2
+
+aiopg==1.4.0
