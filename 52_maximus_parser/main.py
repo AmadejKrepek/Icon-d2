@@ -13,12 +13,9 @@ from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_
 
 from multiprocessing import Pool
 
-logging.basicConfig(
-    filename='scheduler.log',
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s]: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+from setup.set_logger import setup_logging
+
+logger = setup_logging()
 
 # Get the current time
 current_time = datetime.now()
@@ -66,7 +63,7 @@ def download_and_parse_one_param(output_directory_gribs, output_directory, getGr
             ]
             with Pool() as p:
                 p.starmap(parse_gribs, args_list)
-        print(f"Downloaded and parsed")
+        logging.info(f"Downloaded and parsed")
     except Exception as e:
         print("Error during download and parse:", e)
 
