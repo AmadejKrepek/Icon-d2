@@ -242,9 +242,9 @@ async def parse_gribs(source_data_dir, output_directory, temp_directory):
 
             index = index + 1
 
-        os.remove(file)
+        #os.remove(file)
 
-        removeDirectories(delete_directory)
+        #removeDirectories(delete_directory)
 
         await create_db_pool()
 
