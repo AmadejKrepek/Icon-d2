@@ -209,9 +209,8 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
             temp_file.write(data)
 
         # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
-        file_index_pairs = [(index, temp_decompressed_path) for index, grb_file in
-                            enumerate(filenames)]
-
+        file_index_pairs = [(index, temp_decompressed_path)]
+        index = index + 1
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # Process files in parallel
             processed_data_list = list(executor.map(process_file, file_index_pairs))
@@ -220,7 +219,8 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
         end_date = None
 
         if len(data) > 0:
-            for data in processed_data_list:
+            for data_list, parameter_name in processed_data_list:
+                data = data_list[0]
                 if parameter_name == "2 metre temperature" or parameter_name == "2 metre dewpoint temperature":
                     data[parameter_name] = kelvin_to_celsius(data[parameter_name])
 
@@ -259,6 +259,8 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
 
     removeDirectories(deleted_directory)
 
+    await create_db_pool()
+
     start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
@@ -272,6 +274,7 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
                                     last_model_run,
                                     parameter_table_name,
                                     start_date, end_date)
+
 
     # Save data for each parameter to separate CSV files
     # return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
