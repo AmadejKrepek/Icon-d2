@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  parser:
+    image: maximus_parser:1.0.0
+    environment:
+      - TZ=Europe/Ljubljana  # Set the timezone
+    env_file:
+      - .env.prod
+    volumes:
+      - ./logs:/app/logs

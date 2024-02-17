@@ -91,8 +91,6 @@ async def insert_parameter_data(db_pool, provider_id, model_id, parameter_name, 
                     interval
                 ))
 
-                await conn.commit()
-
                 logger.info(f"Data for parameter '{parameter_name}' inserted successfully into table '{parameter_table_name}'.")
 
     except Exception as e:
