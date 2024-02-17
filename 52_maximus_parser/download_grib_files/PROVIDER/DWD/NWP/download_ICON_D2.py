@@ -75,7 +75,7 @@ def download_gribs(latest_model_run_filename, output_directory):
             url = f"{base_url}/{filename}"
             original_filename = filename.split("/")[-1]
             output_path = os.path.join(model_run_dir, original_filename)
-
+            print(output_path)
             download_grib_file(url, output_path)
 
         print("Download complete.")

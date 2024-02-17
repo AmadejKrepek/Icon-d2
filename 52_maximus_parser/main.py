@@ -62,6 +62,10 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
                 (resulted_gribs_directory, os.path.join(output_directory_download, provider_directory, model_directory),
                  output_directory_gribs_download)
             ]
+            print(f"Output directory gribs download: {output_directory_gribs_download}")
+            print(f"Resulted gribs directory: {resulted_gribs_directory}")
+            print(f"JOined directory gribs download: {os.path.join(output_directory_download, provider_directory, model_directory)}")
+
 
             await parse_gribs(resulted_gribs_directory,
                               os.path.join(output_directory_download, provider_directory, model_directory),
@@ -77,6 +81,10 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
 storage_directory = "./data"
 output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files")
 output_directory = os.path.join(storage_directory, "output")
+
+print(storage_directory)
+print(output_directory_gribs)
+print(output_directory)
 
 
 async def run_job():
