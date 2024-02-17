@@ -10,18 +10,13 @@ from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNa
 from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2 as downloadDWD
 from download_grib_files.PROVIDER.ARSO.NWP import download_ALADIN as downloadALADIN
 from parse_gribs.PROVIDER.DWD.NWP.parse_grib_files import parse_gribs as parse_gribs_DWD
-from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_gribs_ARSO, close_db_pool
-
-from multiprocessing import Pool
+from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_gribs_ARSO
 
 from setup.set_logger import setup_logging
 
 logger = setup_logging()
 
-# Get the current time
 current_time = datetime.now()
-
-# Extract the current hour and minute
 current_hour = current_time.hour
 current_minute = current_time.minute
 
@@ -60,15 +55,6 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
             os.makedirs(provider_model_directory, exist_ok=True)
 
             resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
-
-            args_list = [
-                (resulted_gribs_directory, os.path.join(output_directory_download, provider_directory, model_directory),
-                 output_directory_gribs_download)
-            ]
-            print(f"Output directory gribs download: {output_directory_gribs_download}")
-            print(f"Resulted gribs directory: {resulted_gribs_directory}")
-            print(
-                f"JOined directory gribs download: {os.path.join(output_directory_download, provider_directory, model_directory)}")
 
             await parse_gribs(resulted_gribs_directory,
                               os.path.join(output_directory_download, provider_directory, model_directory),
