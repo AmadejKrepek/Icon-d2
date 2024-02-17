@@ -200,9 +200,12 @@ def search_combine_merge(source_data_dir):
         original_filename = os.path.splitext(os.path.basename(file))[0]
         temp_decompressed_path = f"{original_filename}_decompressed.grib2"
         print(temp_decompressed_path)
+        print("Write to file")
         with open(temp_decompressed_path, 'wb') as temp_file:
+            print("Started writing to file")
+            print(temp_file)
             temp_file.write(data)
-
+        print("FInished writing to file")
         # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
         file_index_pairs = [(index, temp_decompressed_path)]
         index = index + 1
