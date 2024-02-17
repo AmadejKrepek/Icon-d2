@@ -28,7 +28,8 @@ current_minute = current_time.minute
 provider_models = {
     "DWD": {
         "IconD2": {
-            "schedule": [(current_hour, current_minute), (0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44), (18, 44), (21, 44)],
+            "schedule": [(current_hour, current_minute), (0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44),
+                         (18, 44), (21, 44)],
             "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850",
                        "dbz_cmax"],  # Parameters for IconD2
         },
@@ -42,7 +43,8 @@ provider_models = {
 }
 
 
-async def download_and_parse_one_param(output_directory_gribs_download, output_directory_download, getGribFileNames, download_function,
+async def download_and_parse_one_param(output_directory_gribs_download, output_directory_download, getGribFileNames,
+                                       download_function,
                                        parse_gribs, provider_directory, model_directory, param):
     try:
         if model_directory == "IconD2":
@@ -53,7 +55,8 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
         print(model_directory)
 
         for filename in filenames:
-            provider_model_directory = os.path.join(output_directory_gribs_download, provider_directory, model_directory)
+            provider_model_directory = os.path.join(output_directory_gribs_download, provider_directory,
+                                                    model_directory)
             os.makedirs(provider_model_directory, exist_ok=True)
 
             resulted_gribs_directory = download_function.download_gribs(filename, provider_model_directory)
@@ -64,8 +67,8 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
             ]
             print(f"Output directory gribs download: {output_directory_gribs_download}")
             print(f"Resulted gribs directory: {resulted_gribs_directory}")
-            print(f"JOined directory gribs download: {os.path.join(output_directory_download, provider_directory, model_directory)}")
-
+            print(
+                f"JOined directory gribs download: {os.path.join(output_directory_download, provider_directory, model_directory)}")
 
             await parse_gribs(resulted_gribs_directory,
                               os.path.join(output_directory_download, provider_directory, model_directory),
