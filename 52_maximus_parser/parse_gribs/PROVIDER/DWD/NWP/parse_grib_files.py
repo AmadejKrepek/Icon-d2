@@ -289,7 +289,9 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
         parameter_data = created_data[0][6]
         print(f"Removing deleted directory: {deleted_directory}")
         removeDirectories(deleted_directory)
+        print(f"Does it go past that way?")
     except Exception as e:
+        print(f"Throwing an errror")
         logging.error(e)
 
     await create_db_pool()
