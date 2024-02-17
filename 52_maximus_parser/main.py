@@ -23,7 +23,7 @@ current_minute = current_time.minute
 provider_models = {
     "DWD": {
         "IconD2": {
-            "schedule": [(current_hour, current_minute), (0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44),
+            "schedule": [(0, 44), (3, 44), (6, 44), (9, 44), (12, 49), (15, 44),
                          (18, 44), (21, 44)],
             "params": ["t_2m", "tot_prec", "vmax_10m", "v_10m", "h_snow", "snow_con", "snow_gsp", "cape_ml", "dbz_850",
                        "dbz_cmax"],  # Parameters for IconD2
@@ -42,12 +42,13 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
                                        download_function,
                                        parse_gribs, provider_directory, model_directory, param):
     try:
+        logger.info(f"Downloading and parsing for parameter: {param}")
         if model_directory == "IconD2":
             filenames = getGribFileNames([param])
         else:
             filenames = getGribFileNames()  # Use without parameter selection for Aladin
 
-        print(model_directory)
+        logger.info(model_directory)
 
         for filename in filenames:
             provider_model_directory = os.path.join(output_directory_gribs_download, provider_directory,
@@ -60,9 +61,9 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
                               os.path.join(output_directory_download, provider_directory, model_directory),
                               output_directory_gribs_download)
 
-        logging.info(f"Downloaded and parsed")
+        logger.info(f"Finished - Downloaded and parsed")
     except Exception as e:
-        print("Error during download and parse:", e)
+        logger.error("Error during download and parse:", e)
 
         return None
 
@@ -70,10 +71,6 @@ async def download_and_parse_one_param(output_directory_gribs_download, output_d
 storage_directory = "./data"
 output_directory_gribs = os.path.join(storage_directory, "downloaded_grib_files")
 output_directory = os.path.join(storage_directory, "output")
-
-print(storage_directory)
-print(output_directory_gribs)
-print(output_directory)
 
 
 async def run_job():
@@ -88,13 +85,12 @@ async def run_job():
 
                 for (scheduled_hour, scheduled_minute) in model_schedule:
                     if current_hour == scheduled_hour and current_minute == scheduled_minute:
-                        logging.info(f"Provider: {provider_directory}, model: {model_directory}, param: {model_params}")
+                        logger.info(f"Provider: {provider_directory}, model: {model_directory}, param: {model_params}")
                         getGribFileNamesFunc = getDWDGribFileNames if provider_directory == "DWD" else getARSOGribFileNames
                         download_function = downloadDWD if provider_directory == "DWD" else downloadALADIN
                         parse_gribs_function = parse_gribs_DWD if provider_directory == "DWD" else parse_gribs_ARSO
 
                         for param in model_params:
-                            print(f"Which param???? {param}")
                             await download_and_parse_one_param(output_directory_gribs, output_directory,
                                                                getGribFileNamesFunc,
                                                                download_function, parse_gribs_function,
@@ -103,7 +99,7 @@ async def run_job():
             except Exception as e:
                 error_message = f"Error downloading and parsing data: {str(e)}"
                 traceback_str = traceback.format_exc()  # Get the traceback as a string
-                logging.error(f"{error_message}\n{traceback_str}")
+                logger.error(f"{error_message}\n{traceback_str}")
 
 
 while True:

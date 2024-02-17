@@ -1,16 +1,13 @@
-import psycopg2
 from psycopg2 import sql
 import logging
-import os
 
-# Initialize the logger
 logger = logging.getLogger(__name__)
 
 
-# Function to create a new table based on the parameter name
 async def create_parameter_table(db_pool, parameter_table_name):
     # Connect to the database using environment variables for credentials
     try:
+        logger.info(f"Started creating parameter table with parameter_table_name: {parameter_table_name}")
         async with db_pool.acquire() as conn:
             async with conn.cursor() as cursor:
                 # Create the SQL statement for table creation with a dynamic table name
@@ -31,6 +28,6 @@ async def create_parameter_table(db_pool, parameter_table_name):
                 # Execute the SQL statement
                 await cursor.execute(create_table_sql)
 
-                logger.info(f"Created table '{parameter_table_name}'.")
+                logger.info(f"Created parameter table '{parameter_table_name}'.")
     except Exception as e:
-        logger.error(f"Error creating table: {str(e)}")
+        logger.error(f"Error creating parameter table: {str(e)}")

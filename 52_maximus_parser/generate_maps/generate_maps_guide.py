@@ -1,9 +1,12 @@
 import os
 from .general.create_dynamic_maps import create_maps
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def choose_directory(options, item_type):
-    print(f"Select a {item_type}:")
+    logger.info(f"Select a {item_type}:")
     for idx, option in enumerate(options, start=1):
         print(f"{idx}. {option}")
     choice = int(input(f"Enter the number of your choice: "))

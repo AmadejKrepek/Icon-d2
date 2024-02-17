@@ -2,33 +2,40 @@ import bz2
 import re
 from datetime import datetime
 import requests
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def download_and_extract_log_file():
-    base_url = "https://opendata.dwd.de/weather/nwp/"
-    file_path = "content.log.bz2"
+    try:
+        logger.info(f"Started downloading and extracting log file")
+        base_url = "https://opendata.dwd.de/weather/nwp/"
+        file_path = "content.log.bz2"
 
-    print("Downloading content.log.bz2...")
-    response = requests.get(base_url + file_path, stream=True)
+        logger.info("Downloading content.log.bz2...")
+        response = requests.get(base_url + file_path, stream=True)
 
-    total_size = int(response.headers.get("content-length", 0))
-    downloaded_size = 0
+        total_size = int(response.headers.get("content-length", 0))
+        downloaded_size = 0
 
-    with open(file_path, "wb") as f:
-        for data in response.iter_content(chunk_size=8192):
-            downloaded_size += len(data)
-            f.write(data)
-            progress = (downloaded_size / total_size) * 100
-            print(f"Download progress: {progress:.2f}%\r", end="", flush=True)
+        with open(file_path, "wb") as f:
+            for data in response.iter_content(chunk_size=8192):
+                downloaded_size += len(data)
+                f.write(data)
+                progress = (downloaded_size / total_size) * 100
 
-    print("\nDownload completed.")
+        logger.info("\nDownload completed.")
 
-    print("Extracting content.log.bz2...")
-    with open(file_path, "rb") as f:
-        data = bz2.decompress(f.read()).decode("utf-8")
-    print("Extraction completed.")
+        logger.info("Extracting content.log.bz2...")
+        with open(file_path, "rb") as f:
+            data = bz2.decompress(f.read()).decode("utf-8")
+        logger.info("Finished extracting and downloading log files.")
 
-    return data
+        return data
+    except Exception as e:
+        logger.error(f"Error while downloading and extracting log file: {e}")
 
 
 def get_latest_model_run_filename(data, parameter_name):

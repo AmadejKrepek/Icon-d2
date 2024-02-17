@@ -1,65 +1,60 @@
-import psycopg2
 from psycopg2 import sql
 from dotenv import load_dotenv
-import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables from .env
 load_dotenv()
 
 
-def extract_dates(data):
-    # Extract start_date from the first row of the ValidDate column
-    start_date = data['ValidDate'].iloc[0]
-
-    # Extract end_date from the last row of the ValidDate column
-    end_date = data['ValidDate'].iloc[-1]
-
-    return start_date, end_date
-
-
 def replaceZeroValuesWithNull(combined_data_list):
-    result = [[None if value <= 0.0 else value for value in nested_array] for nested_array in combined_data_list]
-    return result
+    try:
+        logger.info(f"Replacing zero values with null values")
+        result = [[None if value <= 0.0 else value for value in nested_array] for nested_array in combined_data_list]
+        logger.info(f"Finished replacing zero values with null values")
+        return result
+    except Exception as e:
+        logger.error(f"Error while replacing zero values with null: {e}")
 
 
 def get_interval_from_latest_df(data_list):
-    # Check if data_list has at least two elements
-    if len(data_list) < 2:
-        return None
-
-    # Get the second-to-last and last DataFrames in data_list
-    second_to_last_df = data_list[-2][0]
-    latest_df = data_list[-1][0]
-
-    # Sort both DataFrames by the 'ValidDate' column
-    second_to_last_df = second_to_last_df.sort_values(by='ValidDate')
-    latest_df = latest_df.sort_values(by='ValidDate')
-
-    # Extract start_date from the first row of ValidDate column in the second-to-last DataFrame
-    start_date = second_to_last_df['ValidDate'].iloc[-1]
-
-    # Extract end_date from the first row of ValidDate column in the last DataFrame
-    end_date = latest_df['ValidDate'].iloc[0]
-
-    # Calculate interval as the difference between end_date and start_date
-    interval = end_date - start_date
-
-    return interval
-
-
-def flatten_extend(matrix):
-    flat_list = []
-    for row in matrix:
-        flat_list.extend(row)
-    return flat_list
-
-
-async def insert_parameter_data(db_pool, provider_id, model_id, parameter_name, data_list, model_run, parameter_table_name, start_date,
-                          end_date):
     try:
+        logger.info(f"Started getting interval from latest dataframe")
+        # Check if data_list has at least two elements
+        if len(data_list) < 2:
+            logger.warning(f"Data list should have at least two elements to calculate interval from latest df")
+            return None
+
+        # Get the second-to-last and last DataFrames in data_list
+        second_to_last_df = data_list[-2][0]
+        latest_df = data_list[-1][0]
+
+        # Sort both DataFrames by the 'ValidDate' column
+        second_to_last_df = second_to_last_df.sort_values(by='ValidDate')
+        latest_df = latest_df.sort_values(by='ValidDate')
+
+        # Extract start_date from the first row of ValidDate column in the second-to-last DataFrame
+        start_date = second_to_last_df['ValidDate'].iloc[-1]
+
+        # Extract end_date from the first row of ValidDate column in the last DataFrame
+        end_date = latest_df['ValidDate'].iloc[0]
+
+        # Calculate interval as the difference between end_date and start_date
+        interval = end_date - start_date
+
+        logger.info(f"Finished getting interval from latest dataframe")
+        return interval
+
+    except Exception as e:
+        logger.error(f"Error while getting interval from latest dataframe: {e}")
+
+
+async def insert_parameter_data(db_pool, provider_id, model_id, parameter_name, data_list, model_run,
+                                parameter_table_name, start_date,
+                                end_date):
+    try:
+        logger.info(f"Started insterting parameter data with parameter_name: {parameter_name}, parameter_table_name: "
+                    f"{parameter_table_name}, model_run: {model_run}, start_date: {start_date} and end_date: {end_date}")
         async with db_pool.acquire() as conn:
             async with conn.cursor() as cursor:
                 logger.info("Connection to PostgreSQL established.")
@@ -91,7 +86,8 @@ async def insert_parameter_data(db_pool, provider_id, model_id, parameter_name, 
                     interval
                 ))
 
-                logger.info(f"Data for parameter '{parameter_name}' inserted successfully into table '{parameter_table_name}'.")
+                logger.info(
+                    f"Data for parameter '{parameter_name}' inserted successfully into table '{parameter_table_name}'.")
 
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Error while inserting parameter data: {e}")

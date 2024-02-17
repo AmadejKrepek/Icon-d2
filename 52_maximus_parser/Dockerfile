@@ -17,8 +17,5 @@ RUN pip install --no-cache-dir --force-reinstall 'GDAL[numpy]==3.6.2'
 # Copy the rest of the application code
 COPY . .
 
-# Expose the port the API will run on
-EXPOSE 5000
-
 # Run the web API
 CMD ["python", "main.py"]

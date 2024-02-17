@@ -13,7 +13,7 @@ def setup_logging():
     log_file_path = os.path.join(log_folder, 'app.log')
 
     # Configure the custom formatter
-    log_format = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+    log_format = '%(asctime)s [%(levelname)s] %(name)s - %(funcName)s: %(message)s'
     formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
 
     # Create a rotating file handler with time-based rotation

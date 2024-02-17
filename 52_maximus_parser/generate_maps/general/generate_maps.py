@@ -8,225 +8,254 @@ from shapely.geometry import Polygon, Point
 from models.MapsModel import MapsModel
 from osgeo import gdal
 import pyproj
+import logging
 
+logger = logging.getLogger(__name__)
 
 def create_variable_plot(model: MapsModel):
-    variable_values = model.df.pivot(index="Latitude", columns="Longitude", values=model.variable).values
+    try:
+        logger.info(f"Started creating variable plot with variable: {model.variable}, provider: {model.provider},"
+                     f"model_run: {model.model_run_model}, title: {model.title} and date: {model.model_run_formatted_date}")
+        variable_values = model.df.pivot(index="Latitude", columns="Longitude", values=model.variable).values
 
-    lat_values = model.df['Latitude'].unique()
-    lon_values = model.df['Longitude'].unique()
+        lat_values = model.df['Latitude'].unique()
+        lon_values = model.df['Longitude'].unique()
 
-    # Load the world map with medium resolution
-    world = gpd.read_file('./data_global/shapes/shape/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp')
+        # Load the world map with medium resolution
+        world = gpd.read_file('./data_global/shapes/shape/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp')
 
-    # Define the neighboring countries
-    countries = ['Slovenia', 'Austria', 'Italy', 'Hungary', 'Croatia']
+        # Define the neighboring countries
+        countries = ['Slovenia', 'Austria', 'Italy', 'Hungary', 'Croatia']
 
-    # Filter the neighboring countries
-    region = world[world['NAME'].isin(countries)]
+        # Filter the neighboring countries
+        region = world[world['NAME'].isin(countries)]
 
-    LAT_MIN = 45.1512
-    LAT_MAX = 47.1212
-    LON_MIN = 12.9955
-    LON_MAX = 16.7355
+        LAT_MIN = 45.1512
+        LAT_MAX = 47.1212
+        LON_MIN = 12.9955
+        LON_MAX = 16.7355
 
-    # Create bounding box for the region
-    bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
+        # Create bounding box for the region
+        bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
 
-    # Adjust the bounding box of the region to match the defined bounding box
-    region_clipped = gpd.clip(region, bbox_polygon)
+        # Adjust the bounding box of the region to match the defined bounding box
+        region_clipped = gpd.clip(region, bbox_polygon)
 
-    # Plot the bounding areas with detailed
-    fig, ax = plt.subplots(figsize=(15, 15))
+        # Plot the bounding areas with detailed
+        fig, ax = plt.subplots(figsize=(15, 15))
 
-    # Adjust the position of the axes to control left padding
-    gpd.GeoSeries(bbox_polygon).boundary.plot(ax=ax, color='#333333', linestyle='--')
-    fig.set_facecolor('#333333')
+        # Adjust the position of the axes to control left padding
+        gpd.GeoSeries(bbox_polygon).boundary.plot(ax=ax, color='#333333', linestyle='--')
+        fig.set_facecolor('#333333')
 
-    variable_clipped = np.clip(variable_values, -20, None)
+        variable_clipped = np.clip(variable_values, -20, None)
 
-    # Identify the maximum variable value and its coordinates
-    max_value = variable_clipped.max()
-    max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
+        # Identify the maximum variable value and its coordinates
+        max_value = variable_clipped.max()
+        max_value_coords = np.unravel_index(variable_clipped.argmax(), variable_clipped.shape)
 
-    alpha = 1.0
+        alpha = 1.0
 
-    norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
-    if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
-        alpha = 0.7
+        norm = mcolors.BoundaryNorm(model.contour_levels, model.colormap.N, clip=False, extend='both')
+        if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
+            alpha = 0.7
 
-    if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
-        shaded_relief = createShadedRelief('./data_global/shading/sencenje_250.tif')
-        extent_coordinates = get_extent_coordinates('./data_global/shading/sencenje_250.tif')
-        ax.imshow(shaded_relief, extent=(
-            extent_coordinates['min_longitude'], extent_coordinates['max_longitude'],
-            extent_coordinates['min_latitude'],
-            extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
-    ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm, cmap=model.colormap,
-                alpha=alpha)
+        if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
+            shaded_relief = createShadedRelief('./data_global/shading/sencenje_250.tif')
+            extent_coordinates = get_extent_coordinates('./data_global/shading/sencenje_250.tif')
+            ax.imshow(shaded_relief, extent=(
+                extent_coordinates['min_longitude'], extent_coordinates['max_longitude'],
+                extent_coordinates['min_latitude'],
+                extent_coordinates['max_latitude']), origin='upper', cmap=plt.cm.gray, alpha=1.0)
+        ax.contourf(lon_values, lat_values, variable_clipped, levels=model.contour_levels, norm=norm,
+                    cmap=model.colormap,
+                    alpha=alpha)
 
-    stride = 4
-    if model.model_run_model == "ALADIN":
-        stride = 2
+        stride = 4
+        if model.model_run_model == "ALADIN":
+            stride = 2
 
-    # Iterate through the grid and add text for variable values
-    for i in range(0, len(lat_values), stride):
-        for j in range(0, len(lon_values), stride):
-            # Skip values outside of the bounding box
-            if not bbox_polygon.contains(Point(lon_values[j], lat_values[i])):
-                continue
-            # Extract variable value and convert to integer
-            var_val = int(round(variable_clipped[i, j]))
-            # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
-            if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
-                if (max_value > 0):
-                    if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
-                        ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center',
-                                color='black')
-            else:
-                ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center', color='black')
+        # Iterate through the grid and add text for variable values
+        for i in range(0, len(lat_values), stride):
+            for j in range(0, len(lon_values), stride):
+                # Skip values outside of the bounding box
+                if not bbox_polygon.contains(Point(lon_values[j], lat_values[i])):
+                    continue
+                # Extract variable value and convert to integer
+                var_val = int(round(variable_clipped[i, j]))
+                # Include all values for temperature and maximum value, but exclude 0 for Total Precipitation
+                if model.variable == "max Total Precipitation" or model.variable == "sum Total Precipitation":
+                    if (max_value > 0):
+                        if (i, j) == max_value_coords or var_val != 0 or var_val == max_value:
+                            ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center',
+                                    color='black')
+                else:
+                    ax.text(lon_values[j], lat_values[i], f'{var_val}', fontsize=8, ha='center', va='center',
+                            color='black')
 
-    # Add borders between countries
-    region_clipped.boundary.plot(ax=ax, linewidth=2, color='#333333')
+        # Add borders between countries
+        region_clipped.boundary.plot(ax=ax, linewidth=2, color='#333333')
 
-    plt.xlim(LON_MIN, LON_MAX)
-    plt.ylim(LAT_MIN, LAT_MAX)
+        plt.xlim(LON_MIN, LON_MAX)
+        plt.ylim(LAT_MIN, LAT_MAX)
 
-    # Remove x and y axis
-    plt.xticks([])
-    plt.yticks([])
+        # Remove x and y axis
+        plt.xticks([])
+        plt.yticks([])
 
-    logo_resized = createLogo('./assets_global/logo/logo_512_39.webp')
-    fig.figimage(logo_resized, xo=60, yo=3110, zorder=20)
+        logo_resized = createLogo('./assets_global/logo/logo_512_39.webp')
+        fig.figimage(logo_resized, xo=60, yo=3110, zorder=20)
 
-    title_font = {'family': model.custom_font.get_name(), 'size': '15', 'color': 'white', 'weight': 'bold'}
-    subtitle_font = {'family': model.custom_font.get_name(), 'size': '11', 'color': 'white'}
+        title_font = {'family': model.custom_font.get_name(), 'size': '15', 'color': 'white', 'weight': 'bold'}
+        subtitle_font = {'family': model.custom_font.get_name(), 'size': '11', 'color': 'white'}
 
-    header_padding = 0.01
-    padding = 0.02
+        header_padding = 0.01
+        padding = 0.02
 
-    # Invisible text to adjust the padding
-    fig.text(0.5, 0.795 + padding, 'Upper', ha='center', **title_font, alpha=0)
-    fig.text(0.904, 0.12 + padding, 'Left', ha="right", **subtitle_font, alpha=0)
-    fig.text(0.127, 0.12, "Napovedni model: ICON-D2 15z", ha="left", **subtitle_font, alpha=0)
-    fig.text(0.899, 0.12, "Vir podatkov: Open-Meteo", ha="right", **subtitle_font, alpha=0)
+        # Invisible text to adjust the padding
+        fig.text(0.5, 0.795 + padding, 'Upper', ha='center', **title_font, alpha=0)
+        fig.text(0.904, 0.12 + padding, 'Left', ha="right", **subtitle_font, alpha=0)
+        fig.text(0.127, 0.12, "Napovedni model: ICON-D2 15z", ha="left", **subtitle_font, alpha=0)
+        fig.text(0.899, 0.12, "Vir podatkov: Open-Meteo", ha="right", **subtitle_font, alpha=0)
 
-    # Set title and source information
-    fig.text(0.5, 0.795 + header_padding, f'{model.selected_formatted_date}', ha='center', **title_font)
-    fig.text(0.897, 0.125, f"vir podatkov: {model.provider}", ha="right", **subtitle_font)
-    fig.text(0.127, 0.125, f'{model.model_run_model} ({model.model_run_formatted_date})', ha="left", **subtitle_font)
-    fig.text(0.897, 0.795 + header_padding, model.title, ha='right', **title_font)
+        # Set title and source information
+        fig.text(0.5, 0.795 + header_padding, f'{model.selected_formatted_date}', ha='center', **title_font)
+        fig.text(0.897, 0.125, f"vir podatkov: {model.provider}", ha="right", **subtitle_font)
+        fig.text(0.127, 0.125, f'{model.model_run_model} ({model.model_run_formatted_date})', ha="left",
+                 **subtitle_font)
+        fig.text(0.897, 0.795 + header_padding, model.title, ha='right', **title_font)
 
-    cax_height = 0.02
+        cax_height = 0.02
 
-    # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
-    cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
+        # Create axes for the colorbar to make it the same width as the plot, and place at the very bottom
+        cax = fig.add_axes([0.15, 0.17, 0.7, cax_height])
 
-    colormap_modified = plt.cm.get_cmap(model.colormap, len(model.legend_ticks))
+        colormap_modified = plt.cm.get_cmap(model.colormap, len(model.legend_ticks))
 
-    cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal',
-                        ticks=model.legend_ticks, label=model.x_title, extend='both')
+        cbar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=colormap_modified), cax=cax, orientation='horizontal',
+                            ticks=model.legend_ticks, label=model.x_title, extend='both')
 
-    # Adjust the width of the colorbar
-    cbar.ax.set_position([cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075,
-                          cax.get_position().height])
+        # Adjust the width of the colorbar
+        cbar.ax.set_position(
+            [cax.get_position().x0 - 0.025, cax.get_position().y0 - 0, cax.get_position().width + 0.075,
+             cax.get_position().height])
 
-    # Set the colorbar tick label color
-    cbar.ax.xaxis.set_tick_params(color='white')
+        # Set the colorbar tick label color
+        cbar.ax.xaxis.set_tick_params(color='white')
 
-    # Set the colorbar label color
-    cbar.set_label(model.x_title, color='white', labelpad=11, fontproperties=model.custom_font)
+        # Set the colorbar label color
+        cbar.set_label(model.x_title, color='white', labelpad=11, fontproperties=model.custom_font)
 
-    # Set edgecolor of colorbar to 'none' to remove the border
-    cbar.outline.set_edgecolor('none')
+        # Set edgecolor of colorbar to 'none' to remove the border
+        cbar.outline.set_edgecolor('none')
 
-    cax.set_xticks(model.legend_ticks)
-    cax.set_xticklabels([str(level) for level in model.legend_ticks], color='white')
+        cax.set_xticks(model.legend_ticks)
+        cax.set_xticklabels([str(level) for level in model.legend_ticks], color='white')
 
-    # Make the border white and add padding
-    for spine in ax.spines.values():
-        spine.set_edgecolor('#333333')
-        spine.set_linewidth(3)  # Adjust the border thickness to your liking
+        # Make the border white and add padding
+        for spine in ax.spines.values():
+            spine.set_edgecolor('#333333')
+            spine.set_linewidth(3)  # Adjust the border thickness to your liking
 
-    # Set the tick color for both x and y axes
-    ax.tick_params(axis='x', colors='white')
-    ax.tick_params(axis='y', colors='white')
+        # Set the tick color for both x and y axes
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
 
-    # Save the figure with adjusted left padding
-    plt.savefig(model.output_filepath, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
-    plt.close()
+        # Save the figure with adjusted left padding
+        plt.savefig(model.output_filepath, dpi=300, bbox_inches='tight')  # Adjust the pad_inches value as needed
+        plt.close()
+        logger.info(f"Finished creating variable plot with variable: {model.variable}, provider: {model.provider},"
+                     f"model_run: {model.model_run_model}, title: {model.title} and date: {model.model_run_formatted_date}")
+    except Exception as e:
+        logger.error(f"Error while creating variable plot for variable: {model.variable}, provider: {model.provider},"
+                      f"model_run: {model.model_run_model}, title: {model.title} and date: {model.model_run_formatted_date},"
+                      f"with error: {e}")
 
 
 def createShadedRelief(shading_path: str):
-    # Open the shading GeoTIFF file
-    shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
+    try:
+        logger.info(f"Started creating shaded relief from shading file path: {shading_path}")
+        # Open the shading GeoTIFF file
+        shading_ds = gdal.Open(shading_path, gdal.GA_ReadOnly)
 
-    # Read the shading data into a NumPy array
-    shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
+        # Read the shading data into a NumPy array
+        shading_array = shading_ds.GetRasterBand(1).ReadAsArray()
 
-    # Create a LightSource instance
-    ls = mcolors.LightSource(azdeg=145, altdeg=45)  # Corrected import
+        # Create a LightSource instance
+        ls = mcolors.LightSource(azdeg=145, altdeg=45)  # Corrected import
 
-    # Calculate the shaded relief
-    shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='soft')
-
-    return shaded_relief
+        # Calculate the shaded relief
+        shaded_relief = ls.shade(shading_array, cmap=plt.cm.gray, vert_exag=0.1, blend_mode='soft')
+        logger.info(f"Finished creating shaded relief from shading file path: {shading_path}")
+        return shaded_relief
+    except Exception as e:
+        logger.error(f"Error while creating shaded relief: {e}")
 
 
 def get_extent_coordinates(geotiff_path: str):
-    # Open the GeoTIFF file
-    ds = gdal.Open(geotiff_path, gdal.GA_ReadOnly)
+    try:
+        logger.info(f"Started getting extent coordinates with geotiff path: {geotiff_path}")
+        # Open the GeoTIFF file
+        ds = gdal.Open(geotiff_path, gdal.GA_ReadOnly)
 
-    if ds is None:
-        print(f"Failed to open {geotiff_path}")
-        return None
+        if ds is None:
+            logger.error(f"Failed to open {geotiff_path}")
+            return None
 
-    # Get the geotransform information
-    geotransform = ds.GetGeoTransform()
+        # Get the geotransform information
+        geotransform = ds.GetGeoTransform()
 
-    # Extract relevant information from the geotransform
-    min_x = geotransform[0]
-    max_y = geotransform[3]
-    max_x = min_x + geotransform[1] * ds.RasterXSize
-    min_y = max_y + geotransform[5] * ds.RasterYSize
+        # Extract relevant information from the geotransform
+        min_x = geotransform[0]
+        max_y = geotransform[3]
+        max_x = min_x + geotransform[1] * ds.RasterXSize
+        min_y = max_y + geotransform[5] * ds.RasterYSize
 
-    # Define the source coordinate system based on the provided CRS information
-    source_crs = pyproj.CRS(ds.GetProjection())
+        # Define the source coordinate system based on the provided CRS information
+        source_crs = pyproj.CRS(ds.GetProjection())
 
-    # Define the target coordinate system (WGS84)
-    target_crs = pyproj.CRS("EPSG:4326")  # WGS84 (latitude/longitude)
+        # Define the target coordinate system (WGS84)
+        target_crs = pyproj.CRS("EPSG:4326")  # WGS84 (latitude/longitude)
 
-    # Create a transformer to convert coordinates
-    transformer = pyproj.Transformer.from_crs(source_crs, target_crs, always_xy=True)
+        # Create a transformer to convert coordinates
+        transformer = pyproj.Transformer.from_crs(source_crs, target_crs, always_xy=True)
 
-    # Convert the coordinates to latitude and longitude
-    min_lon, min_lat = transformer.transform(min_x, min_y)
-    max_lon, max_lat = transformer.transform(max_x, max_y)
+        # Convert the coordinates to latitude and longitude
+        min_lon, min_lat = transformer.transform(min_x, min_y)
+        max_lon, max_lat = transformer.transform(max_x, max_y)
 
-    return {
-        "min_latitude": min_lat,
-        "max_latitude": max_lat,
-        "min_longitude": min_lon,
-        "max_longitude": max_lon,
-    }
+        logger.info(f"Finished getting extent coordinates with geotiff path: {geotiff_path}")
+
+        return {
+            "min_latitude": min_lat,
+            "max_latitude": max_lat,
+            "min_longitude": min_lon,
+            "max_longitude": max_lon,
+        }
+    except Exception as e:
+        logger.error(f"Error while getting extent coordinates with geotiff path: {geotiff_path} and error: {e}")
 
 
 def createLogo(path):
-    # Load and resize the logo (replace 'logo.png' with your actual logo path)
-    logo = mpimg.imread(path)
+    try:
+        logger.info(f"Started creating logo with logo path: {path}")
+        # Load and resize the logo (replace 'logo.png' with your actual logo path)
+        logo = mpimg.imread(path)
 
-    # Desired width and height for the resized logo
-    desired_width = 800
-    desired_height = 500
+        # Desired width and height for the resized logo
+        desired_width = 800
+        desired_height = 500
 
-    # Calculate scaling factors for width and height
-    scaling_factor_width = desired_width / logo.shape[1]
-    scaling_factor_height = desired_height / logo.shape[0]
+        # Calculate scaling factors for width and height
+        scaling_factor_width = desired_width / logo.shape[1]
+        scaling_factor_height = desired_height / logo.shape[0]
 
-    # Choose the minimum scaling factor to maintain aspect ratio
-    scaling_factor = min(scaling_factor_width, scaling_factor_height)
+        # Choose the minimum scaling factor to maintain aspect ratio
+        scaling_factor = min(scaling_factor_width, scaling_factor_height)
 
-    # Resize the logo
-    logo_resized = zoom(logo, (scaling_factor, scaling_factor, 1))
-
-    return logo_resized
+        # Resize the logo
+        logo_resized = zoom(logo, (scaling_factor, scaling_factor, 1))
+        logger.info(f"Finished creating logo with path: {path}")
+        return logo_resized
+    except Exception as e:
+        logger.error(f"Error while creating logo with logo path: {path} and error: {e}")
