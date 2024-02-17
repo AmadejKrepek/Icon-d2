@@ -186,6 +186,7 @@ def process_file(file_index_pair):
 def search_combine_merge(source_data_dir):
     filenames = glob.glob(os.path.join(source_data_dir, "*.grib2.bz2"))
     filenames = sorted(filenames)
+    print(filenames)
 
     parameter_data = {}  # Dictionary to store data for each parameter
 
@@ -198,6 +199,7 @@ def search_combine_merge(source_data_dir):
             data = compressed_file.read()
         original_filename = os.path.splitext(os.path.basename(file))[0]
         temp_decompressed_path = f"{original_filename}_decompressed.grib2"
+        print(temp_decompressed_path)
         with open(temp_decompressed_path, 'wb') as temp_file:
             temp_file.write(data)
 
@@ -261,6 +263,7 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
         print(f"Source data directory '{source_data_dir}' does not exist. Please provide the correct path.")
         sys.exit(1)
 
+    print(source_data_dir)
     # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
     try:
         file_index_pairs = [source_data_dir]

@@ -193,7 +193,7 @@ async def parse_gribs(source_data_dir, output_directory, temp_directory):
         # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
         file_index_pairs = [(index, os.path.join(temp_directory, grb_file)) for index, grb_file in
                             enumerate(filtered_files)]
-
+        print(f"Outisde process: {source_data_dir}")
         # Create a ProcessPoolExecutor
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # Process files in parallel
@@ -242,9 +242,9 @@ async def parse_gribs(source_data_dir, output_directory, temp_directory):
 
             index = index + 1
 
-        #os.remove(file)
+        os.remove(file)
 
-        #removeDirectories(delete_directory)
+        removeDirectories(delete_directory)
 
         await create_db_pool()
 
