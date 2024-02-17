@@ -1,5 +1,5 @@
-
 import os
+
 
 def removeDirectories(deleted_directory):
     while os.path.basename(deleted_directory) != "downloaded_grib_files":

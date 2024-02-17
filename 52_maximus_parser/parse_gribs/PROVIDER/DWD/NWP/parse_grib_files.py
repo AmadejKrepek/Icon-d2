@@ -213,6 +213,7 @@ def search_combine_merge(source_data_dir):
             # Process files in parallel
             processed_data_list = list(executor.map(process_file, file_index_pairs))
 
+        print("Getting past this processing inside...")
         start_date = None
         end_date = None
 
@@ -252,9 +253,11 @@ def search_combine_merge(source_data_dir):
                 data_date = data["ValidDate"].iloc[0].strftime("%Y-%m-%d")
                 parameter_data[parameter_name].append((data, data_date))
 
+        print(f"Removing temp decompressed: {temp_decompressed_path}")
         os.remove(temp_decompressed_path)
+        print(f"Removing file: {file}")
         os.remove(file)
-
+    print("Finishing this")
     return last_model_run, model_name, provider_name, parameter_name, start_date, end_date, parameter_data
 
 
@@ -284,7 +287,7 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
         start_date = created_data[0][4]
         end_date = created_data[0][5]
         parameter_data = created_data[0][6]
-
+        print(f"Removing deleted directory: {deleted_directory}")
         removeDirectories(deleted_directory)
     except Exception as e:
         logging.error(e)
