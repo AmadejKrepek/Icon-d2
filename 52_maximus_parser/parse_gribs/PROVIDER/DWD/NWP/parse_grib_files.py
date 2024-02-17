@@ -299,15 +299,24 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
+    print(f"Create parameter table - START")
     await create_parameter_table(db_pool, parameter_table_name)
+    print(f"Create parameter table - END")
 
     if not await check_model_run_exists(db_pool, parameter_table_name, last_model_run, start_date):
+        print(f"Get provider id - START")
         provider_id = await get_provider_id(db_pool, provider_name)
+        print(f"Get provider id - END")
+        print(f"Get model id - START")
         model_id = await get_model_id(db_pool, model_name)
+        print(f"Get model id - END")
+        print(f"Insert parameter data - START")
         await insert_parameter_data(db_pool, provider_id, model_id, parameter_name, parameter_data[parameter_name],
                                     last_model_run,
                                     parameter_table_name,
                                     start_date, end_date)
+        print(f"Insert parameter data - END")
+    print(f"Are at the end of process data?")
 
     # Save data for each parameter to separate CSV files
     # return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
