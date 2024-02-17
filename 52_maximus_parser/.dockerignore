@@ -1,0 +1,13 @@
+__pycache__
+.dockerignore
+.docker
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+idea/
+logs/
+shared-cache/
+.env
+.env.prod
