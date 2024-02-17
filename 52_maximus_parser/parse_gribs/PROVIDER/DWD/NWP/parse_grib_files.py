@@ -1,4 +1,5 @@
 import concurrent
+import logging
 from datetime import timedelta, timezone, datetime
 
 from database.db_connector import create_db_connection_async
@@ -16,7 +17,6 @@ import sys
 import os
 import bz2
 import pygrib
-import numpy as np
 
 # to nicely display maps we need to adjust coordinates to make sure it fits
 DEVIATION_LAT_MIN = 0.15
@@ -183,14 +183,7 @@ def process_file(file_index_pair):
     return process_data(temp_decompressed_path, [LAT_MIN, LAT_MAX, LON_MIN, LON_MAX], index)
 
 
-async def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
-    os.makedirs(output_directory, exist_ok=True)
-    deleted_directory = source_data_dir
-
-    if not os.path.isdir(source_data_dir):
-        print(f"Source data directory '{source_data_dir}' does not exist. Please provide the correct path.")
-        sys.exit(1)
-
+def search_combine_merge(source_data_dir):
     filenames = glob.glob(os.path.join(source_data_dir, "*.grib2.bz2"))
     filenames = sorted(filenames)
 
@@ -257,11 +250,41 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
         os.remove(temp_decompressed_path)
         os.remove(file)
 
-    removeDirectories(deleted_directory)
+    return last_model_run, model_name, provider_name, parameter_name, start_date, end_date, parameter_data
+
+
+async def parse_gribs(source_data_dir, output_directory, output_directory_gribs):
+    os.makedirs(output_directory, exist_ok=True)
+    deleted_directory = source_data_dir
+
+    if not os.path.isdir(source_data_dir):
+        print(f"Source data directory '{source_data_dir}' does not exist. Please provide the correct path.")
+        sys.exit(1)
+
+    # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
+    try:
+        file_index_pairs = [source_data_dir]
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            # Process files in parallel
+            created_data = list(executor.map(search_combine_merge, file_index_pairs))
+
+        if len(created_data) < 1:
+            raise ValueError("There is no data to insert in parse grib files!")
+
+        last_model_run = created_data[0][0]
+        model_name = created_data[0][1]
+        provider_name = created_data[0][2]
+        parameter_name = created_data[0][3]
+        start_date = created_data[0][4]
+        end_date = created_data[0][5]
+        parameter_data = created_data[0][6]
+
+        removeDirectories(deleted_directory)
+    except Exception as e:
+        logging.error(e)
 
     await create_db_pool()
 
-    start_date = parameter_data[parameter_name][0][0]['ValidDate'].iloc[0]
     last_model_run = remove_leading_zeros(last_model_run)
     parameter_table_name = parameter_name.replace(" ", "_").lower()
     parameter_table_name = parameter_table_name + "_" + model_name.lower()
@@ -274,7 +297,6 @@ async def parse_gribs(source_data_dir, output_directory, output_directory_gribs)
                                     last_model_run,
                                     parameter_table_name,
                                     start_date, end_date)
-
 
     # Save data for each parameter to separate CSV files
     # return save_parameter_data(parameter_data, output_directory, year, month, day, model_run)

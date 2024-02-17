@@ -49,9 +49,7 @@ def get_latest_model_run_filename(data, parameter_name):
                 result = match.group()
                 result_extracted = result.split("_")
                 time_run = result_extracted[2]
-                print(result)
-            else:
-                print("Pattern not found.")
+
             file_time = datetime.strptime(parts[2], "%Y-%m-%d %H:%M:%S")
 
             if "icon-d2" in file_info and parameter_name in file_info and "regular-lat-lon" in file_info:
