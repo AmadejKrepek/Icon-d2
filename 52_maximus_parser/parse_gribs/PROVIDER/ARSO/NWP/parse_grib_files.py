@@ -194,6 +194,7 @@ def process_file(file_index_pair):
 
 async def parse_gribs(source_data_dir, output_directory, temp_directory):
     try:
+        filtered_files_to_remove = None
         logger.info(f"Started parsing grib files with source_data_dir: {source_data_dir}, output_dir: {output_directory}")
         os.makedirs(output_directory, exist_ok=True)
         delete_directory = source_data_dir
@@ -222,6 +223,7 @@ async def parse_gribs(source_data_dir, output_directory, temp_directory):
                 1]  # Extract the timestamp value from the first item in the list
 
             filtered_files = [file for file in sorted_file_list if file.split('_')[1] == timestamp_to_match]
+            filtered_files_to_remove = sorted_grb_files
             index = 0
 
             # Create a list of (index, temp_decompressed_path) pairs using enumerate and temp_directory
@@ -307,7 +309,9 @@ async def parse_gribs(source_data_dir, output_directory, temp_directory):
             # Save data for each parameter to separate CSV files
             # save_parameter_data(parameter_data, output_directory, year, month, day, model_run)
         await close_db_pool()
-
+        for filtered_file in filtered_files_to_remove:
+            full_path_temp = os.path.join(temp_directory, filtered_file)
+            os.remove(full_path_temp)
         # return None
     except Exception as e:
         logger.error(f"Error while parsing gribs for ARSO: {e}")
