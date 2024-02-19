@@ -21,7 +21,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 # to nicely display maps we need to adjust coordinates to make sure it fits
 DEVIATION_LAT_MIN = 0.15
 DEVIATION_LAT_MAX = 0.01

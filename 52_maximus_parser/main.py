@@ -9,10 +9,9 @@ from get_grib_filenames.PROVIDER.DWD.NWP.choose_parameters import getGribFileNam
 from get_grib_filenames.PROVIDER.ARSO.NWP.choose_parameters import getGribFileNames as getARSOGribFileNames
 from download_grib_files.PROVIDER.DWD.NWP import download_ICON_D2 as downloadDWD
 from download_grib_files.PROVIDER.ARSO.NWP import download_ALADIN as downloadALADIN
+from logger_test.set_logger import setup_logging
 from parse_gribs.PROVIDER.DWD.NWP.parse_grib_files import parse_gribs as parse_gribs_DWD
 from parse_gribs.PROVIDER.ARSO.NWP.parse_grib_files import parse_gribs as parse_gribs_ARSO
-
-from setup.set_logger import setup_logging
 
 logger = setup_logging()
 
@@ -102,6 +101,9 @@ async def run_job():
                 logger.error(f"{error_message}\n{traceback_str}")
 
 
-while True:
-    asyncio.run(run_job())
-    time.sleep(30)
+if __name__ == "__main__":
+    while True:
+        asyncio.run(run_job())
+        time.sleep(30)
+
+

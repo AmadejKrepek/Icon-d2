@@ -1,5 +1,4 @@
 import concurrent
-import logging
 from datetime import timedelta, timezone, datetime
 
 from database.db_connector import create_db_connection_async
