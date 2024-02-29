@@ -1,0 +1,6 @@
+matplotlib==3.7.2
+diskcache==5.6.3
+python-dotenv==1.0.0
+quart==0.19.4
+schedule==1.2.1
+pandas==2.0.3

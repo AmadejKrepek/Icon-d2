@@ -1,0 +1,4 @@
+matplotlib==3.4.3
+diskcache==5.2.1
+python-dotenv==0.19.1
+quart==0.15.1

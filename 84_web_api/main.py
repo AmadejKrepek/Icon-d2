@@ -46,7 +46,6 @@ async def get_weather():
     return await send_file(img_io, mimetype='image/png')
 
 
-
 def run_flask_app():
     app.run(debug=True, use_reloader=False)
 

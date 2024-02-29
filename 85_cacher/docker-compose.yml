@@ -1,0 +1,5 @@
+version: '3'
+
+services:
+  web_api:
+    image: maximus_cacher:1.0.0

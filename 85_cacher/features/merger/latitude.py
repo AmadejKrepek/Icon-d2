@@ -1,6 +1,3 @@
-import psycopg2
-
-
 def get_latitudes_and_longitudes(provider_id, model_id, conn):
     try:
         # Create a cursor object
