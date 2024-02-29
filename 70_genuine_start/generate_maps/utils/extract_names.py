@@ -27,9 +27,12 @@ def extract_output_names(model_run, variable, output_directory, start_date, end_
     if model_run_model == "icond2":
         model_run_model = "ICON-D2"
         provider = "DWD"
-    else:
+    elif model_run_model == "aladin":
         model_run_model = "ALADIN"
         provider = "ARSO"
+    elif model_run_model == "iconeu":
+        model_run_model = "IconEU"
+        provider = "DWD"
 
     selected_year = selected_date.year
     selected_month = selected_date.month

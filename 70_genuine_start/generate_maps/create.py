@@ -2,13 +2,13 @@ from datetime import timedelta
 
 from animation.animation import create_gif_from_png
 from .models.MapsModel import MapsModel
-from .basic import create_variable_plot
+from .basic import create_variable_plot, create_variable_plot_europe, create_variable_plot_central_europe
 from .utils.extract_names import extract_output_names, extract_animation_output_names
 import matplotlib.colors as mcolors
 
 
 def create_maps(model_run, df_array, output_directory, color_configuration, custom_font, start_date, end_date,
-                selected_date):
+                selected_date, bbox):
     precipitation_colors = color_configuration["precipitation_colors"]
     temperature_colors = color_configuration["temperature_colors"]
     wind_max_2m_colors = color_configuration["wind_max_2m_colors"]
@@ -35,13 +35,19 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
     base_reflectivity_max_contour_levels = base_reflectivity_max_ticks
 
     variables_and_settings = [
-        ("max_2_metre_temperature_2_heightaboveground_aladin", "najvišja temperatura zraka", "temperatura [°C]",
+        ("max_2_metre_temperature_2_heightaboveground_instant_iconeu", "najvišja temperatura zraka", "temperatura [°C]",
          cmap_temperature,
          temperature_ticks, temperature_contour_levels),
-        ("min_2_metre_temperature_2_heightaboveground_aladin", "najnižja temperatura zraka", "temperatura [°C]",
+        ("min_2_metre_temperature_2_heightaboveground_instant_iconeu", "najnižja temperatura zraka", "temperatura [°C]",
          cmap_temperature,
          temperature_ticks, temperature_contour_levels),
-        ("animation_2_metre_temperature_2_heightaboveground_aladin", "temperatura zraka", "temperatura [°C]",
+        ("max_2_metre_temperature_2_heightaboveground_instant_aladin", "najvišja temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("min_2_metre_temperature_2_heightaboveground_instant_aladin", "najnižja temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("animation_2_metre_temperature_2_heightaboveground_instant_aladin", "temperatura zraka", "temperatura [°C]",
          cmap_temperature,
          temperature_ticks, temperature_contour_levels),
         ("max_temperature_850_isobaricinhpa_aladin", "najvišja temperatura zraka na 850 hPa", "temperatura [°C]",
@@ -60,6 +66,12 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
          cmap_temperature,
          temperature_ticks, temperature_contour_levels),
         ("animation_2_metre_temperature_icond2", "animacija temperature zraka", "temperatura [°C]", cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("max_2_metre_temperature_2_heightaboveground_instant_icond2", "najvišja temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
+         temperature_ticks, temperature_contour_levels),
+        ("min_2_metre_temperature_2_heightaboveground_instant_icond2", "najnižja temperatura zraka", "temperatura [°C]",
+         cmap_temperature,
          temperature_ticks, temperature_contour_levels),
         ("max_2_metre_temperature_icond2", "najvišja temperatura zraka", "temperatura [°C]", cmap_temperature,
          temperature_ticks, temperature_contour_levels),
@@ -107,11 +119,13 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
         ("max_u_component_of_wind_500_isobaricinhpa_aladin", "najvišja hitrost vetra na 500hPa", "veter [km/h]",
          cmap_wind_max_2m_colors,
          wind_max_2m_ticks, wind_max_2m_contour_levels),
+        ("max_total_precipitation_0_surface_accum_iconeu", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+         precipitation_ticks, precipitation_contour_leves),
         ("max_total_precipitation_icond2", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-        ("max_total_precipitation_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+        ("max_total_precipitation_0_surface_accum_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
-         ("max_total_precipitation_0_surface_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
+        ("max_total_precipitation_0_surface_aladin", "skupna višina padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
         ("animation_total_precipitation_aladin", "animacija višine padavin", "padavine [mm]", cmap_precipitation,
          precipitation_ticks, precipitation_contour_leves),
@@ -172,6 +186,6 @@ def create_maps(model_run, df_array, output_directory, color_configuration, cust
                 model = MapsModel(df_result, variable, title, x_title, colormap, legend_ticks, contour_levels,
                                   output_filepath, model_run_formatted_date, selected_formatted_date, model_run_model,
                                   provider, custom_font)
-                create_variable_plot(model)
+                create_variable_plot(model, bbox)
                 counter += 1
     create_gif_from_png(chosen_file_path, f"{chosen_variable}.gif")
