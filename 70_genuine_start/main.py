@@ -138,7 +138,7 @@ def convert_data(df, table_name):
 
 def get_model_id_sync(model_name, area, country, region):
     try:
-        query = "SELECT id, bbox FROM model WHERE"
+        query = "SELECT id, adjusted_bbox FROM model WHERE"
         params = []
 
         # Add conditions for each parameter that can be null
@@ -153,10 +153,14 @@ def get_model_id_sync(model_name, area, country, region):
         if country is not None:
             query += " AND country = %s"
             params.append(country)
+        else:
+            query += " AND country IS NULL"
 
         if region is not None:
             query += " AND region = %s"
             params.append(region)
+        else:
+            query += " AND region IS NULL"
 
         conn = psycopg2.connect(
             host=DB_HOST,
@@ -402,7 +406,7 @@ if __name__ == "__main__":
         if 1 <= modela_region_choice <= len(model_regions):
             selected_model_region = model_regions[modela_region_choice - 1]
 
-        model_id, bbox = get_model_id_sync(model_name=selected_model_name,
+        model_id, adjusted_bbox = get_model_id_sync(model_name=selected_model_name,
                                      area=selected_model_area,
                                      country=selected_model_country,
                                      region=selected_model_region)
@@ -501,7 +505,7 @@ if __name__ == "__main__":
                         try:
                             create_maps(selected_model_run, df_array, maps_output_directory, color_configuration,
                                         custom_font,
-                                        selected_start_date, selected_end_date, selected_date, bbox)
+                                        selected_start_date, selected_end_date, selected_date, adjusted_bbox)
                         except Exception as e:
                             print(f"{e}")
                     else:

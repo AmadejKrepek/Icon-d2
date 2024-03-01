@@ -25,10 +25,10 @@ def create_variable_plot(model: MapsModel, bbox):
     # Filter the neighboring countries
     region = world[world['NAME'].isin(countries)]
 
-    LAT_MIN = 45.1512
-    LAT_MAX = 47.1212
-    LON_MIN = 12.9955
-    LON_MAX = 16.7355
+    LAT_MIN = bbox[0]
+    LAT_MAX = bbox[1]
+    LON_MIN = bbox[2]
+    LON_MAX = bbox[3]
 
     # Create bounding box for the region
     bbox_polygon = Polygon([(LON_MIN, LAT_MIN), (LON_MIN, LAT_MAX), (LON_MAX, LAT_MAX), (LON_MAX, LAT_MIN)])
